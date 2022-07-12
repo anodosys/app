@@ -8,7 +8,17 @@ mkdir -p "${anodosysHostPath}"
 anodosysExtensionPath="${anodosysPath}/extension"
 mkdir -p "${anodosysExtensionPath}"
 
-anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+currentUser=$(whoami)
+currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
+
+anodosysUserPath="${currentUserHome}/.anodosys"
+mkdir -p "${anodosysUserPath}"
+
+anodosysUserExtensionPath="${anodosysUserPath}/extension"
+mkdir -p "${anodosysUserExtensionPath}"
+
+anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
 
 (
   [[ -n $ZSH_VERSION && $ZSH_EVAL_CONTEXT =~ :file$ ]] ||
@@ -20,10 +30,17 @@ if [[ "${sourced}" == 1 ]]; then
   echo "Adding to path: ${anodosysHostPath}"
   export PATH="${PATH}:${anodosysHostPath}"
 
-  for anodosysExtension in "${anodosysExtensions[@]}"; do
+  for anodosysExtension in "${anodosysSharedExtensions[@]}"; do
     if [[ -d "${anodosysExtensionPath}/${anodosysExtension}/host" ]]; then
       echo "Adding to path: ${anodosysExtensionPath}/${anodosysExtension}/host"
       export PATH="${PATH}:${anodosysExtensionPath}/${anodosysExtension}/host"
+    fi
+  done
+
+  for anodosysExtension in "${anodosysUserExtensions[@]}"; do
+    if [[ -d "${anodosysUserExtensionPath}/${anodosysExtension}/host" ]]; then
+      echo "Adding to path: ${anodosysUserExtensionPath}/${anodosysExtension}/host"
+      export PATH="${PATH}:${anodosysUserExtensionPath}/${anodosysExtension}/host"
     fi
   done
 else

@@ -291,9 +291,19 @@ completePath()
             realpath "${anodosysConfigurationPath}/${value}"
             exit 0
           fi
-          for anodosysExtension in "${anodosysExtensions[@]}"; do
+          if [[ -f "${anodosysUserConfigurationPath}/${value}" ]]; then
+            realpath "${anodosysUserConfigurationPath}/${value}"
+            exit 0
+          fi
+          for anodosysExtension in "${anodosysSharedExtensions[@]}"; do
             if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/configuration/${value}" ]]; then
               realpath "${anodosysExtensionPath}/${anodosysExtension}/configuration/${value}"
+              exit 0
+            fi
+          done
+          for anodosysExtension in "${anodosysUserExtensions[@]}"; do
+            if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${value}" ]]; then
+              realpath "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${value}"
               exit 0
             fi
           done
@@ -302,9 +312,19 @@ completePath()
             realpath "${anodosysScriptPath}/${value}"
             exit 0
           fi
-          for anodosysExtension in "${anodosysExtensions[@]}"; do
+          if [[ -f "${anodosysUserScriptPath}/${value}" ]]; then
+            realpath "${anodosysUserScriptPath}/${value}"
+            exit 0
+          fi
+          for anodosysExtension in "${anodosysSharedExtensions[@]}"; do
             if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/script/${value}" ]]; then
               realpath "${anodosysExtensionPath}/${anodosysExtension}/script/${value}"
+              exit 0
+            fi
+          done
+          for anodosysExtension in "${anodosysUserExtensions[@]}"; do
+            if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/script/${value}" ]]; then
+              realpath "${anodosysUserExtensionPath}/${anodosysExtension}/script/${value}"
               exit 0
             fi
           done
@@ -1052,6 +1072,7 @@ scriptName="${BASH_SOURCE[0]}"
 if [[ -L "${scriptName}" ]]; then
   scriptName=$(readlink -f "${scriptName}")
 fi
+
 anodosysPath=$(cd -P "$( dirname "${scriptName}" )" && pwd)
 export anodosysPath
 
@@ -1070,8 +1091,41 @@ anodosysExtensionPath="${anodosysPath}/extension"
 mkdir -p "${anodosysExtensionPath}"
 export anodosysExtensionPath
 
-anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
-export anodosysExtensions
+currentUser=$(whoami)
+currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
+
+anodosysUserPath="${currentUserHome}/.anodosys"
+mkdir -p "${anodosysUserPath}"
+export anodosysUserPath
+
+anodosysUserConfigurationPath="${anodosysUserPath}/configuration"
+mkdir -p "${anodosysUserConfigurationPath}"
+export anodosysUserConfigurationPath
+
+anodosysUserExtensionPath="${anodosysUserPath}/extension"
+mkdir -p "${anodosysUserExtensionPath}"
+export anodosysUserExtensionPath
+
+anodosysUserHostPath="${anodosysUserPath}/host"
+mkdir -p "${anodosysUserHostPath}"
+export anodosysUserHostPath
+
+anodosysUserScriptPath="${anodosysUserPath}/script"
+mkdir -p "${anodosysUserScriptPath}"
+export anodosysUserScriptPath
+
+anodosysUserVarPath="${anodosysUserPath}/var"
+mkdir -p "${anodosysUserVarPath}"
+export anodosysUserVarPath
+
+anodosysUserVarConfigurationPath="${anodosysUserVarPath}/configuration"
+mkdir -p "${anodosysUserVarConfigurationPath}"
+export anodosysUserVarConfigurationPath
+
+anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+export anodosysSharedExtensions
+anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+export anodosysUserExtensions
 
 if [[ ! -f anodosys.json ]] && { test -f anodosys/anodosys.json; test -f anodosys/ads.json; }; then
   cd anodosys
@@ -1083,21 +1137,6 @@ if [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]]; then
   >&2 echo "Could not find anodosys.json or ads.json in directory: ${PWD}"
   exit 1
 fi
-
-currentUser=$(whoami)
-currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
-
-anodosysUserPath="${currentUserHome}/.anodosys"
-mkdir -p "${anodosysUserPath}"
-export anodosysUserPath
-
-anodosysUserVarPath="${anodosysUserPath}/var"
-mkdir -p "${anodosysUserVarPath}"
-export anodosysUserVarPath
-
-anodosysUserVarConfigurationPath="${anodosysUserVarPath}/configuration"
-mkdir -p "${anodosysUserVarConfigurationPath}"
-export anodosysUserVarConfigurationPath
 
 configurationFiles=( $(collectConfigurationFiles "${serverName}" "${fileName}") )
 configurationFiles=( $(tr ' ' '\n' <<<"${configurationFiles[@]}" | awk '!u[$0]++' | tr '\n' ' ') )

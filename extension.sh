@@ -47,16 +47,32 @@ Example: ${scriptName} ${action} ${extensionName} ${type} git@bitbucket.org:org/
 EOF
 }
 
-anodosysPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+scriptName="${BASH_SOURCE[0]}"
+if [[ -L "${scriptName}" ]]; then
+  scriptName=$(readlink -f "${scriptName}")
+fi
+
+anodosysPath=$(cd -P "$( dirname "${scriptName}" )" && pwd)
 
 anodosysExtensionPath="${anodosysPath}/extension"
-sudo mkdir -p "${anodosysExtensionPath}"
 
 currentUser=$(whoami)
 currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
 
 anodosysUserPath="${currentUserHome}/.anodosys"
 mkdir -p "${anodosysUserPath}"
+
+anodosysUserConfigurationPath="${anodosysUserPath}/configuration"
+mkdir -p "${anodosysUserConfigurationPath}"
+
+anodosysUserExtensionPath="${anodosysUserPath}/extension"
+mkdir -p "${anodosysUserExtensionPath}"
+
+anodosysUserHostPath="${anodosysUserPath}/host"
+mkdir -p "${anodosysUserHostPath}"
+
+anodosysUserScriptPath="${anodosysUserPath}/script"
+mkdir -p "${anodosysUserScriptPath}"
 
 anodosysUserVarPath="${anodosysUserPath}/var"
 mkdir -p "${anodosysUserVarPath}"
@@ -97,19 +113,23 @@ if [[ "${extensionName}" == "help" ]]; then
 fi
 
 if [[ "${action}" == "update" ]]; then
-  if [[ ! -d "${anodosysExtensionPath}/${extensionName}/" ]]; then
-    >&2 echo "Extension does not exist in: ${anodosysExtensionPath}/${extensionName}/"
+  if [[ "${currentUser}" == "root" ]] && [[ ! -d "${anodosysExtensionPath}/${extensionName}" ]]; then
+    >&2 echo "Extension does not exist in: ${anodosysExtensionPath}/${extensionName}"
+    exit 1
+  elif [[ "${currentUser}" != "root" ]] && [[ ! -d "${anodosysUserExtensionPath}/${extensionName}" ]]; then
+    >&2 echo "Extension does not exist in: ${anodosysUserExtensionPath}/${extensionName}"
     exit 1
   fi
 
   if [[ -d "${anodosysUserVarExtensionPath}/${extensionName}/.git" ]]; then
     cd "${anodosysUserVarExtensionPath}/${extensionName}"
-
     git pull
 
-    cd "${anodosysPath}"
-
-    sudo rsync --exclude '.git/' --exclude '.gitignore' --recursive --checksum --executability --no-owner --no-group --delete --force --verbose "${anodosysUserVarExtensionPath}/${extensionName}/" "${anodosysExtensionPath}/${extensionName}/"
+    if [[ "${currentUser}" == "root" ]]; then
+      rsync --exclude '.git/' --exclude '.gitignore' --recursive --checksum --executability --no-owner --no-group --delete --force --verbose "${anodosysUserVarExtensionPath}/${extensionName}/" "${anodosysExtensionPath}/${extensionName}/"
+    else
+      rsync --exclude '.git/' --exclude '.gitignore' --recursive --checksum --executability --no-owner --no-group --delete --force --verbose "${anodosysUserVarExtensionPath}/${extensionName}/" "${anodosysUserExtensionPath}/${extensionName}/"
+    fi
   else
     >&2 echo "Could not determine extension type"
     exit 1
@@ -119,18 +139,35 @@ if [[ "${action}" == "update" ]]; then
 fi
 
 if [[ "${action}" == "remove" ]]; then
-  if [[ ! -d "${anodosysExtensionPath}/${extensionName}/" ]]; then
-    >&2 echo "Extension does not exist in: ${anodosysExtensionPath}/${extensionName}/"
+  if [[ "${currentUser}" == "root" ]] && [[ ! -d "${anodosysExtensionPath}/${extensionName}" ]]; then
+    >&2 echo "Extension does not exist in: ${anodosysExtensionPath}/${extensionName}"
+    exit 1
+  elif [[ "${currentUser}" != "root" ]] && [[ ! -d "${anodosysUserExtensionPath}/${extensionName}" ]]; then
+    >&2 echo "Extension does not exist in: ${anodosysUserExtensionPath}/${extensionName}"
     exit 1
   fi
 
-  sudo rm -rf "${anodosysExtensionPath:?}/${extensionName}/"
-  sudo rm -rf "${anodosysUserVarExtensionPath:?}/${extensionName}/"
+  if [[ "${currentUser}" == "root" ]]; then
+    # shellcheck disable=SC2115
+    rm -rf "${anodosysPath}/${extensionName}"
+  else
+    # shellcheck disable=SC2115
+    rm -rf "${anodosysUserExtensionPath}/${extensionName}"
+  fi
+
+  # shellcheck disable=SC2115
+  rm -rf "${anodosysUserVarExtensionPath}/${extensionName}"
+
   exit 0
 fi
 
-if [[ -d "${anodosysExtensionPath}/${extensionName}/" ]]; then
-  >&2 echo "Extension already added in: ${anodosysExtensionPath}/${extensionName}/"
+if [[ -d "${anodosysPath}/${extensionName}" ]]; then
+  >&2 echo "Extension already added in: ${anodosysPath}/${extensionName}"
+  exit 1
+fi
+
+if [[ -d "${anodosysUserExtensionPath}/${extensionName}" ]]; then
+  >&2 echo "Extension already added in: ${anodosysUserExtensionPath}/${extensionName}"
   exit 1
 fi
 
@@ -181,8 +218,11 @@ if [[ "${type}" == "git" ]]; then
     git clone "${url}" "${extensionName}"
   fi
 
-  cd "${anodosysPath}"
-
-  sudo mkdir -p "${anodosysExtensionPath}/${extensionName}"
-  sudo rsync --exclude '.git/' --exclude '.gitignore' --recursive --checksum --executability --no-owner --no-group --delete --force --verbose "${anodosysUserVarExtensionPath}/${extensionName}/" "${anodosysExtensionPath}/${extensionName}/"
+  if [[ "${currentUser}" == "root" ]]; then
+    mkdir -p "${anodosysPath}/${extensionName}"
+    rsync --exclude '.git/' --exclude '.gitignore' --recursive --checksum --executability --no-owner --no-group --delete --force --verbose "${anodosysUserVarExtensionPath}/${extensionName}/" "${anodosysPath}/${extensionName}/"
+  else
+    mkdir -p "${anodosysUserExtensionPath}/${extensionName}"
+    rsync --exclude '.git/' --exclude '.gitignore' --recursive --checksum --executability --no-owner --no-group --delete --force --verbose "${anodosysUserVarExtensionPath}/${extensionName}/" "${anodosysUserExtensionPath}/${extensionName}/"
+  fi
 fi
