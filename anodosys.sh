@@ -627,7 +627,9 @@ containerVolumePrepare()
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "none" ]]; then
           echo "Preparing target path: ${targetPath}"
           groupId=$(containerCommandQuiet "${containerName}" "stat -c '%g' ${targetPath}")
+          groupId=$(prepareValue "${groupId}")
           groupName=$(containerCommandQuiet "${containerName}" "stat -c '%G' ${targetPath}")
+          groupName=$(prepareValue "${groupName}")
           if [[ "${groupName}" == "UNKNOWN" ]]; then
             groupName="docker_volume_${groupId}"
             echo "Creating new group: ${groupName}"
@@ -639,19 +641,6 @@ containerVolumePrepare()
           else
             echo "No need to add user: ${targetUser} to group: ${groupName}"
           fi
-          #while : ; do
-          #  parentPath=$(dirname "${targetPath}")
-          #  if [[ "${parentPath}" == "${targetPath}" ]]; then
-          #    break
-          #  fi
-          #  parentGroupId=$(containerCommandQuiet "${containerName}" "stat -c '%g' ${parentPath}")
-          #  if [[ "${parentGroupId}" == 0 ]]; then
-          #    echo "Changing group of path: ${parentPath}"
-          #    containerCommand "${containerName}" "chown :${groupName} ${parentPath}"
-          #  else
-          #    break
-          #  fi
-          #done
         else
           echo "No need to prepare path: ${targetPath}"
         fi
@@ -725,13 +714,17 @@ containerHostNameAdd()
   local ipAddress=
   ipAddress=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r '.Networks[].IPAddress')
   if [[ -f /etc/hosts ]]; then
-    if [[ $(grep -E "\s+${containerName}\s*$" /etc/hosts | wc -l) -eq 0 ]]; then
-      echo "Adding host entry: ${ipAddress} ${containerName}"
-      echo "${ipAddress} ${containerName}" >> /etc/hosts
+    if [[ -w /etc/hosts ]]; then
+      if [[ $(grep -E "\s+${containerName}\s*$" /etc/hosts | wc -l) -eq 0 ]]; then
+        echo "Adding host entry: ${ipAddress} ${containerName}"
+        echo "${ipAddress} ${containerName}" >> /etc/hosts
+      else
+        lineNumber=$(grep -En "\s+${containerName}\s*$" /etc/hosts | awk -F: '{print $1}')
+        echo "Update host entry: ${ipAddress} ${containerName}"
+        sed -i "${lineNumber}s/.*/${ipAddress} ${containerName}/" /etc/hosts
+      fi
     else
-      lineNumber=$(grep -En "\s+${containerName}\s*$" /etc/hosts | awk -F: '{print $1}')
-      echo "Update host entry: ${ipAddress} ${containerName}"
-      sed -i "${lineNumber}s/.*/${ipAddress} ${containerName}/" /etc/hosts
+      echo "/etc/hosts is not writable for current user"
     fi
   fi
 }
@@ -930,7 +923,7 @@ containerExecuteQuiet()
     if [[ $(containerRunning "${containerName}") == 1 ]]; then
       containerCopyQuiet "${containerName}" "${localFileName}"
       remoteFileName=$(basename "${localFileName}")
-      docker exec -t "${containerName}" "/${remoteFileName}" "${parameters[@]}"
+      docker exec "${containerName}" "/${remoteFileName}" "${parameters[@]}"
     fi
   fi
 }
@@ -953,7 +946,7 @@ containerCommandQuiet()
   local containerName="${1}"
   local command="${2}"
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
-    docker exec -t "${containerName}" env TERM=xterm-256color bash -c "${command}"
+    docker exec "${containerName}" bash -c "${command}"
   fi
 }
 
@@ -1091,7 +1084,10 @@ if [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]]; then
   exit 1
 fi
 
-anodosysUserPath=$(realpath "~/.anodosys")
+currentUser=$(whoami)
+currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
+
+anodosysUserPath="${currentUserHome}/.anodosys"
 mkdir -p "${anodosysUserPath}"
 export anodosysUserPath
 

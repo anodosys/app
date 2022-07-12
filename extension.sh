@@ -52,17 +52,17 @@ anodosysPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 anodosysExtensionPath="${anodosysPath}/extension"
 sudo mkdir -p "${anodosysExtensionPath}"
 
-anodosysUserPath=$(realpath "~/.anodosys")
+currentUser=$(whoami)
+currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
+
+anodosysUserPath="${currentUserHome}/.anodosys"
 mkdir -p "${anodosysUserPath}"
-export anodosysUserPath
 
 anodosysUserVarPath="${anodosysUserPath}/var"
 mkdir -p "${anodosysUserVarPath}"
-export anodosysUserVarPath
 
 anodosysUserVarExtensionPath="${anodosysUserVarPath}/extension"
 mkdir -p "${anodosysUserVarExtensionPath}"
-export anodosysUserVarExtensionPath
 
 action="${1}"
 
@@ -102,8 +102,8 @@ if [[ "${action}" == "update" ]]; then
     exit 1
   fi
 
-  if [[ -d "${anodosysExtensionPath}/${extensionName}/.git" ]]; then
-    cd "${anodosysExtensionPath}/${extensionName}"
+  if [[ -d "${anodosysUserVarExtensionPath}/${extensionName}/.git" ]]; then
+    cd "${anodosysUserVarExtensionPath}/${extensionName}"
 
     git pull
 

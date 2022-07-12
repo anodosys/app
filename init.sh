@@ -48,14 +48,16 @@ if [[ -z "${hash}" ]]; then
 fi
 echo "Latest hash: ${hash}"
 
-applicationPath="/opt/install/tofex-anodosys-${hash}"
+basePath="/usr/local/lib"
 
-if [[ -L /opt/install/anodosys ]]; then
+applicationPath="${basePath}/tofex-anodosys-${hash}"
+
+if [[ -L ${basePath}/anodosys ]]; then
   echo "Removing old version"
-  rm /opt/install/anodosys
+  rm ${basePath}/anodosys
 fi
-mkdir -p /opt/install/
-cd /opt/install/
+mkdir -p ${basePath}/
+cd ${basePath}/
 
 if [[ -d "${applicationPath}" ]]; then
   echo "Latest version already downloaded"
@@ -99,27 +101,27 @@ cd "${applicationPath}"
 
 echo "Application downloaded at: ${applicationPath}"
 
-echo "Linking application to: /opt/install/anodosys"
-ln -s "${applicationPath}" /opt/install/anodosys
+echo "Linking application to: ${basePath}/anodosys"
+ln -s "${applicationPath}" ${basePath}/anodosys
 
 if [[ ! -f "/usr/local/bin/anodosys" ]]; then
-  echo "Linking script from: /opt/install/anodosys/anodosys.sh to: /usr/local/bin/anodosys"
-  ln -s /opt/install/anodosys/anodosys.sh /usr/local/bin/anodosys
+  echo "Linking script from: ${basePath}/anodosys/anodosys.sh to: /usr/local/bin/anodosys"
+  ln -s ${basePath}/anodosys/anodosys.sh /usr/local/bin/anodosys
 fi
 
 if [[ ! -f "/usr/local/bin/ads" ]]; then
-  echo "Linking script from: /opt/install/anodosys/anodosys.sh to: /usr/local/bin/ads"
-  ln -s /opt/install/anodosys/anodosys.sh /usr/local/bin/ads
+  echo "Linking script from: ${basePath}/anodosys/anodosys.sh to: /usr/local/bin/ads"
+  ln -s ${basePath}/anodosys/anodosys.sh /usr/local/bin/ads
 fi
 
 anodosysConfigurationPath="${applicationPath}/configuration"
 mkdir -p "${anodosysConfigurationPath}"
-export anodosysConfigurationPath
-
-anodosysScriptPath="${applicationPath}/script"
-mkdir -p "${anodosysScriptPath}"
-export anodosysScriptPath
 
 anodosysExtensionPath="${applicationPath}/extension"
 mkdir -p "${anodosysExtensionPath}"
-export anodosysExtensionPath
+
+anodosysHostPath="${applicationPath}/host"
+mkdir -p "${anodosysHostPath}"
+
+anodosysScriptPath="${applicationPath}/script"
+mkdir -p "${anodosysScriptPath}"
