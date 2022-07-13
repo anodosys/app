@@ -13,6 +13,7 @@ OPTIONS:
   -s  Server name
   -i  Image source (source or target)
   -n  Negate the check
+  -l  Check only local
 
 Example: ${scriptName} -s web
 EOF
@@ -26,13 +27,15 @@ trim()
 serverName=
 imageSource=
 negate=0
+local=0
 
-while getopts hs:i:n? option; do
+while getopts hs:i:nl? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
     i) imageSource=$(trim "$OPTARG");;
     n) negate=1;;
+    l) local=1;;
     ?) usage; exit 1;;
   esac
 done
@@ -81,7 +84,7 @@ if [[ "${imageSource}" == "source" ]]; then
     if [[ "${negate}" == 0 ]]; then
       exit 1
     fi
-  elif [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+  elif [[ ${local} == 0 ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
     echo "Remote image exists: ${imageName}:${imageTag}"
     if [[ "${negate}" == 0 ]]; then
       exit 1
@@ -98,13 +101,13 @@ else
       if [[ "${negate}" == 0 ]]; then
         exit 1
       fi
-    elif [[ $(imageExistsRemote "${buildImageName}" "${buildImageTag}") == 1 ]]; then
+    elif [[ ${local} == 0 ]] && [[ $(imageExistsRemote "${buildImageName}" "${buildImageTag}") == 1 ]]; then
       echo "Remote image exists: ${buildImageName}:${buildImageTag}"
       if [[ "${negate}" == 0 ]]; then
         exit 1
       fi
     elif [[ "${negate}" == 1 ]]; then
-      >&2 echo "Image requires build: ${buildImageName}:${buildImageTag}"
+      >&2 echo "Image does not exist: ${buildImageName}:${buildImageTag}"
       exit 1
     fi
   else

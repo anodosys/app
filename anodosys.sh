@@ -14,6 +14,7 @@ ACTION:
   pull      Pull the images required for building and starting
   install   Build the containers, but do not create images
   image     Build the image from running containers
+  push      Push the build images to remote
   destroy   Destroy the images
   start     Start the containers
   restart   Re-start the containers
@@ -1051,7 +1052,7 @@ if [[ -z "${action}" ]]; then
   usage
   exit 1
 fi
-if [[ "${action}" != "build" ]] && [[ "${action}" != "rebuild" ]] && [[ "${action}" != "pull" ]] && [[ "${action}" != "install" ]] && [[ "${action}" != "image" ]] && [[ "${action}" != "destroy" ]] && [[ "${action}" != "start" ]] && [[ "${action}" != "restart" ]] && [[ "${action}" != "stop" ]] && [[ "${action}" != "remove" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]]; then
+if [[ "${action}" != "build" ]] && [[ "${action}" != "rebuild" ]] && [[ "${action}" != "pull" ]] && [[ "${action}" != "install" ]] && [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]] && [[ "${action}" != "destroy" ]] && [[ "${action}" != "start" ]] && [[ "${action}" != "restart" ]] && [[ "${action}" != "stop" ]] && [[ "${action}" != "remove" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]]; then
   >&2 echo "Invalid action: ${action} defined!"
   usage
   exit 1
@@ -1201,6 +1202,11 @@ if [[ "${action}" == "build" ]]; then
   "${anodosysPath}/app/system/image/exists.sh" -t
 fi
 
+if [[ "${action}" == "push" ]]; then
+  # break if any target image does not exists locally
+  "${anodosysPath}/app/system/image/exists.sh" -t -n -l
+fi
+
 if [[ "${action}" == "build" ]] || [[ "${action}" == "install" ]]; then
   # break if any container already exists
   "${anodosysPath}/app/system/container/exists.sh"
@@ -1277,12 +1283,12 @@ fi
 if [[ "${action}" == "start" ]] || [[ "${action}" == "restart" ]]; then
   # creates the containers from the build image
   "${anodosysPath}/app/system/container/create.sh" -t
-elif [[ "${action}" != "image" ]]; then
+elif [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]]; then
   # creates the containers from the source image
   "${anodosysPath}/app/system/container/create.sh" -s
 fi
 
-if [[ "${action}" != "image" ]]; then
+if [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]]; then
   "${anodosysPath}/app/system/container/start.sh"
 fi
 
@@ -1299,7 +1305,7 @@ if [[ "${action}" == "start" ]] || [[ "${action}" == "restart" ]]; then
   exit 0
 fi
 
-if [[ "${action}" != "image" ]]; then
+if [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]]; then
   # container provisioning process
   "${anodosysPath}/app/system/container/prepare.sh"
   "${anodosysPath}/app/system/container/install.sh"
@@ -1318,6 +1324,17 @@ fi
 
 # create & push image if requested
 "${anodosysPath}/app/system/image/create.sh"
+
+if [[ "${action}" == "image" ]]; then
+  if [[ -n "${actionFinishScript}" ]]; then
+    echo "Action start finish: ${actionFinishScript}"
+    "${actionFinishScript}"
+  fi
+
+  echo "Finished"
+  exit 0
+fi
+
 "${anodosysPath}/app/system/image/push.sh"
 
 if [[ -n "${actionFinishScript}" ]]; then
