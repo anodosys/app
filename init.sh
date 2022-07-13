@@ -114,6 +114,21 @@ if [[ ! -f "/usr/local/bin/ads" ]]; then
   ln -s ${basePath}/anodosys/anodosys.sh /usr/local/bin/ads
 fi
 
+if [[ ! -f "/usr/local/bin/ads-ext" ]]; then
+  echo "Linking script from: ${basePath}/anodosys/extension.sh to: /usr/local/bin/ads-ext"
+  ln -s ${basePath}/anodosys/extension.sh /usr/local/bin/ads-ext
+fi
+
+if [[ ! -f "/usr/local/bin/ads-host" ]]; then
+  echo "Linking script from: ${basePath}/anodosys/host.sh to: /usr/local/bin/ads-host"
+  ln -s ${basePath}/anodosys/host.sh /usr/local/bin/ads-host
+fi
+
+if [[ ! -f "/usr/local/bin/ads-update" ]]; then
+  echo "Linking script from: ${basePath}/anodosys/update.sh to: /usr/local/bin/ads-update"
+  ln -s ${basePath}/anodosys/update.sh /usr/local/bin/ads-update
+fi
+
 anodosysConfigurationPath="${applicationPath}/configuration"
 mkdir -p "${anodosysConfigurationPath}"
 
