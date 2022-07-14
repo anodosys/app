@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -31,11 +36,6 @@ while getopts hs:? option; do
   esac
 done
 
-if [[ -z "${systemName}" ]]; then
-  >&2 echo "No system name specified!"
-  exit 1
-fi
-
 if [[ -z "${serverName}" ]]; then
   >&2 echo "No server name specified!"
   usage
@@ -52,7 +52,7 @@ if [[ -n "${beforeImageCreateScript}" ]]; then
 fi
 
 if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
-  echo "No building of image required"
+  echo "No creating of image required"
   exit 0
 fi
 

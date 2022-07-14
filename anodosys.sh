@@ -1,5 +1,14 @@
 #!/bin/bash -e
 
+finish()
+{
+  # give the output buffer a chance
+  sleep 1
+  echo "Finished"
+}
+
+trap finish EXIT
+
 scriptName="${0##*/}"
 
 usage()
@@ -9,13 +18,15 @@ cat >&2 << EOF
 usage: ${scriptName} <ACTION>
 
 ACTION:
-  build     Build the images if required
-  rebuild   Re-build the images if required
+  build     Build the target images and push if required
+  rebuild   Re-build the target images and push if required
   pull      Pull the images required for building and starting
   install   Build the containers, but do not create images
   image     Build the image from running containers
   push      Push the build images to remote
-  destroy   Destroy the images
+  clean     Remove the containers and the build images
+  destroy   Clean and remove the build images pushed to remote
+  create    Create the container from build images
   start     Start the containers
   restart   Re-start the containers
   stop      Stop the constainers
@@ -27,27 +38,69 @@ Example: ${scriptName} build
 EOF
 }
 
+getActionSteps()
+{
+  local stepAction="${1}"
+  local completeStepActionSteps
+  local stepActionSteps
+  local stepActionStep
+  local stepActionStepAction
+  local stepActionStepActionSteps
+  local stepActionStepActionStep
+
+  completeStepActionSteps=( )
+
+  if test "${steps["${stepAction}"]+isset}"; then
+    readarray -d , -t stepActionSteps < <(printf '%s' "${steps["${stepAction}"]}")
+
+    for stepActionStep in "${stepActionSteps[@]}"; do
+      if [[ "${stepActionStep:0:7}" == "action:" ]]; then
+        stepActionStepAction="${stepActionStep:7}"
+        stepActionStepActionSteps=( $(getActionSteps "${stepActionStepAction}") )
+        for stepActionStepActionStep in "${stepActionStepActionSteps[@]}"; do
+          completeStepActionSteps+=( "${stepActionStepActionStep}" )
+        done
+      else
+        completeStepActionSteps+=( "${stepActionStep}" )
+      fi
+    done
+  fi
+
+  echo "${completeStepActionSteps[@]}"
+}
+
 trim()
 {
   echo -n "$1" | xargs
 }
 
+logPrefix=
+
 logName()
 {
-  local prefix
   local logName="${1}"
   if [[ $(hash ts >/dev/null 2>&1 && echo "yes" || echo "no") == "yes" ]]; then
-    prefix="[${1}]"
+    logPrefix="[${1}]"
     shift
     while [[ "$#" -gt 0 ]]; do
-      prefix+=" [${1}]"
+      logPrefix+=" [${1}]"
       shift
     done
-    exec >/dev/tty
-    exec 2>/dev/tty
-    exec > >(ts "${prefix}" | sed $'s,.*,\e[0;37m&\e[m,')
-    exec 2> >(ts "${prefix}" | sed $'s,.*,\e[1;31m&\e[m,' >&2)
+    logDisable
+    logEnable
   fi
+}
+
+logDisable()
+{
+  exec >/dev/tty
+  exec 2>/dev/tty
+}
+
+logEnable()
+{
+  exec > >(ts "${logPrefix}" | sed $'s,.*,\e[0;37m&\e[m,')
+  exec 2> >(ts "${logPrefix}" | sed $'s,.*,\e[1;31m&\e[m,' >&2)
 }
 
 collectConfigurationFiles()
@@ -235,10 +288,19 @@ completePath()
   if [[ "${key}" == "beforeNetworkRemoveScript" ]] || [[ "${key}" == "networkRemoveScript" ]] || [[ "${key}" == "afterNetworkRemoveScript" ]]; then
     canCompletePath=1
   fi
-  if [[ "${key}" == "beforeImageExistsScript" ]] || [[ "${key}" == "imageExistsScript" ]] || [[ "${key}" == "afterImageExistsScript" ]]; then
+  if [[ "${key}" == "beforeImageExistsSourceScript" ]] || [[ "${key}" == "imageExistsSourceScript" ]] || [[ "${key}" == "afterImageExistsSourceScript" ]]; then
     canCompletePath=1
   fi
-  if [[ "${key}" == "beforeImagePullScript" ]] || [[ "${key}" == "imagePullScript" ]] || [[ "${key}" == "afterImagePullScript" ]]; then
+  if [[ "${key}" == "beforeImageExistsTargetScript" ]] || [[ "${key}" == "imageExistsTargetScript" ]] || [[ "${key}" == "afterImageExistsTargetScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeImageNotExistsTargetScript" ]] || [[ "${key}" == "imageNotExistsTargetScript" ]] || [[ "${key}" == "afterImageNotExistsTargetScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeImagePullSourceScript" ]] || [[ "${key}" == "imagePullSourceScript" ]] || [[ "${key}" == "afterImagePullSourceScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeImagePullTargetScript" ]] || [[ "${key}" == "imagePullTargetScript" ]] || [[ "${key}" == "afterImagePullTargetScript" ]]; then
     canCompletePath=1
   fi
   if [[ "${key}" == "beforeImageCreateScript" ]] || [[ "${key}" == "imageCreateScript" ]] || [[ "${key}" == "afterImageCreateScript" ]]; then
@@ -247,7 +309,10 @@ completePath()
   if [[ "${key}" == "beforeImagePushScript" ]] || [[ "${key}" == "imagePushScript" ]] || [[ "${key}" == "afterImagePushScript" ]]; then
     canCompletePath=1
   fi
-  if [[ "${key}" == "beforeImageRemoveScript" ]] || [[ "${key}" == "imageRemoveScript" ]] || [[ "${key}" == "afterImageRemoveScript" ]]; then
+  if [[ "${key}" == "beforeImageRemoveLocalScript" ]] || [[ "${key}" == "imageRemoveLocalScript" ]] || [[ "${key}" == "afterImageRemoveLocalScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeImageRemoveRemoteScript" ]] || [[ "${key}" == "imageRemoveRemoteScript" ]] || [[ "${key}" == "afterImageRemoveRemoteScript" ]]; then
     canCompletePath=1
   fi
   if [[ "${key}" == "beforeContainerConfigurationScript" ]] || [[ "${key}" == "containerConfigurationScript" ]] || [[ "${key}" == "afterContainerConfigurationScript" ]]; then
@@ -256,7 +321,13 @@ completePath()
   if [[ "${key}" == "beforeContainerExistsScript" ]] || [[ "${key}" == "containerExistsScript" ]] || [[ "${key}" == "afterContainerExistsScript" ]]; then
     canCompletePath=1
   fi
-  if [[ "${key}" == "beforeContainerCreateScript" ]] || [[ "${key}" == "containerCreateScript" ]] || [[ "${key}" == "afterContainerCreateScript" ]]; then
+  if [[ "${key}" == "beforeContainerNotExistsScript" ]] || [[ "${key}" == "containerNotExistsScript" ]] || [[ "${key}" == "afterContainerNotExistsScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeContainerCreateSourceScript" ]] || [[ "${key}" == "containerCreateSourceScript" ]] || [[ "${key}" == "afterContainerCreateSourceScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeContainerCreateTargetScript" ]] || [[ "${key}" == "containerCreateTargetScript" ]] || [[ "${key}" == "afterContainerCreateTargetScript" ]]; then
     canCompletePath=1
   fi
   if [[ "${key}" == "beforeContainerStartScript" ]] || [[ "${key}" == "containerStartScript" ]] || [[ "${key}" == "afterContainerStartScript" ]]; then
@@ -442,7 +513,7 @@ volumeRemove()
   local volumeName="${1}"
   if [[ $(volumeExists "${volumeName}") == 1 ]]; then
     echo "Removing volume: ${volumeName}"
-    result=$(docker volume rm "${volumeName}" 2>&1 | cat)
+    result=$(docker volume rm -f "${volumeName}" 2>&1 | cat)
     if [[ "${result}" == "${volumeName}" ]]; then
       echo "Successfully removed volume: ${volumeName}" | sed $'s,.*,\e[0;32m&\e[m,'
     else
@@ -501,7 +572,9 @@ imagePull()
   local imageTag="${2}"
   if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
     echo "Pulling image: ${imageName}:${imageTag}"
+    logDisable
     docker pull "${imageName}:${imageTag}"
+    logEnable
   else
     echo "No need to pull image: ${imageName}:${imageTag}"
   fi
@@ -513,7 +586,11 @@ imagePush()
   local imageTag="${2}"
   if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
     echo "Pushing image: ${imageName}:${imageTag}"
+    exec >/dev/tty
+    exec 2>/dev/tty
+    logDisable
     docker push "${imageName}:${imageTag}"
+    logEnable
   else
     >&2 echo "Image does not exist: ${imageName}:${imageTag}"
     exit 1
@@ -536,6 +613,29 @@ imageRemove()
     fi
   else
     echo "No need to remove image: ${imageName}:${imageTag}"
+  fi
+}
+
+imageRemoveRemote()
+{
+  local imageName="${1}"
+  local imageTag="${2}"
+  local userName="${3}"
+  local password="${4}"
+  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+    echo "Getting access token for user: ${userName}"
+    token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
+    echo "Removing remote image: ${imageName}:${imageTag}"
+    result=$(curl "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" -X DELETE -H "Authorization: JWT ${token}" | cat)
+    if [[ -z "${result}" ]]; then
+      echo "Successfully removed remote image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
+    else
+      >&2 echo "Could not remove remote image: ${imageName}:${imageTag}"
+      >&2 echo "${result}"
+      exit 1
+    fi
+  else
+    echo "No need to remove remote image: ${imageName}:${imageTag}"
   fi
 }
 
@@ -580,6 +680,17 @@ containerCreate()
         else
           targetUser="none"
         fi
+        if [[ ! -e "${sourcePath}" ]]; then
+          echo "Source path does not exist: ${sourcePath}"
+          mkdir -p "${sourcePath}" | cat
+          if [[ -d "${sourcePath}" ]]; then
+            echo "Successfully created path: ${sourcePath}" | sed $'s,.*,\e[0;32m&\e[m,'
+          fi
+        fi
+        if [[ ! -e "${sourcePath}" ]]; then
+          >&2 echo "Source path does not exist: ${sourcePath}"
+          exit 1
+        fi
         sourcePath=$(realpath "${sourcePath}")
         containerVolumeCreate "${containerName}" "${sourcePath}" "${targetPath}" "${targetUser}"
         local sourceName=
@@ -604,24 +715,88 @@ containerCreate()
   fi
 }
 
+containerReCreate()
+{
+  local containerName="${1}"
+  local imageName
+  local networkName
+  local parameters
+  local aliases
+  local alias
+  local bindPorts
+  local bindPortDefinition
+  local portParts
+  local internalPort
+  local hostPort
+  local volumeNames
+  local volumeName
+  local sourcePath
+  local targetPath
+  local targetUser
+  imageName=$(docker inspect -f "{{ json .Config }}" "${containerName}" | jq -r ".Image // empty")
+  networkName=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r ".Networks | keys[0]")
+  parameters=( )
+  aliases=( $(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r ".Networks .${networkName} .Aliases[]" | head -n -1) )
+  for alias in "${aliases[@]}"; do
+    parameters+=("alias:${alias}")
+  done
+  bindPorts=( $(docker container inspect -f "{{ json . }}" "${containerName}" | jq -r ".HostConfig .PortBindings | keys[] // empty") )
+  for bindPortDefinition in "${bindPorts[@]}"; do
+    readarray -d / -t portParts < <(printf '%s' "${bindPortDefinition}")
+    internalPort="${portParts[0]}"
+    hostPort=$(docker container inspect -f "{{ json . }}" "${containerName}" | jq -r ".HostConfig .PortBindings .\"${bindPortDefinition}\"[0] .HostPort")
+    parameters+=("port:${hostPort}:${internalPort}")
+  done
+  oldIFS="${IFS}"
+  IFS=$'\n'
+  volumeNames=( $(docker container inspect -f "{{ json . }}" "${containerName}" | jq -r ".Mounts[] .Name // empty") )
+  IFS="${oldIFS}"
+  for volumeName in "${volumeNames[@]}"; do
+    sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
+    targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
+    targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
+    if [[ -z "${targetUser}" ]]; then
+      parameters+=("volume:${sourcePath}:${targetPath}")
+    else
+      parameters+=("volume:${sourcePath}:${targetPath}:${targetUser}")
+    fi
+  done
+  containerRemove "${containerName}"
+  containerCreate "${imageName}" "${containerName}" "${networkName}" "${parameters[@]}"
+}
+
 containerVolumeCreate()
 {
   local containerName="${1}"
   local sourcePath="${2}"
   local targetPath="${3}"
   local targetUser="${4:-none}"
+  local sourceName=
+  local volumeName
   if [[ ! -e "${sourcePath}" ]]; then
     mkdir -p "${sourcePath}"
   fi
-  local sourceName=
   sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
-  local volumeName
   volumeName="${containerName}_${sourceName}"
   if [[ -n "${targetUser}" ]]; then
     volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}" "${targetUser}"
   else
     volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}"
   fi
+}
+
+containerVolumeRemove()
+{
+  local containerName="${1}"
+  local sourcePath="${2}"
+  local sourceName=
+  local volumeName
+  if [[ -e "${sourcePath}" ]]; then
+    sourcePath=$(realpath "${sourcePath}")
+  fi
+  sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
+  volumeName="${containerName}_${sourceName}"
+  volumeRemove "${volumeName}"
 }
 
 containerVolumeList()
@@ -678,6 +853,7 @@ containerVolumePrepare()
 containerStart()
 {
   local containerName="${1}"
+  local retry="${2:-no}"
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ $(containerRunning "${containerName}") == 0 ]]; then
       echo "Starting container: ${containerName}"
@@ -685,6 +861,15 @@ containerStart()
       if [[ "${result}" == "${containerName}" ]]; then
         echo "Successfully started container: ${containerName}" | sed $'s,.*,\e[0;32m&\e[m,'
       else
+        if [[ "${retry}" == "no" ]]; then
+          mountingIssue=$(echo "${result}" | grep "error while mounting volume" | wc -l)
+          if [[ "${mountingIssue}" -gt 0 ]]; then
+            echo "Container has mounting issue"
+            containerReCreate "${containerName}"
+            containerStart "${containerName}" "yes"
+            exit 0
+          fi
+        fi
         >&2 echo "Could not start container: ${containerName}"
         >&2 echo "${result}"
         exit 1
@@ -737,15 +922,16 @@ containerHostNameAdd()
   if [[ -f /etc/hosts ]]; then
     if [[ -w /etc/hosts ]]; then
       if [[ $(grep -E "\s+${containerName}\s*$" /etc/hosts | wc -l) -eq 0 ]]; then
-        echo "Adding host entry: ${ipAddress} ${containerName}"
+        echo "Adding host entry: ${ipAddress} ${containerName}" | sed $'s,.*,\e[1;32m&\e[m,'
         echo "${ipAddress} ${containerName}" >> /etc/hosts
       else
         lineNumber=$(grep -En "\s+${containerName}\s*$" /etc/hosts | awk -F: '{print $1}')
-        echo "Update host entry: ${ipAddress} ${containerName}"
+        echo "Update host entry: ${ipAddress} ${containerName}" | sed $'s,.*,\e[1;32m&\e[m,'
         sed -i "${lineNumber}s/.*/${ipAddress} ${containerName}/" /etc/hosts
       fi
     else
-      echo "/etc/hosts is not writable for current user"
+      echo "/etc/hosts is not writable for current user, add:" | sed $'s,.*,\e[0;33m&\e[m,'
+      echo "${ipAddress} ${serverName}" | sed $'s,.*,\e[0;33m&\e[m,'
     fi
   fi
 }
@@ -974,6 +1160,10 @@ containerCommandQuiet()
 # shellcheck disable=SC2034
 typeset -fx logName
 # shellcheck disable=SC2034
+typeset -fx logDisable
+# shellcheck disable=SC2034
+typeset -fx logEnable
+# shellcheck disable=SC2034
 typeset -fx prepareValue
 # shellcheck disable=SC2034
 typeset -fx setServerConfiguration
@@ -1002,13 +1192,19 @@ typeset -fx imagePush
 # shellcheck disable=SC2034
 typeset -fx imageRemove
 # shellcheck disable=SC2034
+typeset -fx imageRemoveRemote
+# shellcheck disable=SC2034
 typeset -fx containerExists
 # shellcheck disable=SC2034
 typeset -fx containerRunning
 # shellcheck disable=SC2034
 typeset -fx containerCreate
 # shellcheck disable=SC2034
+typeset -fx containerReCreate
+# shellcheck disable=SC2034
 typeset -fx containerVolumeCreate
+# shellcheck disable=SC2034
+typeset -fx containerVolumeRemove
 # shellcheck disable=SC2034
 typeset -fx containerVolumePrepare
 # shellcheck disable=SC2034
@@ -1049,11 +1245,6 @@ typeset -fx containerCommandQuiet
 action="${1}"
 if [[ -z "${action}" ]]; then
   >&2 echo "No action defined!"
-  usage
-  exit 1
-fi
-if [[ "${action}" != "build" ]] && [[ "${action}" != "rebuild" ]] && [[ "${action}" != "pull" ]] && [[ "${action}" != "install" ]] && [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]] && [[ "${action}" != "destroy" ]] && [[ "${action}" != "start" ]] && [[ "${action}" != "restart" ]] && [[ "${action}" != "stop" ]] && [[ "${action}" != "remove" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]]; then
-  >&2 echo "Invalid action: ${action} defined!"
   usage
   exit 1
 fi
@@ -1187,159 +1378,79 @@ if [[ "${action}" == "config" ]]; then
   exit 0
 fi
 
+if [[ "${action}" == "config" ]]; then
+  cat "${anodosysConfigurationFile}"
+  exit 0
+fi
+
+declare -A stepScripts
+stepScripts["containerCreateSource"]="${anodosysPath}/app/system/container/create-source.sh"
+stepScripts["containerCreateTarget"]="${anodosysPath}/app/system/container/create-target.sh"
+stepScripts["containerDismantle"]="${anodosysPath}/app/system/container/dismantle.sh"
+stepScripts["containerExists"]="${anodosysPath}/app/system/container/exists.sh"
+stepScripts["containerInstall"]="${anodosysPath}/app/system/container/install.sh"
+stepScripts["containerNotExists"]="${anodosysPath}/app/system/container/not-exists.sh"
+stepScripts["containerPrepare"]="${anodosysPath}/app/system/container/prepare.sh"
+stepScripts["containerRemove"]="${anodosysPath}/app/system/container/remove.sh"
+stepScripts["containerRunning"]="${anodosysPath}/app/system/container/running.sh"
+stepScripts["containerStart"]="${anodosysPath}/app/system/container/start.sh"
+stepScripts["containerStop"]="${anodosysPath}/app/system/container/stop.sh"
+stepScripts["imageCreate"]="${anodosysPath}/app/system/image/create.sh"
+stepScripts["imageExistsSource"]="${anodosysPath}/app/system/image/exists-source.sh"
+stepScripts["imageExistsTarget"]="${anodosysPath}/app/system/image/exists-target.sh"
+stepScripts["imageNotExistsTarget"]="${anodosysPath}/app/system/image/not-exists-target.sh"
+stepScripts["imagePullSource"]="${anodosysPath}/app/system/image/pull-source.sh"
+stepScripts["imagePullTarget"]="${anodosysPath}/app/system/image/pull-target.sh"
+stepScripts["imagePush"]="${anodosysPath}/app/system/image/push.sh"
+stepScripts["imageRemoveLocal"]="${anodosysPath}/app/system/image/remove-local.sh"
+stepScripts["imageRemoveRemote"]="${anodosysPath}/app/system/image/remove-remote.sh"
+stepScripts["networkCreate"]="${anodosysPath}/app/system/network/create.sh"
+stepScripts["networkRemove"]="${anodosysPath}/app/system/network/remove.sh"
+
+declare -A steps
+steps["build"]="imageNotExistsTarget,action:install,action:image,action:remove,action:push"
+steps["rebuild"]="action:clean,action:install,action:image,action:remove,action:push"
+steps["pull"]="imageExistsSource,imagePullSource,imagePullTarget"
+steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,containerStart,containerPrepare,containerInstall,containerDismantle"
+steps["image"]="imageCreate"
+steps["push"]="imageRemoveRemote,imagePush"
+steps["clean"]="action:remove,imageRemoveLocal"
+steps["destroy"]="action:clean,imageRemoveRemote"
+steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCreate,containerCreateTarget"
+steps["start"]="containerExists,containerStart,containerRunning"
+steps["restart"]="action:stop,action:start"
+steps["stop"]="containerStop"
+steps["remove"]="containerStop,containerRemove,networkRemove"
+
 if [[ -n "${actionStartScript}" ]]; then
   echo "Action start script: ${actionStartScript}"
   "${actionStartScript}"
 fi
 
-if [[ "${action}" == "build" ]] || [[ "${action}" == "rebuild" ]] || [[ "${action}" == "pull" ]] || [[ "${action}" == "install" ]] || [[ "${action}" == "start" ]] || [[ "${action}" == "restart" ]]; then
-  # break if any source image does not exists
-  "${anodosysPath}/app/system/image/exists.sh" -s -n
+actionSteps=( $(getActionSteps "${action}") )
+
+if [[ "${#actionSteps[@]}" -gt 0 ]]; then
+  for actionStep in "${actionSteps[@]}"; do
+    if test "${stepScripts["${actionStep}"]+isset}"; then
+      stepScript="${stepScripts["${actionStep}"]}"
+      if [[ -f "${stepScript}" ]]; then
+        "${stepScript}"
+      else
+        >&2 echo "Step script not found at: ${stepScript}"
+        exit 1
+      fi
+    else
+      >&2 echo "No script found to execute step: ${stepActionStep}"
+      exit 1
+    fi
+  done
+else
+  >&2 echo "No steps found for action: ${action}"
+  usage
+  exit 1
 fi
-
-if [[ "${action}" == "build" ]]; then
-  # break if any target image already exists
-  "${anodosysPath}/app/system/image/exists.sh" -t
-fi
-
-if [[ "${action}" == "push" ]]; then
-  # break if any target image does not exists locally
-  "${anodosysPath}/app/system/image/exists.sh" -t -n -l
-fi
-
-if [[ "${action}" == "build" ]] || [[ "${action}" == "install" ]]; then
-  # break if any container already exists
-  "${anodosysPath}/app/system/container/exists.sh"
-fi
-
-if [[ "${action}" == "rebuild" ]] || [[ "${action}" == "restart" ]] || [[ "${action}" == "stop" ]] || [[ "${action}" == "remove" ]] || [[ "${action}" == "destroy" ]]; then
-  "${anodosysPath}/app/system/container/stop.sh"
-fi
-
-if [[ "${action}" == "stop" ]]; then
-  if [[ -n "${actionFinishScript}" ]]; then
-    echo "Action start finish: ${actionFinishScript}"
-    "${actionFinishScript}"
-  fi
-
-  echo "Finished"
-  exit 0
-fi
-
-if [[ "${action}" == "rebuild" ]] || [[ "${action}" == "destroy" ]] || [[ "${action}" == "remove" ]]; then
-  "${anodosysPath}/app/system/container/remove.sh"
-fi
-
-if [[ "${action}" == "rebuild" ]] || [[ "${action}" == "destroy" ]] || [[ "${action}" == "remove" ]]; then
-  "${anodosysPath}/app/system/network/remove.sh"
-fi
-
-if [[ "${action}" == "remove" ]]; then
-  if [[ -n "${actionFinishScript}" ]]; then
-    echo "Action start finish: ${actionFinishScript}"
-    "${actionFinishScript}"
-  fi
-
-  echo "Finished"
-  exit 0
-fi
-
-if [[ "${action}" == "build" ]] || [[ "${action}" == "rebuild" ]] || [[ "${action}" == "install" ]] || [[ "${action}" == "pull" ]]; then
-  # pull the source images if available
-  "${anodosysPath}/app/system/image/pull.sh" -s
-fi
-
-if [[ "${action}" == "start" ]] || [[ "${action}" == "restart" ]] || [[ "${action}" == "pull" ]]; then
-  # pull the build images if available
-  "${anodosysPath}/app/system/image/pull.sh" -t
-fi
-
-if [[ "${action}" == "pull" ]]; then
-  if [[ -n "${actionFinishScript}" ]]; then
-    echo "Action start finish: ${actionFinishScript}"
-    "${actionFinishScript}"
-  fi
-
-  echo "Finished"
-  exit 0
-fi
-
-if [[ "${action}" == "rebuild" ]] || [[ "${action}" == "destroy" ]] || [[ "${action}" == "image" ]]; then
-  "${anodosysPath}/app/system/image/remove.sh"
-fi
-
-if [[ "${action}" == "destroy" ]]; then
-  if [[ -n "${actionFinishScript}" ]]; then
-    echo "Action start finish: ${actionFinishScript}"
-    "${actionFinishScript}"
-  fi
-
-  echo "Finished"
-  exit 0
-fi
-
-"${anodosysPath}/app/system/network/create.sh"
-
-if [[ "${action}" == "start" ]] || [[ "${action}" == "restart" ]]; then
-  # creates the containers from the build image
-  "${anodosysPath}/app/system/container/create.sh" -t
-elif [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]]; then
-  # creates the containers from the source image
-  "${anodosysPath}/app/system/container/create.sh" -s
-fi
-
-if [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]]; then
-  "${anodosysPath}/app/system/container/start.sh"
-fi
-
-# break if not all containers are running
-"${anodosysPath}/app/system/container/running.sh"
-
-if [[ "${action}" == "start" ]] || [[ "${action}" == "restart" ]]; then
-  if [[ -n "${actionFinishScript}" ]]; then
-    echo "Action start finish: ${actionFinishScript}"
-    "${actionFinishScript}"
-  fi
-
-  echo "Finished"
-  exit 0
-fi
-
-if [[ "${action}" != "image" ]] && [[ "${action}" != "push" ]]; then
-  # container provisioning process
-  "${anodosysPath}/app/system/container/prepare.sh"
-  "${anodosysPath}/app/system/container/install.sh"
-  "${anodosysPath}/app/system/container/dismantle.sh"
-fi
-
-if [[ "${action}" == "install" ]]; then
-  if [[ -n "${actionFinishScript}" ]]; then
-    echo "Action start finish: ${actionFinishScript}"
-    "${actionFinishScript}"
-  fi
-
-  echo "Finished"
-  exit 0
-fi
-
-# create & push image if requested
-"${anodosysPath}/app/system/image/create.sh"
-
-if [[ "${action}" == "image" ]]; then
-  if [[ -n "${actionFinishScript}" ]]; then
-    echo "Action start finish: ${actionFinishScript}"
-    "${actionFinishScript}"
-  fi
-
-  echo "Finished"
-  exit 0
-fi
-
-"${anodosysPath}/app/system/image/push.sh"
 
 if [[ -n "${actionFinishScript}" ]]; then
   echo "Action finish script: ${actionFinishScript}"
   "${actionFinishScript}"
 fi
-
-echo "Finished"

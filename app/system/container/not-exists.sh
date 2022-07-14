@@ -7,16 +7,16 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-echo "- Container exists -" | sed $'s,.*,\e[1;37m&\e[m,'
+echo "- Container not exists -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 if [[ -z "${serverNames}" ]]; then
   >&2 echo "No server names specified!"
   exit 1
 fi
 
-if [[ -n "${beforeContainerExistsScript}" ]]; then
-  echo "Before container exists script: ${beforeContainerExistsScript}"
-  "${beforeContainerExistsScript}"
+if [[ -n "${beforeContainerNotExistsScript}" ]]; then
+  echo "Before container not exists script: ${beforeContainerNotExistsScript}"
+  "${beforeContainerNotExistsScript}"
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -28,7 +28,7 @@ for serverName in "${serverNames[@]}"; do
   if [[ -f "${existsScript}" ]]; then
     "${existsScript}" &
   else
-    "${currentPath}/../../server/container/exists.sh" -s "${serverName}" &
+    "${currentPath}/../../server/container/not-exists.sh" -s "${serverName}" &
   fi
   processIds["${serverName}"]=$!
 done
@@ -38,7 +38,7 @@ for serverName in "${!processIds[@]}"; do
   wait "${processId}"
 done
 
-if [[ -n "${afterContainerExistsScript}" ]]; then
-  echo "After container exists script: ${afterContainerExistsScript}"
-  "${afterContainerExistsScript}"
+if [[ -n "${afterContainerNotExistsScript}" ]]; then
+  echo "After container not exists script: ${afterContainerNotExistsScript}"
+  "${afterContainerNotExistsScript}"
 fi

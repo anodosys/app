@@ -42,10 +42,25 @@ if [[ -z "${serverName}" ]]; then
   exit 1
 fi
 
+logName "${systemName}" "${serverName}"
+
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -z "${depends}" ]]; then
-  depends=()
+if [[ -n "${beforeContainerNotExistsScript}" ]]; then
+  echo "Before container not exists script: ${beforeContainerNotExistsScript}"
+  "${beforeContainerNotExistsScript}"
 fi
 
-echo "${depends[@]}"
+containerName="${systemName}_${serverName}"
+
+if [[ $(containerExists "${containerName}") == 1 ]]; then
+  >&2 echo "Container already exists: ${containerName}"
+  exit 1
+else
+  echo "Container does not exist: ${containerName}"
+fi
+
+if [[ -n "${afterContainerNotExistsScript}" ]]; then
+  echo "After container not exists script: ${afterContainerNotExistsScript}"
+  "${afterContainerNotExistsScript}"
+fi

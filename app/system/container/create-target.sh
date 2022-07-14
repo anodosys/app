@@ -7,34 +7,34 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-echo "- Container remove -" | sed $'s,.*,\e[1;37m&\e[m,'
+echo "- Container create target -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 if [[ -z "${serverNames}" ]]; then
   >&2 echo "No server names specified!"
   exit 1
 fi
 
-if [[ -n "${beforeContainerRemoveScript}" ]]; then
-  echo "Before container remove script: ${beforeContainerRemoveScript}"
-  "${beforeContainerRemoveScript}"
+if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
+  echo "Before container target script: ${beforeContainerCreateTargetScript}"
+  "${beforeContainerCreateTargetScript}"
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
+# creates the containers from the target image
 declare -A processedServerNameList
-
 while : ; do
   declare -A processIds
   for serverName in "${serverNames[@]}"; do
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
       if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
-        removeScript="${PWD}/${serverName}/container/remove.sh"
-        if [[ -f "${removeScript}" ]]; then
-          echo "[${serverName}] Removing container of server: ${serverName} with custom script: ${removeScript}"
-          "${removeScript}" &
+        createScript="${PWD}/${serverName}/container/create-target.sh"
+        if [[ -f "${createScript}" ]]; then
+          echo "[${serverName}] Creating container of server: ${serverName} with custom script: ${createScript}"
+          "${createScript}" &
         else
-          "${currentPath}/../../server/container/remove.sh" -s "${serverName}" &
+          "${currentPath}/../../server/container/create-target.sh" -s "${serverName}" &
         fi
         processIds["${serverName}"]=$!
       fi
@@ -60,7 +60,7 @@ while : ; do
   fi
 done
 
-if [[ -n "${afterContainerRemoveScript}" ]]; then
-  echo "After container remove script: ${afterContainerRemoveScript}"
-  "${afterContainerRemoveScript}"
+if [[ -n "${afterContainerCreateTargetScript}" ]]; then
+  echo "After container create target script: ${afterContainerCreateTargetScript}"
+  "${afterContainerCreateTargetScript}"
 fi

@@ -46,19 +46,19 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeImageRemoveScript}" ]]; then
-  echo "Before image remove script: ${beforeImageRemoveScript}"
-  "${beforeImageRemoveScript}"
+if [[ -n "${beforeImageRemoveLocalScript}" ]]; then
+  echo "Before image remove script: ${beforeImageRemoveLocalScript}"
+  "${beforeImageRemoveLocalScript}"
 fi
 
 if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
-  echo "No removing of image required"
+  echo "No removing of local image required"
   exit 0
 fi
 
 imageRemove "${buildImageName}" "${buildImageTag}"
 
-if [[ -n "${afterImageRemoveScript}" ]]; then
-  echo "After image remove script: ${afterImageRemoveScript}"
-  "${afterImageRemoveScript}"
+if [[ -n "${afterImageRemoveLocalScript}" ]]; then
+  echo "After image remove script: ${afterImageRemoveLocalScript}"
+  "${afterImageRemoveLocalScript}"
 fi

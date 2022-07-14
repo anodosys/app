@@ -21,14 +21,42 @@ fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
+declare -A supportsServerNameList
+
+for serverName in "${serverNames[@]}"; do
+  dependList=( $("${currentPath}/../../server/container/depends.sh" -s "${serverName}") )
+  for dependServerName in "${dependList[@]}"; do
+    if ! test "${supportsServerNameList["${dependServerName}"]+isset}"; then
+      supportsServerNameList["${dependServerName}"]="${serverName}"
+    else
+      supportsServerNameList["${dependServerName}"]+=",${serverName}"
+    fi
+  done
+done
+
 declare -A processedServerNameList
 
 while : ; do
   declare -A processIds
+  runningServerNameList=()
+  for serverName in "${serverNames[@]}"; do
+    containerName="${systemName}_${serverName}"
+    if [[ $(containerRunning "${containerName}") == 1 ]]; then
+      runningServerNameList+=("${serverName}")
+    fi
+  done
+  runningServerNames=$(IFS=,; printf '%s' "${runningServerNameList[*]}")
+  if [[ -z "${runningServerNames}" ]]; then
+    runningServerNames="none"
+  fi
   for serverName in "${serverNames[@]}"; do
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
-      processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
-      if [[ $("${currentPath}/../../server/container/depends.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
+      if test "${supportsServerNameList["${serverName}"]+isset}"; then
+        supportsServerNames=${supportsServerNameList[${serverName}]}
+      else
+        supportsServerNames="none"
+      fi
+      if [[ $("${currentPath}/../../server/container/independent.sh" -s "${serverName}" -p "${supportsServerNames}" -r "${runningServerNames}") == 1 ]]; then
         stopScript="${PWD}/${serverName}/container/stop.sh"
         if [[ -f "${stopScript}" ]]; then
           echo "[${serverName}] Stopping container of server: ${serverName} with custom script: ${stopScript}"

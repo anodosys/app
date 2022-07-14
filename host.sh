@@ -1,12 +1,15 @@
 #!/bin/bash -e
 
-anodosysPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+scriptName="${BASH_SOURCE[0]}"
+if [[ -L "${scriptName}" ]]; then
+  scriptName=$(readlink -f "${scriptName}")
+fi
+
+anodosysPath=$(cd -P "$( dirname "${scriptName}" )" && pwd)
 
 anodosysHostPath="${anodosysPath}/host"
-mkdir -p "${anodosysHostPath}"
 
 anodosysExtensionPath="${anodosysPath}/extension"
-mkdir -p "${anodosysExtensionPath}"
 
 currentUser=$(whoami)
 currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
@@ -17,7 +20,12 @@ mkdir -p "${anodosysUserPath}"
 anodosysUserExtensionPath="${anodosysUserPath}/extension"
 mkdir -p "${anodosysUserExtensionPath}"
 
-anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+if [[ -d "${anodosysExtensionPath}" ]]; then
+  anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+else
+  anodosysSharedExtensions=()
+fi
+
 anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
 
 (
@@ -27,8 +35,10 @@ anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxd
 ) && sourced=1 || sourced=0
 
 if [[ "${sourced}" == 1 ]]; then
-  echo "Adding to path: ${anodosysHostPath}"
-  export PATH="${PATH}:${anodosysHostPath}"
+  if [[ -d "${anodosysHostPath}" ]]; then
+    echo "Adding to path: ${anodosysHostPath}"
+    export PATH="${PATH}:${anodosysHostPath}"
+  fi
 
   for anodosysExtension in "${anodosysSharedExtensions[@]}"; do
     if [[ -d "${anodosysExtensionPath}/${anodosysExtension}/host" ]]; then
@@ -37,10 +47,10 @@ if [[ "${sourced}" == 1 ]]; then
     fi
   done
 
-  for anodosysExtension in "${anodosysUserExtensions[@]}"; do
-    if [[ -d "${anodosysUserExtensionPath}/${anodosysExtension}/host" ]]; then
-      echo "Adding to path: ${anodosysUserExtensionPath}/${anodosysExtension}/host"
-      export PATH="${PATH}:${anodosysUserExtensionPath}/${anodosysExtension}/host"
+  for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+    if [[ -d "${anodosysUserExtensionPath}/${anodosysUserExtension}/host" ]]; then
+      echo "Adding to path: ${anodosysUserExtensionPath}/${anodosysUserExtension}/host"
+      export PATH="${PATH}:${anodosysUserExtensionPath}/${anodosysUserExtension}/host"
     fi
   done
 else

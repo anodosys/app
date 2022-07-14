@@ -19,6 +19,7 @@ if [[ -n "${beforeContainerRunningScript}" ]]; then
   "${beforeContainerRunningScript}"
 fi
 
+# break if not all containers are running
 for serverName in "${serverNames[@]}"; do
   containerName="${systemName}_${serverName}"
   if [[ $(containerRunning "${containerName}") == 0 ]]; then

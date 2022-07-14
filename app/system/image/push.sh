@@ -22,21 +22,14 @@ fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
-declare -A processIds
 for serverName in "${serverNames[@]}"; do
   imageScript="${PWD}/${serverName}/image/push.sh"
   if [[ -f "${imageScript}" ]]; then
     echo "[${serverName}] Pushing image of server: ${serverName} with custom script: ${imageScript}"
-    "${imageScript}" &
+    "${imageScript}"
   else
-    "${currentPath}/../../server/image/push.sh" -s "${serverName}" &
+    "${currentPath}/../../server/image/push.sh" -s "${serverName}"
   fi
-  processIds["${serverName}"]=$!
-done
-
-for serverName in "${!processIds[@]}"; do
-  processId="${processIds[${serverName}]}"
-  wait "${processId}"
 done
 
 if [[ -n "${afterImagePushScript}" ]]; then

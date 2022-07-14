@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -11,7 +16,6 @@ usage: ${scriptName} options
 OPTIONS:
   -h  Show this message
   -s  Server name
-  -i  Image source (source or target)
 
 Example: ${scriptName} -s web
 EOF
@@ -23,21 +27,14 @@ trim()
 }
 
 serverName=
-imageSource=
 
-while getopts hs:i:? option; do
+while getopts hs:? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
-    i) imageSource=$(trim "$OPTARG");;
     ?) usage; exit 1;;
   esac
 done
-
-if [[ -z "${systemName}" ]]; then
-  >&2 echo "No system name specified!"
-  exit 1
-fi
 
 if [[ -z "${serverName}" ]]; then
   >&2 echo "No server name specified!"
@@ -49,34 +46,25 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeContainerCreateScript}" ]]; then
-  echo "Before container create script: ${beforeContainerCreateScript}"
-  "${beforeContainerCreateScript}"
-fi
-
-if [[ "${imageSource}" == "target" ]]; then
-  if [[ -n "${buildImageName}" ]]; then
-    imageName="${buildImageName}"
-  fi
-  if [[ -n "${buildImageTag}" ]]; then
-    imageTag="${buildImageTag}"
-  fi
+if [[ -n "${beforeContainerCreateSourceScript}" ]]; then
+  echo "Before container create source script: ${beforeContainerCreateSourceScript}"
+  "${beforeContainerCreateSourceScript}"
 fi
 
 if [[ -z "${imageName}" ]]; then
-  >&2 echo "No image name for server: ${serverName}"
+  >&2 echo "No source image name for server: ${serverName}"
   exit 1
 fi
 
 if [[ -z "${imageTag}" ]]; then
-  >&2 echo "No image tag for server: ${serverName}"
+  >&2 echo "No source image tag for server: ${serverName}"
   exit 1
 fi
 
 containerName="${systemName}_${serverName}"
 
-if [[ $(containerExists "${containerName}") == 0 ]] && [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-  >&2 echo "Required image: ${imageName}:${imageTag} does not exist"
+if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
+  >&2 echo "Required source image: ${imageName}:${imageTag} does not exist"
   exit 1
 fi
 
@@ -101,13 +89,13 @@ for containerAlias in "${containerAliases[@]}"; do
   optionalParameters+=( "alias:${containerAlias}" )
 done
 
-if [[ -z "${containerPorts}" ]]; then
-  containerPorts=()
-fi
+#if [[ -z "${containerPorts}" ]]; then
+#  containerPorts=()
+#fi
 
-for containerPort in "${containerPorts[@]}"; do
-  optionalParameters+=( "port:${containerPort}" )
-done
+#for containerPort in "${containerPorts[@]}"; do
+#  optionalParameters+=( "port:${containerPort}" )
+#done
 
 if [[ -z "${containerExpose}" ]]; then
   containerExpose=()
@@ -127,7 +115,7 @@ done
 
 containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${optionalParameters[@]}"
 
-if [[ -n "${afterContainerCreateScript}" ]]; then
-  echo "After container create script: ${afterContainerCreateScript}"
-  "${afterContainerCreateScript}"
+if [[ -n "${afterContainerCreateSourceScript}" ]]; then
+  echo "After container create source script: ${afterContainerCreateSourceScript}"
+  "${afterContainerCreateSourceScript}"
 fi

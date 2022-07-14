@@ -46,21 +46,21 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeContainerExistsScript}" ]]; then
-  echo "Before container exists script: ${beforeContainerExistsScript}"
-  "${beforeContainerExistsScript}"
+if [[ -n "${beforeImageRemoveRemoteScript}" ]]; then
+  echo "Before image remove script: ${beforeImageRemoveRemoteScript}"
+  "${beforeImageRemoveRemoteScript}"
 fi
 
-containerName="${systemName}_${serverName}"
-
-if [[ $(containerExists "${containerName}") == 0 ]]; then
-  >&2 echo "Container does not exist: ${containerName}"
-  exit 1
-else
-  echo "Container exists: ${containerName}"
+if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
+  echo "No removing of remote image required"
+  exit 0
 fi
 
-if [[ -n "${afterContainerExistsScript}" ]]; then
-  echo "After container exists script: ${afterContainerExistsScript}"
-  "${afterContainerExistsScript}"
+if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
+  imageRemoveRemote "${buildImageName}" "${buildImageTag}" "${repositoryUserName}" "${repositoryPassword}"
+fi
+
+if [[ -n "${afterImageRemoveRemoteScript}" ]]; then
+  echo "After image remove script: ${afterImageRemoveRemoteScript}"
+  "${afterImageRemoveRemoteScript}"
 fi

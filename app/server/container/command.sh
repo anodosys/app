@@ -5,11 +5,6 @@ if [[ -z "${systemName}" ]]; then
   exit 1
 fi
 
-if [[ -z "${action}" ]]; then
-  >&2 echo "No system name specified!"
-  exit 1
-fi
-
 scriptName="${0##*/}"
 
 usage()
@@ -60,10 +55,6 @@ if [[ -z "${command}" ]]; then
 fi
 
 setServerConfiguration "${systemName}" "${serverName}"
-
-if [[ "${action}" != "cmd" ]]; then
-  logName "${systemName}" "${serverName}"
-fi
 
 containerName="${systemName}_${serverName}"
 

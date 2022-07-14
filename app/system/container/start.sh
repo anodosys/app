@@ -28,7 +28,7 @@ while : ; do
   for serverName in "${serverNames[@]}"; do
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
-      if [[ $("${currentPath}/../../server/container/depends.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
+      if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         startScript="${PWD}/${serverName}/container/start.sh"
         if [[ -f "${startScript}" ]]; then
           echo "[${serverName}] Starting container of server: ${serverName} with custom script: ${startScript}"

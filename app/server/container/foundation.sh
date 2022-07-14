@@ -16,6 +16,7 @@ usage: ${scriptName} options
 OPTIONS:
   -h  Show this message
   -s  Server name
+  -p  Processed server names
 
 Example: ${scriptName} -s web
 EOF
@@ -27,11 +28,13 @@ trim()
 }
 
 serverName=
+processedServerNames=
 
-while getopts hs:? option; do
+while getopts hs:p:? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
+    p) processedServerNames=$(trim "$OPTARG");;
     ?) usage; exit 1;;
   esac
 done
@@ -44,8 +47,22 @@ fi
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -z "${depends}" ]]; then
-  depends=()
+readarray -d , -t processedServerNameList < <(printf '%s' "${processedServerNames}")
+
+if [[ -n "${depends}" ]]; then
+  for dependServerName in "${depends[@]}"; do
+    found=0
+    for processedServerName in "${processedServerNameList[@]}"; do
+      if [[ "${processedServerName}" == "${dependServerName}" ]]; then
+        found=1
+        break
+      fi
+    done
+    if [[ "${found}" == 0 ]]; then
+      echo 0
+      exit 0
+    fi
+  done
 fi
 
-echo "${depends[@]}"
+echo 1

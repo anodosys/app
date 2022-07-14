@@ -7,7 +7,7 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-# create local images and possible upload of images
+# create local images
 echo "- Image create -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 if [[ -n "${beforeImageCreateScript}" ]]; then

@@ -55,6 +55,17 @@ containerName="${systemName}_${serverName}"
 
 containerRemove "${containerName}"
 
+if [[ -z "${containerVolumes}" ]]; then
+  containerVolumes=()
+fi
+
+for containerVolume in "${containerVolumes[@]}"; do
+  containerVolume=$(trim "${containerVolume}")
+  readarray -d : -t containerVolumeParts < <(printf '%s' "${containerVolume}")
+  sourcePath="${containerVolumeParts[0]}"
+  containerVolumeRemove "${containerName}" "${sourcePath}"
+done
+
 if [[ -n "${afterContainerRemoveScript}" ]]; then
   echo "After container remove script: ${afterContainerRemoveScript}"
   "${afterContainerRemoveScript}"
