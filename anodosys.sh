@@ -626,7 +626,9 @@ imageRemoveRemote()
     echo "Getting access token for user: ${userName}"
     token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
     echo "Removing remote image: ${imageName}:${imageTag}"
-    result=$(curl "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" -X DELETE -H "Authorization: JWT ${token}" | cat)
+    logDisable
+    result=$(curl "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" -X DELETE -H "Authorization: JWT ${token}" 2>&1 | cat)
+    logEnable
     if [[ -z "${result}" ]]; then
       echo "Successfully removed remote image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
     else
@@ -931,7 +933,7 @@ containerHostNameAdd()
       fi
     else
       echo "/etc/hosts is not writable for current user, add:" | sed $'s,.*,\e[0;33m&\e[m,'
-      echo "${ipAddress} ${serverName}" | sed $'s,.*,\e[0;33m&\e[m,'
+      echo "${ipAddress} ${containerName}" | sed $'s,.*,\e[0;33m&\e[m,'
     fi
   fi
 }
@@ -1408,12 +1410,12 @@ stepScripts["networkCreate"]="${anodosysPath}/app/system/network/create.sh"
 stepScripts["networkRemove"]="${anodosysPath}/app/system/network/remove.sh"
 
 declare -A steps
-steps["build"]="imageNotExistsTarget,action:install,action:image,action:remove,action:push"
-steps["rebuild"]="action:clean,action:install,action:image,action:remove,action:push"
+steps["build"]="imageNotExistsTarget,action:install,action:image,action:remove,imageRemoveRemote,action:push"
+steps["rebuild"]="action:clean,action:install,action:image,action:remove,imageRemoveRemote,action:push"
 steps["pull"]="imageExistsSource,imagePullSource,imagePullTarget"
 steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,containerStart,containerPrepare,containerInstall,containerDismantle"
 steps["image"]="imageCreate"
-steps["push"]="imageRemoveRemote,imagePush"
+steps["push"]="imagePush"
 steps["clean"]="action:remove,imageRemoveLocal"
 steps["destroy"]="action:clean,imageRemoveRemote"
 steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCreate,containerCreateTarget"
