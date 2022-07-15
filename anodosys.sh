@@ -312,10 +312,16 @@ completePath()
   if [[ "${key}" == "beforeImagePushScript" ]] || [[ "${key}" == "imagePushScript" ]] || [[ "${key}" == "afterImagePushScript" ]]; then
     canCompletePath=1
   fi
-  if [[ "${key}" == "beforeImageRemoveLocalScript" ]] || [[ "${key}" == "imageRemoveLocalScript" ]] || [[ "${key}" == "afterImageRemoveLocalScript" ]]; then
+  if [[ "${key}" == "beforeImageRemoveSourceLocalScript" ]] || [[ "${key}" == "imageRemoveSourceLocalScript" ]] || [[ "${key}" == "afterImageRemoveSourceLocalScript" ]]; then
     canCompletePath=1
   fi
-  if [[ "${key}" == "beforeImageRemoveRemoteScript" ]] || [[ "${key}" == "imageRemoveRemoteScript" ]] || [[ "${key}" == "afterImageRemoveRemoteScript" ]]; then
+  if [[ "${key}" == "beforeImageRemoveTargetLocalScript" ]] || [[ "${key}" == "imageRemoveTargetLocalScript" ]] || [[ "${key}" == "afterImageRemoveTargetLocalScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeImageRemoveSourceRemoteScript" ]] || [[ "${key}" == "imageRemoveSourceRemoteScript" ]] || [[ "${key}" == "afterImageRemoveSourceRemoteScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeImageRemoveTargetRemoteScript" ]] || [[ "${key}" == "imageRemoveTargetRemoteScript" ]] || [[ "${key}" == "afterImageRemoveTargetRemoteScript" ]]; then
     canCompletePath=1
   fi
   if [[ "${key}" == "beforeContainerConfigurationScript" ]] || [[ "${key}" == "containerConfigurationScript" ]] || [[ "${key}" == "afterContainerConfigurationScript" ]]; then
@@ -817,11 +823,20 @@ containerVolumeList()
 containerVolumePrepare()
 {
   local containerName="${1}"
+  local volumeNames
+  local volumeName
+  local groupUserList
+  local sourcePath
+  local targetUser
+  local groupId
+  local userNames
+  local userNameList
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     oldIFS="${IFS}"
     IFS=$'\n'
     volumeNames=( $(containerVolumeList "${containerName}" ) )
     IFS="${oldIFS}"
+    declare -A groupUserList
     for volumeName in "${volumeNames[@]}"; do
       volumeName=$(trim "${volumeName}")
       if [[ $(volumeExists "${volumeName}") == 1 ]]; then
@@ -830,21 +845,11 @@ containerVolumePrepare()
         targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
         targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "none" ]]; then
-          echo "Preparing target path: ${targetPath}"
-          groupId=$(containerCommandQuiet "${containerName}" "stat -c '%g' ${targetPath}")
-          groupId=$(prepareValue "${groupId}")
-          groupName=$(containerCommandQuiet "${containerName}" "stat -c '%G' ${targetPath}")
-          groupName=$(prepareValue "${groupName}")
-          if [[ "${groupName}" == "UNKNOWN" ]]; then
-            groupName="docker_volume_${groupId}"
-            echo "Creating new group: ${groupName}"
-            containerCommand "${containerName}" "groupadd -g ${groupId} ${groupName}"
-          fi
-          if [[ $(containerCommandQuiet "${containerName}" "id -nG ${targetUser} | grep -w ${groupName} | wc -l") == 0 ]]; then
-            echo "Adding user: ${targetUser} to group: ${groupName}"
-            containerCommand "${containerName}" "usermod -a -G ${groupName} ${targetUser}"
+          groupId=$(stat -c '%g' "${sourcePath}")
+          if test "${groupUserList[${groupId}]+isset}"; then
+            groupUserList[${groupId}]+=",${targetUser}"
           else
-            echo "No need to add user: ${targetUser} to group: ${groupName}"
+            groupUserList[${groupId}]="${targetUser}"
           fi
         else
           echo "No need to prepare path: ${targetPath}"
@@ -853,6 +858,26 @@ containerVolumePrepare()
         >&2 echo "Volume does not exist: ${volumeName}"
         exit 1
       fi
+    done
+    for groupId in "${!groupUserList[@]}"; do
+      groupName=$(containerCommandQuiet "${containerName}" "getent group ${groupId} | tr ':' ' ' | awk '{print \$1}'")
+      if [[ -z "${groupName}" ]]; then
+        groupName="docker_volume_${groupId}"
+        echo "Creating new group: ${groupName}"
+        containerCommand "${containerName}" "groupadd -g ${groupId} ${groupName}"
+      else
+        echo "No need to create group: ${groupName}"
+      fi
+      userNames="${groupUserList[${groupId}]}"
+      userNameList=( $(echo "${userNames}" | sed -e 's/,/\n/g' | sort -u) )
+      for targetUser in "${userNameList[@]}"; do
+        if [[ $(containerCommandQuiet "${containerName}" "id -nG ${targetUser} | grep -w ${groupName} | wc -l") == 0 ]]; then
+          echo "Adding user: ${targetUser} to group: ${groupName}"
+          containerCommand "${containerName}" "usermod -a -G ${groupName} ${targetUser}"
+        else
+          echo "No need to add user: ${targetUser} to group: ${groupName}"
+        fi
+      done
     done
   else
     echo "Not possible to prepare volumes of container: ${containerName}"
@@ -1424,8 +1449,9 @@ stepScripts["imageNotExistsTarget"]="${anodosysPath}/app/system/image/not-exists
 stepScripts["imagePullSource"]="${anodosysPath}/app/system/image/pull-source.sh"
 stepScripts["imagePullTarget"]="${anodosysPath}/app/system/image/pull-target.sh"
 stepScripts["imagePush"]="${anodosysPath}/app/system/image/push.sh"
-stepScripts["imageRemoveLocal"]="${anodosysPath}/app/system/image/remove-local.sh"
-stepScripts["imageRemoveRemote"]="${anodosysPath}/app/system/image/remove-remote.sh"
+stepScripts["imageRemoveSourceLocal"]="${anodosysPath}/app/system/image/remove-source-local.sh"
+stepScripts["imageRemoveTargetLocal"]="${anodosysPath}/app/system/image/remove-target-local.sh"
+stepScripts["imageRemoveTargetRemote"]="${anodosysPath}/app/system/image/remove-target-remote.sh"
 stepScripts["networkCreate"]="${anodosysPath}/app/system/network/create.sh"
 stepScripts["networkRemove"]="${anodosysPath}/app/system/network/remove.sh"
 
@@ -1436,8 +1462,8 @@ steps["pull"]="imageExistsSource,imagePullSource,imagePullTarget"
 steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,containerStart,containerPrepare,containerInstall,containerDismantle"
 steps["image"]="imageCreate"
 steps["push"]="imagePush"
-steps["clean"]="action:remove,imageRemoveLocal"
-steps["destroy"]="action:clean,imageRemoveRemote"
+steps["clean"]="action:remove,imageRemoveSourceLocal,imageRemoveTargetLocal"
+steps["destroy"]="action:clean,imageRemoveTargetRemote"
 steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCreate,containerCreateTarget"
 steps["start"]="containerExists,containerStart,containerRunning"
 steps["restart"]="action:stop,action:start"

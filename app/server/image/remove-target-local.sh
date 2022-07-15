@@ -46,21 +46,27 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeImageRemoveRemoteScript}" ]]; then
-  echo "Before image remove script: ${beforeImageRemoveRemoteScript}"
-  "${beforeImageRemoveRemoteScript}"
+if [[ -n "${beforeImageRemoveTargetLocalScript}" ]]; then
+  echo "Before image remove target local script: ${beforeImageRemoveTargetLocalScript}"
+  "${beforeImageRemoveTargetLocalScript}"
 fi
 
 if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
-  echo "No removing of remote image required"
+  echo "No removing of local target image required"
   exit 0
 fi
 
-if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
-  imageRemoveRemote "${buildImageName}" "${buildImageTag}" "${repositoryUserName}" "${repositoryPassword}"
+if [[ -n "${buildImageName}" ]]; then
+  imageName="${buildImageName}"
 fi
 
-if [[ -n "${afterImageRemoveRemoteScript}" ]]; then
-  echo "After image remove script: ${afterImageRemoveRemoteScript}"
-  "${afterImageRemoveRemoteScript}"
+if [[ -n "${buildImageTag}" ]]; then
+  imageTag="${buildImageTag}"
+fi
+
+imageRemove "${imageName}" "${imageTag}"
+
+if [[ -n "${afterImageRemoveTargetLocalScript}" ]]; then
+  echo "After image remove target local script: ${afterImageRemoveTargetLocalScript}"
+  "${afterImageRemoveTargetLocalScript}"
 fi
