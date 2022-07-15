@@ -48,7 +48,11 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -n "${beforeContainerStartScript}" ]]; then
   echo "Before container start script: ${beforeContainerStartScript}"
-  "${beforeContainerStartScript}"
+  if [[ -n "${beforeContainerStartParameters}" ]]; then
+    "${beforeContainerStartScript}" "${beforeContainerStartParameters[@]}"
+  else
+    "${beforeContainerStartScript}"
+  fi
 fi
 
 if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
@@ -62,5 +66,9 @@ containerStart "${containerName}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
-  "${afterContainerStartScript}"
+  if [[ -n "${afterContainerStartParameters}" ]]; then
+    "${afterContainerStartScript}" "${afterContainerStartParameters[@]}"
+  else
+    "${afterContainerStartScript}"
+  fi
 fi

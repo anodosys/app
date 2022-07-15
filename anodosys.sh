@@ -2,9 +2,11 @@
 
 finish()
 {
-  # give the output buffer a chance
-  sleep 1
-  echo "Finished"
+  if [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]]; then
+    # give the output buffer a chance
+    sleep 1
+    echo "Finished"
+  fi
 }
 
 trap finish EXIT
@@ -33,6 +35,7 @@ ACTION:
   remove    Remove the constainers
   cmd       Execute a command in a container
   config    Show the complete configuration
+  status    Show an overview of images and containers
 
 Example: ${scriptName} build
 EOF
@@ -380,10 +383,6 @@ completePath()
             fi
           done
         else
-          if [[ -f "${anodosysScriptPath}/${value}" ]]; then
-            realpath "${anodosysScriptPath}/${value}"
-            exit 0
-          fi
           if [[ -f "${anodosysUserScriptPath}/${value}" ]]; then
             realpath "${anodosysUserScriptPath}/${value}"
             exit 0
@@ -394,12 +393,20 @@ completePath()
               exit 0
             fi
           done
+          if [[ -f "${anodosysScriptPath}/${value}" ]]; then
+            realpath "${anodosysScriptPath}/${value}"
+            exit 0
+          fi
           for anodosysExtension in "${anodosysUserExtensions[@]}"; do
             if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/script/${value}" ]]; then
               realpath "${anodosysUserExtensionPath}/${anodosysExtension}/script/${value}"
               exit 0
             fi
           done
+          if [[ -f "${anodosysAppPath}/${value}" ]]; then
+            realpath "${anodosysAppPath}/${value}"
+            exit 0
+          fi
         fi
       fi
       echo "${sourceFilePath}/${value}"
@@ -1142,7 +1149,7 @@ containerCommand()
   local containerName="${1}"
   local command="${2}"
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
-    echo "Executing command in container: ${command}"
+    echo "Executing command in container: ${containerName}: ${command}"
     docker exec -t "${containerName}" bash -c "${command}"
   else
     >&2 echo "Container not running: ${containerName}"
@@ -1353,7 +1360,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]]; then
+if [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]]; then
   logName "${systemName}"
 fi
 
@@ -1380,8 +1387,21 @@ if [[ "${action}" == "config" ]]; then
   exit 0
 fi
 
-if [[ "${action}" == "config" ]]; then
-  cat "${anodosysConfigurationFile}"
+if [[ "${action}" == "status" ]]; then
+  maxLength=6
+  for serverName in "${serverNames[@]}"; do
+    length=$(("${#systemName}" + "${#serverName}" + 1))
+    if [[ "${length}" -gt "${maxLength}" ]]; then
+      maxLength="${length}"
+    fi
+  done
+  printf "%-${maxLength}s" "Server"
+  echo " | local source image | remote source image | local target image | remote target image | container created | container running"
+  printf "%${maxLength}s" "" |tr " " "-"
+  echo " | ------------------ | ------------------- | ------------------ | ------------------- | ----------------- | -----------------"
+  for serverName in "${serverNames[@]}"; do
+    "${anodosysPath}/app/server/status.sh" -s "${serverName}" -l "${maxLength}"
+  done
   exit 0
 fi
 
