@@ -498,6 +498,7 @@ volumeCreate()
   local sourcePath="${2}"
   local targetPath="${3}"
   local targetUser="${4:-none}"
+  local mode="${5:-r}"
   if [[ $(volumeExists "${volumeName}") == 0 ]]; then
     echo "Creating volume: ${volumeName} with source path: ${sourcePath} and target path: ${targetPath} accessible by user: ${targetUser}"
     result=$(docker volume create \
@@ -508,7 +509,8 @@ volumeCreate()
       --name "${volumeName}" \
       --label "sourcePath=${sourcePath}" \
       --label "targetPath=${targetPath}" \
-      --label "targetUser=${targetUser}" 2>&1 | cat)
+      --label "targetUser=${targetUser}" \
+      --label "mode=${mode}" 2>&1 | cat)
     if [[ "${result}" == "${volumeName}" ]]; then
       echo "Successfully created volume: ${volumeName}" | sed $'s,.*,\e[0;32m&\e[m,'
     else
@@ -551,6 +553,28 @@ imageExistsRemote()
   local imageName="${1}"
   local imageTag="${2}"
   docker manifest inspect "${imageName}:${imageTag}" >/dev/null 2>&1 && echo 1 || echo 0
+}
+
+imageNewerRemote()
+{
+  local imageName="${1}"
+  local imageTag="${2}"
+  local userName="${3}"
+  local password="${4}"
+  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+    echo "Getting access token for user: ${userName}"
+    token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
+    echo "Getting local image id: ${imageName}:${imageTag}"
+    localId=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.RepoDigests[]')
+    localId="${localId##*@}"
+    echo "Getting remote image id: ${imageName}:${imageTag}"
+    remoteId=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" | jq -r '.images[] .digest')
+    if [[ "${localId}" != "${remoteId}" ]]; then
+      echo 1
+      exit 0
+    fi
+  fi
+  echo 0
 }
 
 imageCreate()
@@ -610,18 +634,46 @@ imagePush()
   fi
 }
 
+imageIsInUse()
+{
+  local imageName="${1}"
+  local imageTag="${2}"
+  local imageId
+  local nextImageId
+  local historyImageId
+  if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
+    imageId=$(docker image inspect --format '{{.Id}}' "${imageName}:${imageTag}")
+    # shellcheck disable=SC2046
+    if [[ -n "${imageId}" ]] && [[ $(docker container inspect $(docker container ls -aq) --format "{{ if eq .Image \"${imageId}\" }}{{.Id}}{{end}}" | grep -v '^$' | wc -l) -gt 0 ]]; then
+      echo "1"
+      exit 0
+    else
+      if [[ $(for nextImageId in $(docker image ls -a | tail -n +2 | awk '{print $3}'); do if [[ "${nextImageId}" != "${imageId}" ]]; then for historyImageId in $(docker image history "${nextImageId}" | awk '{print $1}'); do if [[ "${historyImageId}" == "${imageId}" ]]; then echo "${nextImageId}"; fi; done; fi; done | wc -l) -gt 0 ]]; then
+        echo "1"
+        exit 0
+      fi
+    fi
+  fi
+  echo "0"
+}
+
 imageRemove()
 {
   local imageName="${1}"
   local imageTag="${2}"
   if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-    echo "Removing image: ${imageName}:${imageTag}"
-    result=$(docker image rm "${imageName}:${imageTag}" 2>&1 | cat)
-    if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-      echo "Successfully removed image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
+    if [[ $(imageIsInUse "${imageName}" "${imageTag}") == 0 ]]; then
+      echo "Removing image: ${imageName}:${imageTag}"
+      result=$(docker image rm "${imageName}:${imageTag}" 2>&1 | cat)
+      if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
+        echo "Successfully removed image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
+      else
+        >&2 echo "Could not remove image: ${imageName}:${imageTag}"
+        >&2 echo "${result}"
+        exit 1
+      fi
     else
-      >&2 echo "Could not remove image: ${imageName}:${imageTag}"
-      >&2 echo "${result}"
+      >&2 echo "Could not remove image: ${imageName}:${imageTag} because it is in use"
       exit 1
     fi
   else
@@ -640,7 +692,7 @@ imageRemoveRemote()
     token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
     echo "Removing remote image: ${imageName}:${imageTag}"
     logDisable
-    result=$(curl "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" -X DELETE -H "Authorization: JWT ${token}" 2>&1 | cat)
+    result=$(curl -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
     logEnable
     if [[ -z "${result}" ]]; then
       echo "Successfully removed remote image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
@@ -695,11 +747,19 @@ containerCreate()
         else
           targetUser="none"
         fi
+        if test "${parameterParts[3]+isset}"; then
+          mode="${parameterParts[3]}"
+        else
+          mode="r"
+        fi
         if [[ ! -e "${sourcePath}" ]]; then
-          echo "Source path does not exist: ${sourcePath}"
+          echo "Creating source path: ${sourcePath}"
           mkdir -p "${sourcePath}" | cat
           if [[ -d "${sourcePath}" ]]; then
-            echo "Successfully created path: ${sourcePath}" | sed $'s,.*,\e[0;32m&\e[m,'
+            echo "Successfully created source path: ${sourcePath}" | sed $'s,.*,\e[1;36m&\e[m,'
+          else
+            >&2 echo "Could not create source path: ${sourcePath}"
+            exit 1
           fi
         fi
         if [[ ! -e "${sourcePath}" ]]; then
@@ -707,7 +767,7 @@ containerCreate()
           exit 1
         fi
         sourcePath=$(realpath "${sourcePath}")
-        containerVolumeCreate "${containerName}" "${sourcePath}" "${targetPath}" "${targetUser}"
+        containerVolumeCreate "${containerName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}"
         local sourceName=
         sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
         local volumeName
@@ -748,6 +808,7 @@ containerReCreate()
   local sourcePath
   local targetPath
   local targetUser
+  local mode
   imageName=$(docker inspect -f "{{ json .Config }}" "${containerName}" | jq -r ".Image // empty")
   networkName=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r ".Networks | keys[0]")
   parameters=( )
@@ -770,11 +831,14 @@ containerReCreate()
     sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
     targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
     targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
+    mode=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".mode // empty")
     if [[ -z "${targetUser}" ]]; then
-      parameters+=("volume:${sourcePath}:${targetPath}")
-    else
-      parameters+=("volume:${sourcePath}:${targetPath}:${targetUser}")
+      targetUser="none"
     fi
+    if [[ -z "${mode}" ]]; then
+      mode="r"
+    fi
+    parameters+=("volume:${sourcePath}:${targetPath}:${targetUser}:${mode}")
   done
   containerRemove "${containerName}"
   containerCreate "${imageName}" "${containerName}" "${networkName}" "${parameters[@]}"
@@ -786,18 +850,22 @@ containerVolumeCreate()
   local sourcePath="${2}"
   local targetPath="${3}"
   local targetUser="${4:-none}"
+  local mode="${5:-r}"
   local sourceName=
   local volumeName
   if [[ ! -e "${sourcePath}" ]]; then
-    mkdir -p "${sourcePath}"
+    echo "Creating source path: ${sourcePath}"
+    mkdir -p "${sourcePath}" | cat
+    if [[ -d "${sourcePath}" ]]; then
+      echo "Successfully created source path: ${sourcePath}" | sed $'s,.*,\e[1;36m&\e[m,'
+    else
+      >&2 echo "Could not create source path: ${sourcePath}"
+      exit 1
+    fi
   fi
   sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
   volumeName="${containerName}_${sourceName}"
-  if [[ -n "${targetUser}" ]]; then
-    volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}" "${targetUser}"
-  else
-    volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}"
-  fi
+  volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}"
 }
 
 containerVolumeRemove()
@@ -844,6 +912,7 @@ containerVolumePrepare()
         sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
         targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
         targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
+        mode=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".mode // empty")
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "none" ]]; then
           groupId=$(stat -c '%g' "${sourcePath}")
           if test "${groupUserList[${groupId}]+isset}"; then
@@ -853,6 +922,18 @@ containerVolumePrepare()
           fi
         else
           echo "No need to prepare path: ${targetPath}"
+        fi
+        if [[ "${mode}" == "w" ]]; then
+          accessRights=$(stat -L -c "%a" "${sourcePath}")
+          if [[ "${accessRights:1:1}" != 7 ]]; then
+            accessRights=$(echo "${accessRights}" | sed s/./7/2)
+            if [[ $(chmod "${accessRights}" "${sourcePath}" && echo "1" || echo "0") == 1 ]]; then
+              echo "Successfully set group rights to source path: ${sourcePath}" | sed $'s,.*,\e[1;36m&\e[m,'
+            else
+              >&2 echo "Could not set group rights to source path: ${sourcePath}"
+              exit 1
+            fi
+          fi
         fi
       else
         >&2 echo "Volume does not exist: ${volumeName}"
@@ -912,18 +993,26 @@ containerStart()
       containerHostNameAdd "${containerName}"
       ports=( $(containerPorts "${containerName}") )
       if [[ "${#ports[@]}" -gt 0 ]]; then
-        echo "Checking if all ports are available: ${containerName}"
+        echo "Checking if all ports are available for container: ${containerName}"
         counter=0
-        while [[ $(containerPortsAvailable "${containerName}") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
+        while [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerPortsAvailable "${containerName}") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
           echo "Waiting until ports are available for container: ${containerName}" | sed $'s,.*,\e[1;30m&\e[m,'
           counter=$(( counter + 1 ))
           sleep 1
         done
-        if [[ $(containerPortsAvailable "${containerName}") == 1 ]]; then
+        if [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerPortsAvailable "${containerName}") == 1 ]]; then
           echo "All ports are available for containerName: ${containerName}" | sed $'s,.*,\e[0;36m&\e[m,'
-        else
-          >&2 echo "Not all ports are available for containerName: ${containerName}"
+        elif [[ $(containerRunning "${containerName}") == 1 ]]; then
+          >&2 echo "Not all ports are available for container: ${containerName}"
           exit 1
+        else
+          if [[ "${retry}" == "no" ]]; then
+            echo "Container not running: ${containerName}, try again"
+            containerStart "${containerName}" "yes"
+          else
+            >&2 echo "Container not running: ${containerName}"
+            exit 1
+          fi
         fi
       fi
     else
@@ -992,6 +1081,7 @@ containerStop()
 containerRestart()
 {
   local containerName="${1}"
+  local retry="${2:-no}"
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     echo "Restarting container: ${containerName}"
     result=$(docker restart "${containerName}" 2>&1 | cat)
@@ -1001,16 +1091,24 @@ containerRestart()
       if [[ "${#ports[@]}" -gt 0 ]]; then
         echo "Checking if all ports are available: ${containerName}"
         counter=0
-        while [[ $(containerPortsAvailable "${containerName}") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
+        while [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerPortsAvailable "${containerName}") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
           echo "Waiting until ports are available for container: ${containerName}" | sed $'s,.*,\e[1;30m&\e[m,'
           counter=$(( counter + 1 ))
           sleep 1
         done
-        if [[ $(containerPortsAvailable "${containerName}") == 1 ]]; then
+        if [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerPortsAvailable "${containerName}") == 1 ]]; then
           echo "All ports are available for containerName: ${containerName}" | sed $'s,.*,\e[0;36m&\e[m,'
-        else
+        elif [[ $(containerRunning "${containerName}") == 1 ]]; then
           >&2 echo "Not all ports are available for containerName: ${containerName}"
           exit 1
+        else
+          if [[ "${retry}" == "no" ]]; then
+            echo "Container not running: ${containerName}, try again"
+            containerRestart "${containerName}" "yes"
+          else
+            >&2 echo "Container not running: ${containerName}"
+            exit 1
+          fi
         fi
       fi
     else
@@ -1218,6 +1316,8 @@ typeset -fx imageExists
 # shellcheck disable=SC2034
 typeset -fx imageExistsRemote
 # shellcheck disable=SC2034
+typeset -fx imageNewerRemote
+# shellcheck disable=SC2034
 typeset -fx imageCreate
 # shellcheck disable=SC2034
 typeset -fx imagePull
@@ -1225,6 +1325,8 @@ typeset -fx imagePull
 typeset -fx imagePush
 # shellcheck disable=SC2034
 typeset -fx imageRemove
+# shellcheck disable=SC2034
+typeset -fx imageIsInUse
 # shellcheck disable=SC2034
 typeset -fx imageRemoveRemote
 # shellcheck disable=SC2034
@@ -1306,15 +1408,12 @@ anodosysAppPath="${anodosysPath}/app"
 export anodosysAppPath
 
 anodosysConfigurationPath="${anodosysPath}/configuration"
-mkdir -p "${anodosysConfigurationPath}"
 export anodosysConfigurationPath
 
 anodosysScriptPath="${anodosysPath}/script"
-mkdir -p "${anodosysScriptPath}"
 export anodosysScriptPath
 
 anodosysExtensionPath="${anodosysPath}/extension"
-mkdir -p "${anodosysExtensionPath}"
 export anodosysExtensionPath
 
 currentUser=$(whoami)
@@ -1456,8 +1555,8 @@ stepScripts["networkCreate"]="${anodosysPath}/app/system/network/create.sh"
 stepScripts["networkRemove"]="${anodosysPath}/app/system/network/remove.sh"
 
 declare -A steps
-steps["build"]="imageNotExistsTarget,action:install,action:image,action:remove,imageRemoveRemote,action:push"
-steps["rebuild"]="action:clean,action:install,action:image,action:remove,imageRemoveRemote,action:push"
+steps["build"]="imageNotExistsTarget,action:install,imageRemoveTargetLocal,action:image,action:remove,imageRemoveTargetRemote,action:push"
+steps["rebuild"]="action:remove,action:install,imageRemoveTargetLocal,action:image,action:remove,imageRemoveRemote,action:push"
 steps["pull"]="imageExistsSource,imagePullSource,imagePullTarget"
 steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,containerStart,containerPrepare,containerInstall,containerDismantle"
 steps["image"]="imageCreate"

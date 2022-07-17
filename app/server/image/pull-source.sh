@@ -69,7 +69,11 @@ if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
     exit 1
   fi
 else
-  echo "No need to pull source image: ${imageName}:${imageTag}"
+  if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageNewerRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+    imagePull "${imageName}" "${imageTag}"
+  else
+    echo "No need to pull source image: ${imageName}:${imageTag}"
+  fi
 fi
 
 if [[ -n "${afterImagePullSourceScript}" ]]; then
