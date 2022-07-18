@@ -229,7 +229,9 @@ prepareConfigurationJson()
           if [[ "${key}" == "containerVolumes" ]]; then
             readarray -d : -t valueParts < <(printf '%s' "${value}")
             sourcePath=$(completePath "${configurationFile}" "include" "${valueParts[0]}")
-            if test "${valueParts[2]+isset}"; then
+            if test "${valueParts[3]+isset}"; then
+              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}:${valueParts[3]}"
+            elif test "${valueParts[2]+isset}"; then
               preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}"
             else
               preparedValue="${sourcePath}:${valueParts[1]}"
@@ -500,7 +502,7 @@ volumeCreate()
   local targetUser="${4:-none}"
   local mode="${5:-r}"
   if [[ $(volumeExists "${volumeName}") == 0 ]]; then
-    echo "Creating volume: ${volumeName} with source path: ${sourcePath} and target path: ${targetPath} accessible by user: ${targetUser}"
+    echo "Creating volume: ${volumeName} with source path: ${sourcePath} and target path: ${targetPath} accessible by user: ${targetUser} and mode: ${mode}"
     result=$(docker volume create \
       --driver local \
       --opt type=none \
@@ -692,7 +694,7 @@ imageRemoveRemote()
     token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
     echo "Removing remote image: ${imageName}:${imageTag}"
     logDisable
-    result=$(curl -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
+    result=$(curl -s -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
     logEnable
     if [[ -z "${result}" ]]; then
       echo "Successfully removed remote image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
@@ -920,20 +922,17 @@ containerVolumePrepare()
           else
             groupUserList[${groupId}]="${targetUser}"
           fi
-        else
-          echo "No need to prepare path: ${targetPath}"
-        fi
-        if [[ "${mode}" == "w" ]]; then
-          accessRights=$(stat -L -c "%a" "${sourcePath}")
-          if [[ "${accessRights:1:1}" != 7 ]]; then
-            accessRights=$(echo "${accessRights}" | sed s/./7/2)
-            if [[ $(chmod "${accessRights}" "${sourcePath}" && echo "1" || echo "0") == 1 ]]; then
-              echo "Successfully set group rights to source path: ${sourcePath}" | sed $'s,.*,\e[1;36m&\e[m,'
-            else
-              >&2 echo "Could not set group rights to source path: ${sourcePath}"
+          if [[ "${mode}" == "w" ]]; then
+            user=$(stat -L -c "%U" "${sourcePath}")
+            accessRights=$(stat -L -c "%a" "${sourcePath}")
+            echo "Source path: ${sourcePath} has user: ${user}, target user: ${targetUser}, access rights: ${accessRights}, group rights: ${accessRights:1:1}"
+            if [[ "${user}" != "${targetUser}" ]] && [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
+              >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
               exit 1
             fi
           fi
+        else
+          echo "No need to prepare volume: ${volumeName}"
         fi
       else
         >&2 echo "Volume does not exist: ${volumeName}"
@@ -1452,6 +1451,9 @@ export anodosysSharedExtensions
 anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
 export anodosysUserExtensions
 
+systemPath="${PWD}"
+export systemPath
+
 if [[ ! -f anodosys.json ]] && { test -f anodosys/anodosys.json; test -f anodosys/ads.json; }; then
   cd anodosys
 elif [[ ! -f anodosys.json ]] && { test -f ads/anodosys.json; test -f ads/ads.json; }; then
@@ -1556,7 +1558,7 @@ stepScripts["networkRemove"]="${anodosysPath}/app/system/network/remove.sh"
 
 declare -A steps
 steps["build"]="imageNotExistsTarget,action:install,imageRemoveTargetLocal,action:image,action:remove,imageRemoveTargetRemote,action:push"
-steps["rebuild"]="action:remove,action:install,imageRemoveTargetLocal,action:image,action:remove,imageRemoveRemote,action:push"
+steps["rebuild"]="action:remove,action:install,imageRemoveTargetLocal,action:image,action:remove,imageRemoveTargetRemote,action:push"
 steps["pull"]="imageExistsSource,imagePullSource,imagePullTarget"
 steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,containerStart,containerPrepare,containerInstall,containerDismantle"
 steps["image"]="imageCreate"
@@ -1587,7 +1589,7 @@ if [[ "${#actionSteps[@]}" -gt 0 ]]; then
         exit 1
       fi
     else
-      >&2 echo "No script found to execute step: ${stepActionStep}"
+      >&2 echo "No script found to execute step: ${actionStep}"
       exit 1
     fi
   done

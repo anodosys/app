@@ -53,7 +53,11 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -n "${beforeContainerPrepareScript}" ]]; then
   echo "Before container prepare script: ${beforeContainerPrepareScript}"
-  "${beforeContainerPrepareScript}"
+  if [[ -n "${beforeContainerPrepareParameters}" ]]; then
+    "${beforeContainerPrepareScript}" "${beforeContainerPrepareParameters[@]}"
+  else
+    "${beforeContainerPrepareScript}"
+  fi
 fi
 
 containerName="${systemName}_${serverName}"

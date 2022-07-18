@@ -48,7 +48,11 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -n "${beforeContainerCreateSourceScript}" ]]; then
   echo "Before container create source script: ${beforeContainerCreateSourceScript}"
-  "${beforeContainerCreateSourceScript}"
+  if [[ -n "${beforeContainerCreateSourceParameters}" ]]; then
+    "${beforeContainerCreateSourceScript}" "${beforeContainerCreateSourceParameters[@]}"
+  else
+    "${beforeContainerCreateSourceScript}"
+  fi
 fi
 
 if [[ -z "${imageName}" ]]; then
