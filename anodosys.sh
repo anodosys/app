@@ -890,6 +890,63 @@ containerVolumeList()
   docker inspect -f "{{ json .Mounts }}" "${containerName}" | jq -r '.[].Name // empty'
 }
 
+containerVolumeCheck()
+{
+  local containerName="${1}"
+  local volumeNames
+  local volumeName
+  local sourcePath
+  local targetUser
+
+  if [[ $(containerExists "${containerName}") == 1 ]]; then
+    oldIFS="${IFS}"
+    IFS=$'\n'
+    volumeNames=( $(containerVolumeList "${containerName}" ) )
+    IFS="${oldIFS}"
+    for volumeName in "${volumeNames[@]}"; do
+      volumeName=$(trim "${volumeName}")
+      if [[ $(volumeExists "${volumeName}") == 1 ]]; then
+        echo "Checking volume: ${volumeName}"
+        sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
+        targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
+        targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
+        mode=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".mode // empty")
+        if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "none" ]]; then
+          user=$(stat -L -c "%U" "${sourcePath}")
+          accessRights=$(stat -L -c "%a" "${sourcePath}")
+          echo "Source path: ${sourcePath} has user: ${user}, target user: ${targetUser}, access rights: ${accessRights}"
+          if [[ "${user}" != "${targetUser}" ]]; then
+            if [[ "${mode}" == "w" ]]; then
+              if [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
+                >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
+                exit 1
+              else
+                echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is writable for group"
+              fi
+            else
+              if [[ "${accessRights:1:1}" != 4 ]] && [[ "${accessRights:1:1}" != 5 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
+                >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not readable for group"
+                exit 1
+              else
+                echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is readable for group"
+              fi
+            fi
+          else
+            echo "No different user for volume: ${volumeName}"
+          fi
+        else
+          echo "No need to check volume: ${volumeName}"
+        fi
+      else
+        >&2 echo "Volume does not exist: ${volumeName}"
+        exit 1
+      fi
+    done
+  else
+    echo "Not possible to check volumes of container: ${containerName}"
+  fi
+}
+
 containerVolumePrepare()
 {
   local containerName="${1}"
@@ -921,15 +978,6 @@ containerVolumePrepare()
             groupUserList[${groupId}]+=",${targetUser}"
           else
             groupUserList[${groupId}]="${targetUser}"
-          fi
-          if [[ "${mode}" == "w" ]]; then
-            user=$(stat -L -c "%U" "${sourcePath}")
-            accessRights=$(stat -L -c "%a" "${sourcePath}")
-            echo "Source path: ${sourcePath} has user: ${user}, target user: ${targetUser}, access rights: ${accessRights}, group rights: ${accessRights:1:1}"
-            if [[ "${user}" != "${targetUser}" ]] && [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
-              >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
-              exit 1
-            fi
           fi
         else
           echo "No need to prepare volume: ${volumeName}"
@@ -970,6 +1018,7 @@ containerStart()
   local retry="${2:-no}"
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ $(containerRunning "${containerName}") == 0 ]]; then
+      containerVolumeCheck "${containerName}"
       echo "Starting container: ${containerName}"
       result=$(docker start "${containerName}" 2>&1 | cat)
       if [[ "${result}" == "${containerName}" ]]; then
@@ -1341,6 +1390,8 @@ typeset -fx containerVolumeCreate
 # shellcheck disable=SC2034
 typeset -fx containerVolumeRemove
 # shellcheck disable=SC2034
+typeset -fx containerVolumeCheck
+# shellcheck disable=SC2034
 typeset -fx containerVolumePrepare
 # shellcheck disable=SC2034
 typeset -fx containerVolumeList
@@ -1563,8 +1614,8 @@ steps["pull"]="imageExistsSource,imagePullSource,imagePullTarget"
 steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,containerStart,containerPrepare,containerInstall,containerDismantle"
 steps["image"]="imageCreate"
 steps["push"]="imagePush"
-steps["clean"]="action:remove,imageRemoveSourceLocal,imageRemoveTargetLocal"
-steps["destroy"]="action:clean,imageRemoveTargetRemote"
+steps["clean"]="action:remove,imageRemoveTargetLocal"
+steps["destroy"]="action:clean,imageRemoveSourceLocal,imageRemoveTargetRemote"
 steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCreate,containerCreateTarget"
 steps["start"]="containerExists,containerStart,containerRunning"
 steps["restart"]="action:stop,action:start"
