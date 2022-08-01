@@ -16,8 +16,9 @@ usage: ${scriptName} options
 OPTIONS:
   -h  Show this message
   -s  Server name
-  -u  User name (optional)
   -c  Command
+  -i  Flag if the command show by executed interactively (optional)
+  -u  User name (optional)
 
 Example: ${scriptName} -s web -u www-data -c "/test.sh"
 EOF
@@ -29,15 +30,17 @@ trim()
 }
 
 serverName=
-userName=
 command=
+interactive=0
+userName=
 
-while getopts hs:u:c:? option; do
+while getopts hs:c:iu:? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
-    u) userName=$(trim "$OPTARG");;
     c) command=$(trim "$OPTARG");;
+    i) interactive=1;;
+    u) userName=$(trim "$OPTARG");;
     ?) usage; exit 1;;
   esac
 done
@@ -59,7 +62,7 @@ setServerConfiguration "${systemName}" "${serverName}"
 containerName="${systemName}_${serverName}"
 
 if [[ -n "${userName}" ]]; then
-  containerCommand "${containerName}" "sudo -H -u \"${userName}\" bash -c \"${command}\""
+  containerCommand "${containerName}" "${command}" "${interactive}" "${userName}"
 else
-  containerCommand "${containerName}" "${command}"
+  containerCommand "${containerName}" "${command}" "${interactive}"
 fi

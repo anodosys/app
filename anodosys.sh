@@ -989,6 +989,7 @@ containerVolumePrepare()
     done
     for groupId in "${!groupUserList[@]}"; do
       groupName=$(containerCommandQuiet "${containerName}" "getent group ${groupId} | tr ':' ' ' | awk '{print \$1}'")
+      groupName=$(prepareValue "${groupName}")
       if [[ -z "${groupName}" ]]; then
         groupName="docker_volume_${groupId}"
         echo "Creating new group: ${groupName}"
@@ -999,7 +1000,9 @@ containerVolumePrepare()
       userNames="${groupUserList[${groupId}]}"
       userNameList=( $(echo "${userNames}" | sed -e 's/,/\n/g' | sort -u) )
       for targetUser in "${userNameList[@]}"; do
-        if [[ $(containerCommandQuiet "${containerName}" "id -nG ${targetUser} | grep -w ${groupName} | wc -l") == 0 ]]; then
+        result=$(containerCommandQuiet "${containerName}" "id -nG ${targetUser} | grep -w ${groupName} | wc -l")
+        result=$(prepareValue "${result}")
+        if [[ "${result}" == 0 ]]; then
           echo "Adding user: ${targetUser} to group: ${groupName}"
           containerCommand "${containerName}" "usermod -a -G ${groupName} ${targetUser}"
         else
@@ -1319,9 +1322,20 @@ containerCommand()
 {
   local containerName="${1}"
   local command="${2}"
+  local interactive="${3:-0}"
+  local userName="${4}"
+  local flags="-t"
+  if [[ "${interactive}" == 1 ]]; then
+    flags+="i"
+  fi
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
-    echo "Executing command in container: ${containerName}: ${command}"
-    docker exec -t "${containerName}" bash -c "${command}"
+    if [[ -z "${userName}" ]] || [[ "${userName}" == "none" ]]; then
+      echo "Executing command in container: ${containerName}: ${command}"
+      docker exec "${flags}" "${containerName}" bash -c "${command}"
+    else
+      echo "Executing command with user: ${userName} in container: ${containerName}: ${command}"
+      docker exec "${flags}" -u "${userName}" "${containerName}" bash -c "${command}"
+    fi
   else
     >&2 echo "Container not running: ${containerName}"
     exit 1
@@ -1332,8 +1346,17 @@ containerCommandQuiet()
 {
   local containerName="${1}"
   local command="${2}"
+  local interactive="${3:-0}"
+  local userName="${4}"
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
-    docker exec "${containerName}" bash -c "${command}"
+    if [[ -z "${userName}" ]] || [[ "${userName}" == "none" ]]; then
+      docker exec "${containerName}" bash -c "${command}"
+    else
+      docker exec -u "${userName}" "${containerName}" bash -c "${command}"
+    fi
+  else
+    >&2 echo "Container not running: ${containerName}"
+    exit 1
   fi
 }
 
@@ -1537,7 +1560,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]]; then
+if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]]; then
   logName "${systemName}"
 fi
 
@@ -1548,36 +1571,64 @@ if [[ -z "${serverNames}" ]]; then
   exit 1
 fi
 
+interactive=0
+if [[ "${action}" == "bash" ]]; then
+  action="cmd"
+  command="bash --rcfile <(echo 'cd ~')"
+  interactive=1
+fi
+
 if [[ "${action}" == "cmd" ]]; then
   shift
   serverName="${1}"
   shift
-  userName="${1}"
-  shift
-  command=( "${@}" )
-  "${anodosysPath}/app/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}"
+  if [[ -n "${1}" ]]; then
+    userName="${1}"
+    shift
+  else
+    userName="none"
+  fi
+  if [[ -z "${command}" ]]; then
+    command=( "${@}" )
+  fi
+  if [[ "${interactive}" == 1 ]]; then
+    "${anodosysPath}/app/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}" -i
+  else
+    "${anodosysPath}/app/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}"
+  fi
   exit 0
 fi
 
 if [[ "${action}" == "config" ]]; then
-  cat "${anodosysConfigurationFile}"
+  if [[ -n "${2}" ]]; then
+    result=$(cat "${anodosysConfigurationFile}" | jq -r ".global .${2}  | if type==\"array\" then values[] else . end // empty") && [[ -n "$result" ]] && echo "${result}" || cat "${anodosysConfigurationFile}" | jq -r ".system .${2} | if type==\"array\" then values[] else . end //empty"
+  else
+    cat "${anodosysConfigurationFile}"
+  fi
   exit 0
 fi
 
 if [[ "${action}" == "status" ]]; then
-  maxLength=6
+  mode="${2:-local}"
+  maxLength=9
   for serverName in "${serverNames[@]}"; do
     length=$(("${#systemName}" + "${#serverName}" + 1))
     if [[ "${length}" -gt "${maxLength}" ]]; then
       maxLength="${length}"
     fi
   done
-  printf "%-${maxLength}s" "Server"
-  echo " | local source image | remote source image | local target image | remote target image | container created | container running"
-  printf "%${maxLength}s" "" |tr " " "-"
-  echo " | ------------------ | ------------------- | ------------------ | ------------------- | ----------------- | -----------------"
+  printf "%-${maxLength}s" "Container"
+  if [[ "${mode}" == "all" ]]; then
+    echo " | local source image | remote source image | local target image | remote target image | container created | container running"
+    printf "%${maxLength}s" "" |tr " " "-"
+    echo " | ------------------ | ------------------- | ------------------ | ------------------- | ----------------- | -----------------"
+  elif [[ "${mode}" == "local" ]]; then
+    echo " | local source image | local target image | container created | container running"
+    printf "%${maxLength}s" "" |tr " " "-"
+    echo " | ------------------ | ------------------ | ----------------- | -----------------"
+  fi
   for serverName in "${serverNames[@]}"; do
-    "${anodosysPath}/app/server/status.sh" -s "${serverName}" -l "${maxLength}"
+    "${anodosysPath}/app/server/status.sh" -s "${serverName}" -l "${maxLength}" -m "${mode}"
   done
   exit 0
 fi

@@ -17,6 +17,7 @@ OPTIONS:
   -h  Show this message
   -s  Server name
   -l  Length of server name
+  -m  Mode, default: all
 
 Example: ${scriptName} -s web -l 10
 EOF
@@ -29,12 +30,14 @@ trim()
 
 serverName=
 length=
+mode=
 
-while getopts hs:l:? option; do
+while getopts hs:l:m:? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
     l) length=$(trim "$OPTARG");;
+    m) mode=$(trim "$OPTARG");;
     ?) usage; exit 1;;
   esac
 done
@@ -43,6 +46,10 @@ if [[ -z "${serverName}" ]]; then
   >&2 echo "No server name specified!"
   usage
   exit 1
+fi
+
+if [[ -z "${mode}" ]]; then
+  mode="all"
 fi
 
 setServerConfiguration "${systemName}" "${serverName}"
@@ -58,16 +65,16 @@ if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imag
 else
   echo -n "                  "
 fi
-
 echo -n " | "
 
-if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
-  echo -n "         X         "
-else
-  echo -n "                   "
+if [[ "${mode}" == "all" ]]; then
+  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+    echo -n "         X         "
+  else
+    echo -n "                   "
+  fi
+  echo -n " | "
 fi
-
-echo -n " | "
 
 if [[ -n "${buildImageName}" ]]; then
   imageName="${buildImageName}"
@@ -82,16 +89,16 @@ if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imag
 else
   echo -n "                  "
 fi
-
 echo -n " | "
 
-if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
-  echo -n "         X         "
-else
-  echo -n "                   "
+if [[ "${mode}" == "all" ]]; then
+  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+    echo -n "         X         "
+  else
+    echo -n "                   "
+  fi
+  echo -n " | "
 fi
-
-echo -n " | "
 
 if [[ $(containerExists "${containerName}") == 1 ]]; then
   echo -n "        X        "
