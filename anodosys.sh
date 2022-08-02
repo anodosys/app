@@ -1534,12 +1534,19 @@ elif [[ ! -f anodosys.json ]] && { test -f ads/anodosys.json; test -f ads/ads.js
   cd ads
 fi
 
-if [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]]; then
-  >&2 echo "Could not find anodosys.json or ads.json in directory: ${PWD}"
-  exit 1
+if [[ -n "${2}" ]]; then
+  fileName="${2}"
+  if [[ ! -f "${fileName}" ]]; then
+    fileName=
+  fi
+else
+  if [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]]; then
+    >&2 echo "Could not find anodosys.json or ads.json in directory: ${PWD}"
+    exit 1
+  fi
 fi
 
-configurationFiles=( $(collectConfigurationFiles "${serverName}" "${fileName}") )
+configurationFiles=( $(collectConfigurationFiles "${fileName}") )
 configurationFiles=( $(tr ' ' '\n' <<<"${configurationFiles[@]}" | awk '!u[$0]++' | tr '\n' ' ') )
 configurationFiles=( $(prepareConfigurationFiles "${configurationFiles[@]}") )
 configurationHash=$(for configurationFile in "${configurationFiles[@]}"; do md5sum "${configurationFile}"; done | md5sum | awk '{print $1}')
@@ -1560,7 +1567,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]]; then
+if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "systems" ]]; then
   logName "${systemName}"
 fi
 
@@ -1600,8 +1607,14 @@ if [[ "${action}" == "cmd" ]]; then
 fi
 
 if [[ "${action}" == "config" ]]; then
-  if [[ -n "${2}" ]]; then
-    result=$(cat "${anodosysConfigurationFile}" | jq -r ".global .${2}  | if type==\"array\" then values[] else . end // empty") && [[ -n "$result" ]] && echo "${result}" || cat "${anodosysConfigurationFile}" | jq -r ".system .${2} | if type==\"array\" then values[] else . end //empty"
+  propertyName=
+  if [[ -n "${3}" ]]; then
+    propertyName="${3}"
+  elif [[ -n "${2}" ]] && [[ ! -f "${2}" ]]; then
+    propertyName="${2}"
+  fi
+  if [[ -n "${propertyName}" ]]; then
+    result=$(cat "${anodosysConfigurationFile}" | jq -r ".global .${propertyName} | if type==\"array\" then values[] else . end // empty") && [[ -n "$result" ]] && echo "${result}" || cat "${anodosysConfigurationFile}" | jq -r ".system .${propertyName} | if type==\"array\" then values[] else . end //empty"
   else
     cat "${anodosysConfigurationFile}"
   fi
