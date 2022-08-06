@@ -62,6 +62,12 @@ setServerConfiguration "${systemName}" "${serverName}"
 containerName="${systemName}_${serverName}"
 
 if [[ -n "${userName}" ]]; then
+  if [[ $(containerCommandQuiet "${containerName}" "getent passwd ${userName} | cat" | wc -l) == 0 ]]; then
+    userId=$(getent passwd "${userName}" | tr ':' ' ' | awk '{print $3}')
+    if [[ -n "${userId}" ]]; then
+      userName=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} | cat" | tr ':' ' ' | awk '{print $1}')
+    fi
+  fi
   containerCommand "${containerName}" "${command}" "${interactive}" "${userName}"
 else
   containerCommand "${containerName}" "${command}" "${interactive}"

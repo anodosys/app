@@ -23,6 +23,10 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 declare -A processIds
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   "${currentPath}/../../server/image/not-exists-target.sh" -s "${serverName}" &
   processIds["${serverName}"]=$!
 done

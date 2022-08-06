@@ -26,13 +26,17 @@ declare -A processedServerNameList
 while : ; do
   declare -A processIds
   for serverName in "${serverNames[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
       if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         dismantleScript="${PWD}/${serverName}/container/dismantle.sh"
         if [[ -f "${dismantleScript}" ]]; then
           echo "[${serverName}] Dismantling container of server: ${serverName} with custom script: ${dismantleScript}"
-          "${dismantleScript}" &
+          "${dismantleScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/dismantle.sh" -s "${serverName}" &
         fi

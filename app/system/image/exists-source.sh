@@ -24,6 +24,10 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 # break if any source image does not exist
 declare -A processIds
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   "${currentPath}/../../server/image/exists-source.sh" -s "${serverName}" &
   processIds["${serverName}"]=$!
 done

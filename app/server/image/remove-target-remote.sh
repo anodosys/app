@@ -51,13 +51,21 @@ if [[ -n "${beforeImageRemoveSourceRemoteScript}" ]]; then
   "${beforeImageRemoveSourceRemoteScript}"
 fi
 
-if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
+if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
   echo "No removing of remote image required"
   exit 0
 fi
 
+if [[ -n "${buildImageName}" ]]; then
+  imageName="${buildImageName}"
+fi
+
+if [[ -n "${buildImageTag}" ]]; then
+  imageTag="${buildImageTag}"
+fi
+
 if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
-  imageRemoveRemote "${buildImageName}" "${buildImageTag}" "${repositoryUserName}" "${repositoryPassword}"
+  imageRemoveRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}"
 fi
 
 if [[ -n "${afterImageRemoveSourceRemoteScript}" ]]; then

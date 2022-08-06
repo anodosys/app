@@ -51,13 +51,21 @@ if [[ -n "${beforeImagePushScript}" ]]; then
   "${beforeImagePushScript}"
 fi
 
-if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
+if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
   echo "No pushing of image required"
   exit 0
 fi
 
+if [[ -n "${buildImageName}" ]]; then
+  imageName="${buildImageName}"
+fi
+
+if [[ -n "${buildImageTag}" ]]; then
+  imageTag="${buildImageTag}"
+fi
+
 if [[ -n "${buildImageMode}" ]] && [[ "${buildImageMode}" == "remote" ]]; then
-  imagePush "${buildImageName}" "${buildImageTag}"
+  imagePush "${imageName}" "${imageTag}"
 else
   echo "No pushing of image required"
 fi

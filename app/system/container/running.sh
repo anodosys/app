@@ -21,6 +21,10 @@ fi
 
 # break if not all containers are running
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   containerName="${systemName}_${serverName}"
   if [[ $(containerRunning "${containerName}") == 0 ]]; then
     >&2 echo "Container not running: ${containerName}"

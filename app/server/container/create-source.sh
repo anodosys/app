@@ -93,14 +93,6 @@ for containerAlias in "${containerAliases[@]}"; do
   optionalParameters+=( "alias:${containerAlias}" )
 done
 
-#if [[ -z "${containerPorts}" ]]; then
-#  containerPorts=()
-#fi
-
-#for containerPort in "${containerPorts[@]}"; do
-#  optionalParameters+=( "port:${containerPort}" )
-#done
-
 if [[ -z "${containerExpose}" ]]; then
   containerExpose=()
 fi

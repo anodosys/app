@@ -24,6 +24,10 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 declare -A processIds
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   imageScript="${PWD}/${serverName}/image/create.sh"
   if [[ -f "${imageScript}" ]]; then
     echo "[${serverName}] Creating image of server: ${serverName} with custom script: ${imageScript}"

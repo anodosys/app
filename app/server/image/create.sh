@@ -51,17 +51,25 @@ if [[ -n "${beforeImageCreateScript}" ]]; then
   "${beforeImageCreateScript}"
 fi
 
-if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
+if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
   echo "No creating of image required"
   exit 0
+fi
+
+if [[ -n "${buildImageName}" ]]; then
+  imageName="${buildImageName}"
+fi
+
+if [[ -n "${buildImageTag}" ]]; then
+  imageTag="${buildImageTag}"
 fi
 
 containerName="${systemName}_${serverName}"
 
 if [[ -n "${buildImageEntryPoint}" ]]; then
-  imageCreate "${buildImageName}" "${buildImageTag}" "${containerName}" "${buildImageEntryPoint}"
+  imageCreate "${imageName}" "${imageTag}" "${containerName}" "${buildImageEntryPoint}"
 else
-  imageCreate "${buildImageName}" "${buildImageTag}" "${containerName}"
+  imageCreate "${imageName}" "${imageTag}" "${containerName}"
 fi
 
 if [[ -n "${afterImageCreateScript}" ]]; then

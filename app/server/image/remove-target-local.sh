@@ -51,7 +51,7 @@ if [[ -n "${beforeImageRemoveTargetLocalScript}" ]]; then
   "${beforeImageRemoveTargetLocalScript}"
 fi
 
-if [[ -z "${buildImageName}" ]] || [[ -z "${buildImageTag}" ]]; then
+if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
   echo "No removing of local target image required"
   exit 0
 fi

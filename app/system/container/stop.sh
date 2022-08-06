@@ -50,6 +50,10 @@ while : ; do
     runningServerNames="none"
   fi
   for serverName in "${serverNames[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       if test "${supportsServerNameList["${serverName}"]+isset}"; then
         supportsServerNames=${supportsServerNameList[${serverName}]}
@@ -60,7 +64,7 @@ while : ; do
         stopScript="${PWD}/${serverName}/container/stop.sh"
         if [[ -f "${stopScript}" ]]; then
           echo "[${serverName}] Stopping container of server: ${serverName} with custom script: ${stopScript}"
-          "${stopScript}" &
+          "${stopScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/stop.sh" -s "${serverName}" &
         fi

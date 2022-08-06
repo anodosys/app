@@ -23,6 +23,10 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 declare -A processIds
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   removeScript="${PWD}/${serverName}/image/remove-source-local.sh"
   if [[ -f "${removeScript}" ]]; then
     echo "[${serverName}] Removing local source image of server: ${serverName} with custom script: ${removeScript}"

@@ -46,6 +46,10 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+if [[ -z "${skipImageCheck}" ]]; then
+  skipImageCheck="false"
+fi
+
 if [[ -n "${beforeImagePullSourceScript}" ]]; then
   echo "Before image pull source script: ${beforeImagePullSourceScript}"
   "${beforeImagePullSourceScript}"
@@ -69,7 +73,7 @@ if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
     exit 1
   fi
 else
-  if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageNewerRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+  if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ "${skipImageCheck}" == "false" ]] && [[ $(imageCheck "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
     imagePull "${imageName}" "${imageTag}"
   else
     echo "No need to pull source image: ${imageName}:${imageTag}"

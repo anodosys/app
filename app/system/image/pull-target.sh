@@ -23,6 +23,10 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 # pull the source images if available
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   imageScript="${PWD}/${serverName}/image/pull-target.sh"
   if [[ -f "${imageScript}" ]]; then
     echo "[${serverName}] Pulling target image of server: ${serverName} with custom script: ${imageScript}"

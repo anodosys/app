@@ -26,13 +26,17 @@ declare -A processedServerNameList
 while : ; do
   declare -A processIds
   for serverName in "${serverNames[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
       if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         createScript="${PWD}/${serverName}/container/create-source.sh"
         if [[ -f "${createScript}" ]]; then
           echo "[${serverName}] Creating container of server: ${serverName} with custom script: ${createScript}"
-          "${createScript}" &
+          "${createScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/create-source.sh" -s "${serverName}" &
         fi

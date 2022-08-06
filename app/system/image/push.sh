@@ -23,6 +23,10 @@ fi
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   imageScript="${PWD}/${serverName}/image/push.sh"
   if [[ -f "${imageScript}" ]]; then
     echo "[${serverName}] Pushing image of server: ${serverName} with custom script: ${imageScript}"

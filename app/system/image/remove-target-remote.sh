@@ -23,6 +23,10 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 declare -A processIds
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   removeScript="${PWD}/${serverName}/image/remove-target-remote.sh"
   if [[ -f "${removeScript}" ]]; then
     echo "[${serverName}] Removing remote target image of server: ${serverName} with custom script: ${removeScript}"

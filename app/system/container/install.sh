@@ -5,6 +5,11 @@ if [[ -z "${systemName}" ]]; then
   exit 1
 fi
 
+if [[ -z "${systemPath}" ]]; then
+  >&2 echo "No system path specified!"
+  exit 1
+fi
+
 setServerConfiguration "${systemName}" "system"
 
 echo "- Container install -" | sed $'s,.*,\e[1;37m&\e[m,'
@@ -26,13 +31,17 @@ declare -A processedServerNameList
 while : ; do
   declare -A processIds
   for serverName in "${serverNames[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
       if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
-        installScript="${PWD}/${serverName}/container/install.sh"
+        installScript="${systemPath}/${serverName}/container/install.sh"
         if [[ -f "${installScript}" ]]; then
           echo "[${serverName}] Installing container of server: ${serverName} with custom script: ${installScript}"
-          "${installScript}" &
+          "${installScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/install.sh" -s "${serverName}" &
         fi

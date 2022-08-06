@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -30,11 +35,6 @@ while getopts hs:? option; do
     ?) usage; exit 1;;
   esac
 done
-
-if [[ -z "${systemName}" ]]; then
-  >&2 echo "No system name specified!"
-  exit 1
-fi
 
 if [[ -z "${serverName}" ]]; then
   >&2 echo "No server name specified!"

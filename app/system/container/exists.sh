@@ -24,9 +24,13 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 # break if any container already exists
 declare -A processIds
 for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
   existsScript="${PWD}/${serverName}/container/exists.sh"
   if [[ -f "${existsScript}" ]]; then
-    "${existsScript}" &
+    "${existsScript}" -s "${serverName}" &
   else
     "${currentPath}/../../server/container/exists.sh" -s "${serverName}" &
   fi
