@@ -16,7 +16,11 @@ fi
 
 if [[ -n "${beforeContainerStartScript}" ]]; then
   echo "Before container start script: ${beforeContainerStartScript}"
-  "${beforeContainerStartScript}"
+  if [[ -n "${beforeContainerStartParameters}" ]]; then
+    "${beforeContainerStartScript}" "${beforeContainerStartParameters[@]}"
+  else
+    "${beforeContainerStartScript}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -66,5 +70,9 @@ done
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
-  "${afterContainerStartScript}"
+  if [[ -n "${afterContainerStartParameters}" ]]; then
+    "${afterContainerStartScript}" "${afterContainerStartParameters[@]}"
+  else
+    "${afterContainerStartScript}"
+  fi
 fi
