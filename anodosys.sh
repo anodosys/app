@@ -88,7 +88,7 @@ if [[ -n "${server}" ]]; then
   export server
 fi
 
-if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "config" ]] && [[ -n "${2}" ]]; then
+if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "bash" ]] && [[ -n "${2}" ]]; then
   systemName="${2}"
 fi
 
