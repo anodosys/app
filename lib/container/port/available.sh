@@ -7,6 +7,7 @@ containerPortAvailable()
   local portParts
   local port
   local protocol
+  local portAvailable
 
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     ports=( $(containerPortList "${containerName}") )

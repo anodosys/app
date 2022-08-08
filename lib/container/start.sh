@@ -11,6 +11,11 @@ containerStart()
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ $(containerRunning "${containerName}") == 0 ]]; then
+      echo "Checking if ports are blocked for container: ${containerName}"
+      if [[ $(containerPortBlocked "${containerName}") == 1 ]]; then
+        >&2 echo "Cannot start container because ports are blocked"
+        exit 1
+      fi
       containerVolumeCheck "${containerName}"
       echo "Starting container: ${containerName}"
       result=$(docker start "${containerName}" 2>&1 | cat)

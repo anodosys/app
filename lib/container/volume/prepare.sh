@@ -32,7 +32,6 @@ containerVolumePrepare()
         sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
         targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
         empty=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".empty // empty")
-        echo "Source path: ${sourcePath} is empty: ${empty}"
 
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${empty}" == "true" ]]; then
           userId=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".userId // empty")

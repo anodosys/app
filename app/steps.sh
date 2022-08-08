@@ -60,6 +60,10 @@ stepScripts["imageRemoveTargetLocal"]="${anodosysAppPath}/system/image/remove-ta
 stepScripts["imageRemoveTargetRemote"]="${anodosysAppPath}/system/image/remove-target-remote.sh"
 stepScripts["networkCreate"]="${anodosysAppPath}/system/network/create.sh"
 stepScripts["networkRemove"]="${anodosysAppPath}/system/network/remove.sh"
+stepScripts["systemAdd"]="${anodosysAppPath}/system/add.sh"
+stepScripts["systemRemove"]="${anodosysAppPath}/system/remove.sh"
+stepScripts["systemStart"]="${anodosysAppPath}/system/start.sh"
+stepScripts["systemStop"]="${anodosysAppPath}/system/stop.sh"
 
 declare -A steps
 steps["build"]="imageNotExistsTarget,action:install,imageRemoveTargetLocal,action:image,action:remove,imageRemoveTargetRemote,action:push"
@@ -70,11 +74,11 @@ steps["image"]="imageCreate"
 steps["push"]="imageExistsTarget,imagePush"
 steps["clean"]="action:remove,imageRemoveTargetLocal"
 steps["destroy"]="action:clean,imageRemoveSourceLocal,imageRemoveTargetRemote"
-steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCreate,containerCreateTarget"
-steps["start"]="containerExists,containerStart,containerRunning"
+steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,systemAdd,networkCreate,containerCreateTarget"
+steps["start"]="containerExists,containerStart,containerRunning,systemStart"
 steps["restart"]="action:stop,action:start"
-steps["stop"]="containerStop"
-steps["remove"]="containerStop,containerRemove,networkRemove"
+steps["stop"]="containerStop,systemStop"
+steps["remove"]="systemRemove,containerStop,containerRemove,networkRemove"
 
 if [[ -n "${actionStartScript}" ]]; then
   echo "Action start script: ${actionStartScript}"

@@ -124,6 +124,11 @@ if [[ ! -f "/usr/local/bin/ads-host" ]]; then
   ln -s ${basePath}/anodosys/host.sh /usr/local/bin/ads-host
 fi
 
+if [[ ! -f "/usr/local/bin/ads-jump" ]]; then
+  echo "Linking script from: ${basePath}/anodosys/jump.sh to: /usr/local/bin/ads-jump"
+  ln -s ${basePath}/anodosys/jump.sh /usr/local/bin/ads-jump
+fi
+
 if [[ ! -f "/usr/local/bin/ads-update" ]]; then
   echo "Linking script from: ${basePath}/anodosys/update.sh to: /usr/local/bin/ads-update"
   ln -s ${basePath}/anodosys/update.sh /usr/local/bin/ads-update

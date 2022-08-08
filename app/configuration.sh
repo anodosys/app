@@ -386,13 +386,10 @@ setServerConfiguration()
 # shellcheck disable=SC2034
 typeset -fx setServerConfiguration
 
-fileName=$(realpath "${fileName}")
+configurationFileName=$(realpath "${fileName}")
+export configurationFileName
 
-if [[ -f "${anodosysUserPath}/.anodosys/systems.json" ]]; then
-  echo "{}" > "${anodosysUserPath}/.anodosys/systems.json"
-fi
-
-configurationFiles=( $(collectConfigurationFiles "${fileName}") )
+configurationFiles=( $(collectConfigurationFiles "${configurationFileName}") )
 configurationFiles=( $(tr ' ' '\n' <<<"${configurationFiles[@]}" | awk '!u[$0]++' | tr '\n' ' ') )
 configurationFiles=( $(prepareConfigurationFiles "${configurationFiles[@]}") )
 configurationHash=$(for configurationFile in "${configurationFiles[@]}"; do md5sum "${configurationFile}"; done | md5sum | awk '{print $1}')

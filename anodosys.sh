@@ -2,7 +2,7 @@
 
 finish()
 {
-  if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]]; then
+  if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     # give the output buffer a chance
     sleep 1
     echo "Finished"
@@ -34,8 +34,10 @@ ACTION:
   stop      Stop the constainers
   remove    Remove the constainers
   cmd       Execute a command in a container
+  bash      Open a bash shell in a container
   config    Show the complete configuration
   status    Show an overview of images and containers
+  list      List all known systems
 
 Example: ${scriptName} build
 EOF
@@ -71,14 +73,27 @@ export anodosysPath
 anodosysAppPath="${anodosysPath}/app"
 export anodosysAppPath
 
+anodosysUserPath=
 source "${anodosysAppPath}/path.sh"
 source "${anodosysAppPath}/log.sh"
 
 fileName=
 source "${anodosysAppPath}/prepare-parameters.sh"
 
+source "${anodosysAppPath}/lib.sh"
+
+source "${anodosysAppPath}/systems.sh"
+
 if [[ -n "${server}" ]]; then
   export server
+fi
+
+if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "config" ]] && [[ -n "${2}" ]]; then
+  systemName="${2}"
+fi
+
+if [[ -n "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ -f "${anodosysUserPath}/systems.json" ]]; then
+  fileName=$(jq -r ". | with_entries(select(.key|match(\"${systemName}\")))[]" "${anodosysUserPath}/systems.json")
 fi
 
 if [[ -z "${fileName}" ]]; then
@@ -110,8 +125,6 @@ if [[ ! -f "${fileName}" ]]; then
   >&2 echo "Could not find configuration at: ${fileName}"
   exit 1
 fi
-
-source "${anodosysAppPath}/lib.sh"
 
 anodosysConfigurationFile=
 source "${anodosysAppPath}/configuration.sh"
