@@ -8,5 +8,3 @@ fi
 echo "- System remove -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 systemRemove "${systemName}"
-
-systemUpdate &

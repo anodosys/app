@@ -14,5 +14,3 @@ echo "- System add -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 systemAdd "${systemName}" "${configurationFileName}"
 systemStop "${systemName}"
-
-systemUpdate &
