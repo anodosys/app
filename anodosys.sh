@@ -61,7 +61,6 @@ if [[ $(which ts | wc -l) == 0 ]]; then
   exit 1
 fi
 
-
 scriptName="${BASH_SOURCE[0]}"
 if [[ -L "${scriptName}" ]]; then
   scriptName=$(readlink -f "${scriptName}")

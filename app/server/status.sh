@@ -31,13 +31,15 @@ trim()
 serverName=
 length=
 mode=
+times=0
 
-while getopts hs:l:m:? option; do
+while getopts hs:l:m:t? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
     l) length=$(trim "$OPTARG");;
     m) mode=$(trim "$OPTARG");;
+    t) times=1;;
     ?) usage; exit 1;;
   esac
 done
@@ -61,17 +63,25 @@ printf "%-${length}s" "${containerName}"
 echo -n " | "
 
 if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-  echo -n "        X         "
+  if [[ "${times}" == 1 ]]; then
+    printf '%-19s' "$(imageTime "${imageName}" "${imageTag}")"
+  else
+    printf '%-19s' "$(duration "$(imageTime "${imageName}" "${imageTag}" "%s")")"
+  fi
 else
-  echo -n "                  "
+  printf '%-19s' ""
 fi
 echo -n " | "
 
 if [[ "${mode}" == "all" ]]; then
-  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
-    echo -n "         X         "
+  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
+    if [[ "${times}" == 1 ]]; then
+      printf '%-19s' "$(imageTimeRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}")"
+    else
+      printf '%-19s' "$(duration "$(imageTimeRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}" "%s")")"
+    fi
   else
-    echo -n "                   "
+    printf '%-19s' ""
   fi
   echo -n " | "
 fi
@@ -85,33 +95,52 @@ if [[ -n "${buildImageTag}" ]]; then
 fi
 
 if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-  echo -n "        X         "
+  if [[ "${times}" == 1 ]]; then
+    printf '%-19s' "$(imageTime "${imageName}" "${imageTag}")"
+  else
+    printf '%-19s' "$(duration "$(imageTime "${imageName}" "${imageTag}" "%s")")"
+  fi
 else
-  echo -n "                  "
+  printf '%-19s' ""
 fi
 echo -n " | "
 
 if [[ "${mode}" == "all" ]]; then
-  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
-    echo -n "         X         "
+  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
+    if [[ "${times}" == 1 ]]; then
+      printf '%-19s' "$(imageTimeRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}")"
+    else
+      printf '%-19s' "$(duration "$(imageTimeRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}" "%s")")"
+    fi
   else
-    echo -n "                   "
+    printf '%-19s' ""
   fi
   echo -n " | "
 fi
 
-if [[ $(containerExists "${containerName}") == 1 ]]; then
-  echo -n "        X        "
+if [[ "${times}" == 1 ]]; then
+  printf '%-19s' "$(containerCreateTime "${containerName}")"
 else
-  echo -n "                 "
+  printf '%-19s' "$(duration "$(containerCreateTime "${containerName}" "%s")")"
 fi
+echo -n " | "
 
+if [[ "${times}" == 1 ]]; then
+  printf '%-19s' "$(containerStartTime "${containerName}")"
+else
+  printf '%-19s' "$(duration "$(containerStartTime "${containerName}" "%s")")"
+fi
+echo -n " | "
+
+printf '%-15s' "$(containerIp "${containerName}")"
 echo -n " | "
 
 if [[ $(containerRunning "${containerName}") == 1 ]]; then
-  echo -n "        X        "
+  portList=( $(containerPortHostList "${containerName}") )
+  ports=${portList[*]// /,}
+  printf '%-15s' "${ports}"
 else
-  echo -n "                 "
+  printf '%-15s' ""
 fi
 
 echo ""

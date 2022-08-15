@@ -17,18 +17,21 @@ imageCheckRemote()
   local remoteId
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
-    if [[ -f "${anodosysUserVarPath}/image-check-token" ]]; then
-      tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${anodosysUserVarPath}/image-check-token")")
+    tokenFile="${anodosysUserVarPath}/hub_docker_com"
+    if [[ -f "${tokenFile}" ]]; then
+      tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
       if [[ "${tokenTime}" -gt 55 ]]; then
-        rm -rf "${anodosysUserVarPath}/image-check-token"
+        rm -rf "${tokenFile}"
       fi
     fi
-    if [[ -f "${anodosysUserVarPath}/image-check-token" ]]; then
-      token=$(cat "${anodosysUserVarPath}/image-check-token")
+
+    if [[ -f "${tokenFile}" ]]; then
+      token=$(cat "${tokenFile}")
     else
       token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
-      echo -n "${token}" > "${anodosysUserVarPath}/image-check-token"
+      echo -n "${token}" > "${tokenFile}"
     fi
+
     localId=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.RepoDigests[]')
     localId="${localId##*@}"
     remoteId=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" | jq -r '.images[] .digest')

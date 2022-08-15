@@ -11,6 +11,9 @@ if [[ -z "${action}" ]]; then
 fi
 
 if [[ "${action}" == "list" ]]; then
+#  if [[ -n "${find}" ]]; then
+#  fi
+
   if [[ -f "${anodosysUserPath}/systems.json" ]]; then
     systemNames=( $(jq -r "keys[]" "${anodosysUserPath}/systems.json") )
     startedSystemNames=()

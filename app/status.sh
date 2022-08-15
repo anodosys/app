@@ -29,15 +29,15 @@ if [[ "${action}" == "status" ]]; then
       maxLength="${length}"
     fi
   done
-  printf "%-${maxLength}s" "Container"
+  printf "%-${maxLength}s" "container"
   if [[ "${mode}" == "all" ]]; then
-    echo " | local source image | remote source image | local target image | remote target image | container created | container running"
+    echo " | local source image  | remote source image | local target image  | remote target image | container created   | container running   | container IP    | container ports"
     printf "%${maxLength}s" "" |tr " " "-"
-    echo " | ------------------ | ------------------- | ------------------ | ------------------- | ----------------- | -----------------"
+    echo " | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | --------------- | ---------------"
   elif [[ "${mode}" == "local" ]]; then
-    echo " | local source image | local target image | container created | container running"
+    echo " | local source image  | local target image  | container created   | container running   | container IP    | container ports"
     printf "%${maxLength}s" "" |tr " " "-"
-    echo " | ------------------ | ------------------ | ----------------- | -----------------"
+    echo " | ------------------- | ------------------- | ------------------- | ------------------- | --------------- | ---------------"
   fi
   for serverName in "${serverNames[@]}"; do
     "${anodosysAppPath}/server/status.sh" -s "${serverName}" -l "${maxLength}" -m "${mode}"
