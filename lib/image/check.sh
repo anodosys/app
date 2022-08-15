@@ -5,13 +5,18 @@ if [[ -z "${anodosysUserVarPath}" ]]; then
   exit 1
 fi
 
-imageCheck()
+imageCheckRemote()
 {
   local imageName="${1}"
   local imageTag="${2}"
   local userName="${3}"
   local password="${4}"
-  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+  local tokenTime
+  local token
+  local localId
+  local remoteId
+
+  if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     if [[ -f "${anodosysUserVarPath}/image-check-token" ]]; then
       tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${anodosysUserVarPath}/image-check-token")")
       if [[ "${tokenTime}" -gt 55 ]]; then
@@ -36,4 +41,4 @@ imageCheck()
 }
 
 # shellcheck disable=SC2034
-typeset -fx imageCheck
+typeset -fx imageCheckRemote

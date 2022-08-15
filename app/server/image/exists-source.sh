@@ -64,7 +64,7 @@ fi
 echo "Checking if source image exists: ${imageName}:${imageTag}"
 if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
   echo "Local source image exists"
-elif [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+elif [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
   echo "Remote source image exists"
 else
   >&2 echo "Source image does not exist: ${imageName}:${imageTag}"

@@ -33,7 +33,7 @@ imageRemoveRemote()
   local imageTag="${2}"
   local userName="${3}"
   local password="${4}"
-  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+  if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     echo "Getting access token for user: ${userName}"
     token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
     echo "Removing remote image: ${imageName}:${imageTag}"

@@ -3,7 +3,10 @@
 containerPortList()
 {
   local containerName="${1}"
-  docker container inspect -f "{{ json . }}" "${containerName}" | jq -r ".NetworkSettings .Ports | keys[] // empty"
+
+  if [[ $(containerExists "${containerName}") == 1 ]]; then
+    docker container inspect -f "{{ json . }}" "${containerName}" | jq -r ".NetworkSettings .Ports | keys[] // empty"
+  fi
 }
 
 # shellcheck disable=SC2034
@@ -12,7 +15,10 @@ typeset -fx containerPortList
 containerPortHostList()
 {
   local containerName="${1}"
-  docker container inspect -f "{{ json . }}" "${containerName}" | jq -r ".HostConfig .PortBindings[][] .HostPort // empty"
+
+  if [[ $(containerExists "${containerName}") == 1 ]]; then
+    docker container inspect -f "{{ json . }}" "${containerName}" | jq -r ".HostConfig .PortBindings[][] .HostPort // empty"
+  fi
 }
 
 # shellcheck disable=SC2034

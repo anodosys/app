@@ -66,6 +66,13 @@ fi
 
 if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
   imageRemoveRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}"
+else
+  if [[ -z "${repositoryUserName}" ]]; then
+    >&2 echo "No repository user name for server: ${serverName}"
+  else
+    >&2 echo "No repository password for server: ${serverName}"
+  fi
+  exit 1
 fi
 
 if [[ -n "${afterImageRemoveSourceRemoteScript}" ]]; then

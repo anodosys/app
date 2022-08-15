@@ -70,8 +70,14 @@ if [[ -z "${imageTag}" ]]; then
 fi
 
 if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+  if [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
     imagePull "${imageName}" "${imageTag}"
+  elif [[ -z "${repositoryUserName}" ]]; then
+    >&2 echo "No repository user name for server: ${serverName}"
+    exit 1
+  elif [[ -z "${repositoryPassword}" ]]; then
+    >&2 echo "No repository password for server: ${serverName}"
+    exit 1
   else
     >&2 echo "Target image does not exist: ${imageName}:${imageTag}"
     exit 1
