@@ -5,6 +5,12 @@ if [[ -z "${systemName}" ]]; then
   exit 1
 fi
 
+if [[ -z "${configurationFileName}" ]]; then
+  >&2 echo "No configuration file name specified!"
+  exit 1
+fi
+
 echo "- System start -" | sed $'s,.*,\e[1;37m&\e[m,'
 
+systemAdd "${systemName}" "${configurationFileName}"
 systemStart "${systemName}"

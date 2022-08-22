@@ -14,8 +14,12 @@ systemAdd()
     echo "{}" > "${anodosysUserPath}/systems.json"
   fi
 
-  echo "Adding system with name: ${systemName} and configuration file: ${configurationFile}"
-  $(cd "${anodosysUserPath}"; jq -j ". += {\"${systemName}\":\"${configurationFile}\"}" systems.json | ex -sc 'wq!systems.json' /dev/stdin)
+  if [[ $(jq -r ". | has(\"${systemName}\")" "${anodosysUserPath}/systems.json") == "false" ]]; then
+    echo "Adding system with name: ${systemName} and configuration file: ${configurationFile}"
+    $(cd "${anodosysUserPath}"; jq -j ". += {\"${systemName}\":\"${configurationFile}\"}" systems.json | ex -sc 'wq!systems.json' /dev/stdin)
+  else
+    echo "No need to add system with name: ${systemName}"
+  fi
 }
 
 # shellcheck disable=SC2034
