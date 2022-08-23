@@ -307,6 +307,7 @@ completePath()
     canCompletePath=1
   fi
   if [[ "${canCompletePath}" == 1 ]]; then
+    eval "value=\"${value}\""
     if [[ "${value:0:1}" != "/" ]]; then
       sourceFilePath=$(dirname "${sourceFile}")
       if [[ -f "${sourceFilePath}/${value}" ]]; then
