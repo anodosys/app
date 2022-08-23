@@ -2,7 +2,7 @@
 
 finish()
 {
-  if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
+  if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     # give the output buffer a chance
     sleep 1
     echo "Finished"
@@ -36,7 +36,8 @@ ACTION:
   cmd       Execute a command in a container
   bash      Open a bash shell in a container
   config    Show the complete configuration
-  status    Show an overview of images and containers
+  names     Show the names of images and containers
+  status    Show a current status of images and containers
   list      List all known systems
 
 Example: ${scriptName} build
@@ -136,7 +137,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "systems" ]]; then
+if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "systems" ]]; then
   logName "${systemName}"
 fi
 
@@ -144,5 +145,6 @@ setServerConfiguration "${systemName}" "system"
 
 source "${anodosysAppPath}/cmd.sh"
 source "${anodosysAppPath}/config.sh"
+source "${anodosysAppPath}/names.sh"
 source "${anodosysAppPath}/status.sh"
 source "${anodosysAppPath}/steps.sh"
