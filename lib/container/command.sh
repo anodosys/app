@@ -7,6 +7,7 @@ containerCommand()
   local interactive="${3:-0}"
   local userName="${4}"
   local flags="-t"
+
   if [[ "${interactive}" == 1 ]]; then
     flags+="i"
   fi
@@ -33,11 +34,20 @@ containerCommandQuiet()
   local command="${2}"
   local interactive="${3:-0}"
   local userName="${4}"
+
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     if [[ -z "${userName}" ]] || [[ "${userName}" == "none" ]]; then
-      docker exec "${containerName}" bash -c "${command}"
+      if [[ "${interactive}" == 1 ]]; then
+        docker exec -it "${containerName}" bash -c "${command}"
+      else
+        docker exec "${containerName}" bash -c "${command}"
+      fi
     else
-      docker exec -u "${userName}" "${containerName}" bash -c "${command}"
+      if [[ "${interactive}" == 1 ]]; then
+        docker exec -it -u "${userName}" "${containerName}" bash -c "${command}"
+      else
+        docker exec -u "${userName}" "${containerName}" bash -c "${command}"
+      fi
     fi
   else
     >&2 echo "Container not running: ${containerName}"

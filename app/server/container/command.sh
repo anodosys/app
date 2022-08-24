@@ -18,6 +18,7 @@ OPTIONS:
   -s  Server name
   -c  Command
   -i  Flag if the command show by executed interactively (optional)
+  -q  Flag if the command is hidden
   -u  User name (optional)
 
 Example: ${scriptName} -s web -u www-data -c "/test.sh"
@@ -32,14 +33,16 @@ trim()
 serverName=
 command=
 interactive=0
+quiet=0
 userName=
 
-while getopts hs:c:iu:? option; do
+while getopts hs:c:iqu:? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
     c) command=$(trim "$OPTARG");;
     i) interactive=1;;
+    q) quiet=1;;
     u) userName=$(trim "$OPTARG");;
     ?) usage; exit 1;;
   esac
@@ -68,7 +71,15 @@ if [[ -n "${userName}" ]]; then
       userName=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} | cat" | tr ':' ' ' | awk '{print $1}')
     fi
   fi
-  containerCommand "${containerName}" "${command}" "${interactive}" "${userName}"
+  if [[ "${quiet}" == 0 ]]; then
+    containerCommand "${containerName}" "${command}" "${interactive}" "${userName}"
+  else
+    containerCommandQuiet "${containerName}" "${command}" "${interactive}" "${userName}"
+  fi
 else
-  containerCommand "${containerName}" "${command}" "${interactive}"
+  if [[ "${quiet}" == 0 ]]; then
+    containerCommand "${containerName}" "${command}" "${interactive}"
+  else
+    containerCommandQuiet "${containerName}" "${command}" "${interactive}"
+  fi
 fi

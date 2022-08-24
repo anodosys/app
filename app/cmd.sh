@@ -6,10 +6,12 @@ if [[ -z "${anodosysAppPath}" ]]; then
 fi
 
 interactive=0
+quiet=0
 if [[ "${action}" == "bash" ]]; then
   action="cmd"
   command="bash --rcfile <(echo 'cd ~')"
   interactive=1
+  quiet=1
 fi
 
 if [[ "${action}" == "cmd" ]]; then
@@ -29,9 +31,17 @@ if [[ "${action}" == "cmd" ]]; then
     command=( "${@}" )
   fi
   if [[ "${interactive}" == 1 ]]; then
-    "${anodosysAppPath}/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}" -i
+    if [[ "${quiet}" == 1 ]]; then
+      "${anodosysAppPath}/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}" -i -q
+    else
+      "${anodosysAppPath}/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}" -i
+    fi
   else
-    "${anodosysAppPath}/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}"
+    if [[ "${quiet}" == 1 ]]; then
+      "${anodosysAppPath}/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}" -q
+    else
+      "${anodosysAppPath}/server/container/command.sh" -s "${serverName}" -u "${userName}" -c "${command[@]}"
+    fi
   fi
   exit 0
 fi
