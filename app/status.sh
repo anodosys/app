@@ -21,7 +21,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 
 if [[ "${action}" == "status" ]]; then
-  mode="${2:-local}"
+  mode="${2:-container}"
   maxLength=9
   for serverName in "${serverNames[@]}"; do
     length=$(("${#systemName}" + "${#serverName}" + 1))
@@ -30,14 +30,18 @@ if [[ "${action}" == "status" ]]; then
     fi
   done
   printf "%-${maxLength}s" "container"
-  if [[ "${mode}" == "all" ]]; then
+  if [[ "${mode}" == "remote" ]]; then
     echo " | local source image  | remote source image | local target image  | remote target image | container created   | container running   | container IP    | container ports"
     printf "%${maxLength}s" "" |tr " " "-"
     echo " | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | ------------------- | --------------- | ---------------"
-  elif [[ "${mode}" == "local" ]]; then
+  elif [[ "${mode}" == "image" ]]; then
     echo " | local source image  | local target image  | container created   | container running   | container IP    | container ports"
     printf "%${maxLength}s" "" |tr " " "-"
     echo " | ------------------- | ------------------- | ------------------- | ------------------- | --------------- | ---------------"
+  else
+    echo " | container created   | container running   | container IP    | container ports"
+    printf "%${maxLength}s" "" |tr " " "-"
+    echo " | ------------------- | ------------------- | --------------- | ---------------"
   fi
   for serverName in "${serverNames[@]}"; do
     "${anodosysAppPath}/server/status.sh" -s "${serverName}" -l "${maxLength}" -m "${mode}"

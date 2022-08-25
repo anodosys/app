@@ -51,7 +51,7 @@ if [[ -z "${serverName}" ]]; then
 fi
 
 if [[ -z "${mode}" ]]; then
-  mode="all"
+  mode="container"
 fi
 
 setServerConfiguration "${systemName}" "${serverName}"
@@ -62,18 +62,20 @@ printf "%-${length}s" "${containerName}"
 
 echo -n " | "
 
-if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-  if [[ "${times}" == 1 ]]; then
-    printf '%-19s' "$(imageTime "${imageName}" "${imageTag}")"
+if [[ "${mode}" == "image" ]] || [[ "${mode}" == "remote" ]]; then
+  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
+    if [[ "${times}" == 1 ]]; then
+      printf '%-19s' "$(imageTime "${imageName}" "${imageTag}")"
+    else
+      printf '%-19s' "$(duration "$(imageTime "${imageName}" "${imageTag}" "%s")")"
+    fi
   else
-    printf '%-19s' "$(duration "$(imageTime "${imageName}" "${imageTag}" "%s")")"
+    printf '%-19s' ""
   fi
-else
-  printf '%-19s' ""
+  echo -n " | "
 fi
-echo -n " | "
 
-if [[ "${mode}" == "all" ]]; then
+if [[ "${mode}" == "remote" ]]; then
   if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
     if [[ "${times}" == 1 ]]; then
       printf '%-19s' "$(imageTimeRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}")"
@@ -94,18 +96,20 @@ if [[ -n "${buildImageTag}" ]]; then
   imageTag="${buildImageTag}"
 fi
 
-if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-  if [[ "${times}" == 1 ]]; then
-    printf '%-19s' "$(imageTime "${imageName}" "${imageTag}")"
+if [[ "${mode}" == "image" ]] || [[ "${mode}" == "remote" ]]; then
+  if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
+    if [[ "${times}" == 1 ]]; then
+      printf '%-19s' "$(imageTime "${imageName}" "${imageTag}")"
+    else
+      printf '%-19s' "$(duration "$(imageTime "${imageName}" "${imageTag}" "%s")")"
+    fi
   else
-    printf '%-19s' "$(duration "$(imageTime "${imageName}" "${imageTag}" "%s")")"
+    printf '%-19s' ""
   fi
-else
-  printf '%-19s' ""
+  echo -n " | "
 fi
-echo -n " | "
 
-if [[ "${mode}" == "all" ]]; then
+if [[ "${mode}" == "remote" ]]; then
   if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]] && [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
     if [[ "${times}" == 1 ]]; then
       printf '%-19s' "$(imageTimeRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}")"
