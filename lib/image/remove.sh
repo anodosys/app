@@ -38,19 +38,23 @@ imageRemoveRemote()
   local imageTag="${2}"
   local userName="${3}"
   local password="${4}"
+  local useTokenFile
+  local tokenFile
+  local tokenTime
   local token
   local result
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
+    useTokenFile=0
     tokenFile="${anodosysUserVarPath}/hub_docker_com"
     if [[ -f "${tokenFile}" ]]; then
       tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
-      if [[ "${tokenTime}" -gt 55 ]]; then
-        rm -rf "${tokenFile}"
+      if [[ "${tokenTime}" -lt 55 ]]; then
+        useTokenFile=1
       fi
     fi
 
-    if [[ -f "${tokenFile}" ]]; then
+    if [[ "${useTokenFile}" == 1 ]]; then
       token=$(cat "${tokenFile}")
     else
       token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
