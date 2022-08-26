@@ -70,7 +70,7 @@ steps["build"]="imageNotExistsTarget,action:install,imageRemoveTargetLocal,actio
 steps["rebuild"]="action:remove,action:install,imageRemoveTargetLocal,action:image,action:remove,imageRemoveTargetRemote,action:push"
 steps["pull"]="imageExistsSource,imagePullSource,imagePullTarget"
 steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,containerStart,containerPrepare,containerInstall,containerDismantle"
-steps["image"]="imageCreate"
+steps["image"]="containerExists,containerStop,imageCreate"
 steps["push"]="imageExistsTarget,imagePush"
 steps["clean"]="action:remove,imageRemoveTargetLocal"
 steps["destroy"]="action:clean,imageRemoveSourceLocal,imageRemoveTargetRemote"
@@ -78,7 +78,7 @@ steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,systemAdd,
 steps["start"]="containerExists,containerStart,containerRunning,systemStart"
 steps["restart"]="action:stop,action:start"
 steps["stop"]="containerStop,systemStop"
-steps["remove"]="systemRemove,containerStop,containerRemove,networkRemove"
+steps["remove"]="containerStop,containerRemove,networkRemove,systemRemove"
 
 if [[ -n "${actionStartScript}" ]]; then
   echo "Action start script: ${actionStartScript}"
