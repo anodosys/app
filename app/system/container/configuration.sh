@@ -82,8 +82,6 @@ createConfigurationFile "${systemName}" "system"
 
 setServerConfiguration "${systemName}" "system"
 
-echo "- Container configuration -" | sed $'s,.*,\e[1;37m&\e[m,'
-
 if [[ -z "${serverNames}" ]]; then
   >&2 echo "No server names specified!"
   exit 1
