@@ -4,7 +4,9 @@ imagePull()
 {
   local imageName="${1}"
   local imageTag="${2}"
-  if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
+  local force="${3:-no}"
+
+  if [[ "${force}" == "yes" ]] || [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
     echo "Pulling image: ${imageName}:${imageTag}"
     logDisable
     docker pull "${imageName}:${imageTag}"

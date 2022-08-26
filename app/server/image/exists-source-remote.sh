@@ -46,9 +46,9 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeImageExistsSourceScript}" ]]; then
-  echo "Before source image exists script: ${beforeImageExistsSourceScript}"
-  "${beforeImageExistsSourceScript}"
+if [[ -n "${beforeImageExistsSourceRemoteScript}" ]]; then
+  echo "Before source image exists remote script: ${beforeImageExistsSourceRemoteScript}"
+  "${beforeImageExistsSourceRemoteScript}"
 fi
 
 if [[ -z "${imageName}" ]]; then
@@ -61,10 +61,8 @@ if [[ -z "${imageTag}" ]]; then
   exit 1
 fi
 
-echo "Checking if source image exists: ${imageName}:${imageTag}"
-if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-  echo "Local source image exists"
-elif [[ -z "${repositoryUserName}" ]]; then
+echo "Checking if remote source image exists: ${imageName}:${imageTag}"
+if [[ -z "${repositoryUserName}" ]]; then
   >&2 echo "No repository user name for server: ${serverName}"
   exit 1
 elif [[ -z "${repositoryPassword}" ]]; then
@@ -73,11 +71,11 @@ elif [[ -z "${repositoryPassword}" ]]; then
 elif [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
   echo "Remote source image exists"
 else
-  >&2 echo "Source image does not exist: ${imageName}:${imageTag}"
+  >&2 echo "Remot source image does not exist: ${imageName}:${imageTag}"
   exit 1
 fi
 
-if [[ -n "${afterImageExistsSourceScript}" ]]; then
-  echo "After source image exists script: ${afterImageExistsSourceScript}"
-  "${afterImageExistsSourceScript}"
+if [[ -n "${afterImageExistsSourceRemoteScript}" ]]; then
+  echo "After source image exists remote script: ${afterImageExistsSourceRemoteScript}"
+  "${afterImageExistsSourceRemoteScript}"
 fi

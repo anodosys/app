@@ -46,38 +46,44 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeImageExistsSourceScript}" ]]; then
-  echo "Before source image exists script: ${beforeImageExistsSourceScript}"
-  "${beforeImageExistsSourceScript}"
+if [[ -n "${beforeImageExistsTargetRemoteScript}" ]]; then
+  echo "Before image exists target remote script: ${beforeImageExistsTargetRemoteScript}"
+  "${beforeImageExistsTargetRemoteScript}"
+fi
+
+if [[ -n "${buildImageName}" ]]; then
+  imageName="${buildImageName}"
+fi
+
+if [[ -n "${buildImageTag}" ]]; then
+  imageTag="${buildImageTag}"
 fi
 
 if [[ -z "${imageName}" ]]; then
-  >&2 echo "No source image name for server: ${serverName}"
+  >&2 echo "No target image name for server: ${serverName}"
   exit 1
 fi
 
 if [[ -z "${imageTag}" ]]; then
-  >&2 echo "No source image tag for server: ${serverName}"
+  >&2 echo "No target image tag for server: ${serverName}"
   exit 1
 fi
 
-echo "Checking if source image exists: ${imageName}:${imageTag}"
-if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-  echo "Local source image exists"
-elif [[ -z "${repositoryUserName}" ]]; then
+echo "Checking if remote target image exists: ${imageName}:${imageTag}"
+if [[ -z "${repositoryUserName}" ]]; then
   >&2 echo "No repository user name for server: ${serverName}"
   exit 1
 elif [[ -z "${repositoryPassword}" ]]; then
   >&2 echo "No repository password for server: ${serverName}"
   exit 1
 elif [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
-  echo "Remote source image exists"
+  echo "Remote target image exists"
 else
-  >&2 echo "Source image does not exist: ${imageName}:${imageTag}"
+  >&2 echo "Remote target image does not exist: ${imageName}:${imageTag}"
   exit 1
 fi
 
-if [[ -n "${afterImageExistsSourceScript}" ]]; then
-  echo "After source image exists script: ${afterImageExistsSourceScript}"
-  "${afterImageExistsSourceScript}"
+if [[ -n "${afterImageExistsTargetRemoteScript}" ]]; then
+  echo "After image exists target remote script: ${afterImageExistsTargetRemoteScript}"
+  "${afterImageExistsTargetRemoteScript}"
 fi

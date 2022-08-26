@@ -72,7 +72,13 @@ fi
 echo "Checking if target image exists: ${imageName}:${imageTag}"
 if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
   echo "Local target image exists"
-elif [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+elif [[ -z "${repositoryUserName}" ]]; then
+  >&2 echo "No repository user name for server: ${serverName}"
+  exit 1
+elif [[ -z "${repositoryPassword}" ]]; then
+  >&2 echo "No repository password for server: ${serverName}"
+  exit 1
+elif [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
   echo "Remote target image exists"
 else
   >&2 echo "Target image does not exist: ${imageName}:${imageTag}"

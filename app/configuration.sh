@@ -240,7 +240,13 @@ completePath()
   if [[ "${key}" == "beforeImageExistsSourceScript" ]] || [[ "${key}" == "imageExistsSourceScript" ]] || [[ "${key}" == "afterImageExistsSourceScript" ]]; then
     canCompletePath=1
   fi
+  if [[ "${key}" == "beforeImageExistsSourceRemoteScript" ]] || [[ "${key}" == "imageExistsSourceRemoteScript" ]] || [[ "${key}" == "afterImageExistsSourceRemoteScript" ]]; then
+    canCompletePath=1
+  fi
   if [[ "${key}" == "beforeImageExistsTargetScript" ]] || [[ "${key}" == "imageExistsTargetScript" ]] || [[ "${key}" == "afterImageExistsTargetScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeImageExistsTargetRemoteScript" ]] || [[ "${key}" == "imageExistsTargetRemoteScript" ]] || [[ "${key}" == "afterImageExistsTargetRemoteScript" ]]; then
     canCompletePath=1
   fi
   if [[ "${key}" == "beforeImageNotExistsTargetScript" ]] || [[ "${key}" == "imageNotExistsTargetScript" ]] || [[ "${key}" == "afterImageNotExistsTargetScript" ]]; then
