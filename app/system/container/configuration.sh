@@ -15,22 +15,61 @@ if [[ -z "${anodosysUserVarConfigurationPath}" ]]; then
   exit 1
 fi
 
+scriptName="${0##*/}"
+
+usage()
+{
+cat >&2 << EOF
+
+usage: ${scriptName} options
+
+OPTIONS:
+  -h  Show this message
+  -c  Configuration hash
+
+Example: ${scriptName} -c 1234567890
+EOF
+}
+
+trim()
+{
+  echo -n "$1" | xargs
+}
+
 createConfigurationFile()
 {
-  local systemName="${1}"
+  local configurationHash="${1}"
   local serverName="${2}"
   local configurationFile
 
-  configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_${serverName}.ini"
-  echo "Create configuration file at: ${configurationFile}"
-  rm -rf "${configurationFile}"
-  touch "${configurationFile}"
-  echo "#!/bin/bash -e" >> "${configurationFile}"
+  configurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${serverName}.ini"
+  if [[ ! -f "${configurationFile}" ]]; then
+    echo "Create configuration file at: ${configurationFile}"
+    rm -rf "${configurationFile}"
+    touch "${configurationFile}"
+    echo "#!/bin/bash -e" >> "${configurationFile}"
 
-  "${anodosysAppPath}/prepare-configuration.sh" \
-    -s "${serverName}" \
-    -o >> "${configurationFile}"
+    "${anodosysAppPath}/prepare-configuration.sh" \
+      -s "${serverName}" \
+      -o >> "${configurationFile}"
+  fi
 }
+
+configurationHash=
+
+while getopts hc:? option; do
+  case "${option}" in
+    h) usage; exit 1;;
+    c) configurationHash=$(trim "$OPTARG");;
+    ?) usage; exit 1;;
+  esac
+done
+
+if [[ -z "${configurationHash}" ]]; then
+  >&2 echo "No configuration hash specified!"
+  usage
+  exit 1
+fi
 
 systemName=$(jq -r '.global .systemName //empty' "${anodosysConfigurationFile}")
 
@@ -42,8 +81,6 @@ fi
 createConfigurationFile "${systemName}" "system"
 
 setServerConfiguration "${systemName}" "system"
-
-echo "- Container configuration -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 if [[ -z "${serverNames}" ]]; then
   >&2 echo "No server names specified!"
@@ -57,12 +94,19 @@ fi
 
 processIds=( )
 for serverName in "${serverNames[@]}"; do
-  createConfigurationFile "${systemName}" "${serverName}" &
+  createConfigurationFile "${configurationHash}" "${serverName}" &
   processIds+=( $! )
 done
 
 for processId in ${processIds[*]}; do
   wait "${processId}"
+done
+
+for serverName in "${serverNames[@]}"; do
+  configurationHashFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${serverName}.ini"
+  configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_${serverName}.ini"
+
+  cp "${configurationHashFile}" "${configurationFile}"
 done
 
 if [[ -n "${afterContainerConfigurationScript}" ]]; then
