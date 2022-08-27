@@ -78,7 +78,12 @@ if [[ -z "${systemName}" ]]; then
   exit 1
 fi
 
-createConfigurationFile "${systemName}" "system"
+createConfigurationFile "${configurationHash}" "system"
+
+configurationHashFile="${anodosysUserVarConfigurationPath}/${configurationHash}_system.ini"
+configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_system.ini"
+
+cp "${configurationHashFile}" "${configurationFile}"
 
 setServerConfiguration "${systemName}" "system"
 

@@ -23,6 +23,14 @@ currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
 declare -A processedServerNameList
 
+for serverName in "${serverNames[@]}"; do
+  containerName="${systemName}_${serverName}"
+  if [[ $(containerExists "${containerName}") == 0 ]]; then
+    echo "No need to remove container: ${containerName}"
+    processedServerNameList["${serverName}"]=1
+  fi
+done
+
 while : ; do
   declare -A processIds
   for serverName in "${serverNames[@]}"; do
