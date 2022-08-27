@@ -2,7 +2,7 @@
 
 finish()
 {
-  if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
+  if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     # give the output buffer a chance
     sleep 1
     echo "Finished"
@@ -37,6 +37,7 @@ ACTION:
   bash      Open a bash shell in a container
   config    Show the complete configuration
   names     Show the names of images and containers
+  volumes   Show the details of all volumes
   status    Show a current status of images and containers
   list      List all known systems
 
@@ -137,7 +138,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "systems" ]]; then
+if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "systems" ]]; then
   logName "${systemName}"
 fi
 
@@ -146,5 +147,6 @@ setServerConfiguration "${systemName}" "system"
 source "${anodosysAppPath}/cmd.sh"
 source "${anodosysAppPath}/config.sh"
 source "${anodosysAppPath}/names.sh"
+source "${anodosysAppPath}/volumes.sh"
 source "${anodosysAppPath}/status.sh"
 source "${anodosysAppPath}/steps.sh"

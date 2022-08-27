@@ -20,7 +20,6 @@ containerCreate()
   local targetUser
   local mode
   local sourceName
-  local volumeNames
   local volumeName
   local result
 
