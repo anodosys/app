@@ -15,8 +15,11 @@ imageCheckRemote()
   local tokenFile
   local tokenTime
   local token
+  local remoteData
   local localId
   local remoteId
+  local localTimestamp
+  local remoteTimestamp
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     useTokenFile=0
@@ -37,10 +40,15 @@ imageCheckRemote()
 
     localId=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.RepoDigests[]')
     localId="${localId##*@}"
-    remoteId=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" | jq -r '.images[] .digest')
+    remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/")
+    remoteId=$(echo "${remoteData}" | jq -r '.images[] .digest')
     if [[ "${localId}" != "${remoteId}" ]]; then
-      echo 1
-      exit 0
+      localTimestamp=$(date -d "$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.Created')" +%s)
+      remoteTimestamp=$(date -d "$(echo "${remoteData}" | jq -r '.images[] .last_pushed')" +%s)
+      if [[ "${remoteTimestamp}" -gt "${localTimestamp}" ]]; then
+        echo 1
+        exit 0
+      fi
     fi
   fi
   echo 0
