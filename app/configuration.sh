@@ -107,6 +107,9 @@ collectConfigurationFiles()
 
 prepareConfigurationFiles()
 {
+  local mainConfigurationFileName="${1}"
+  local mainConfigurationFileContentHash
+  shift
   local configurationFiles=( "${@}" )
   local configurationFile
   local configurationFileNameHash
@@ -116,11 +119,13 @@ prepareConfigurationFiles()
   local configurationJson
   local preparedConfigurationJson
 
+  mainConfigurationFileContentHash=$(md5sum "${mainConfigurationFileName}" | awk '{print $1}')
+
   preparedConfigurationFiles=( )
   for configurationFile in "${configurationFiles[@]}"; do
     configurationFileNameHash=$(echo "${configurationFile}" | md5sum | awk '{print $1}')
     configurationFileContentHash=$(md5sum "${configurationFile}" | awk '{print $1}')
-    preparedConfigurationFile="${anodosysUserVarConfigurationPath}/${configurationFileNameHash}_${configurationFileContentHash}.json"
+    preparedConfigurationFile="${anodosysUserVarConfigurationPath}/${mainConfigurationFileContentHash}_${configurationFileNameHash}_${configurationFileContentHash}.json"
     if [[ ! -f "${preparedConfigurationFile}" ]]; then
       >&2 echo "Preparing configuration file at: ${configurationFile}"
       configurationJson=$(cat "${configurationFile}")
@@ -398,7 +403,7 @@ export configurationFileName
 
 configurationFiles=( $(collectConfigurationFiles "${configurationFileName}") )
 configurationFiles=( $(tr ' ' '\n' <<<"${configurationFiles[@]}" | awk '!u[$0]++' | tr '\n' ' ') )
-configurationFiles=( $(prepareConfigurationFiles "${configurationFiles[@]}") )
+configurationFiles=( $(prepareConfigurationFiles "${configurationFileName}" "${configurationFiles[@]}") )
 configurationHash=$(for configurationFile in "${configurationFiles[@]}"; do md5sum "${configurationFile}"; done | md5sum | awk '{print $1}')
 anodosysConfigurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}.json"
 export anodosysConfigurationFile
