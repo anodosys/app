@@ -9,6 +9,7 @@ finish()
   local runningProcessId
 
   if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
+    lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
     if [[ -n "${sessionId}" ]]; then
@@ -30,7 +31,7 @@ finish()
     done
     # give the output buffer a chance
     sleep 1
-    if [[ "${#subProcessIds[@]}" -gt 0 ]]; then
+    if [[ "${#lastExitCode[@]}" -gt 0 ]]; then
       >&2 echo "Finished unexpectedly"
     else
       echo "Finished"
