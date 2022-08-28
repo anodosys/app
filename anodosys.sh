@@ -3,6 +3,10 @@
 finish()
 {
   local processId
+  local subProcessIds
+  local subProcessId
+  local runningProcessIds
+  local runningProcessId
 
   if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     processId=$$
