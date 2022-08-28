@@ -12,6 +12,7 @@ finish()
     lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
+    sessionId=$(prepareValue "${sessionId}")
     if [[ -n "${sessionId}" ]]; then
       subProcessIds=( $(ps --forest -o pid,cmd -g "${sessionId}" | tail -n +2 | grep -e "[[:space:]]*[0-9]\+[[:space:]][^[:space:]]" | grep -e "\.sh" | awk '{print $1}') )
     else
@@ -31,7 +32,7 @@ finish()
     done
     # give the output buffer a chance
     sleep 1
-    if [[ "${#lastExitCode[@]}" -gt 0 ]]; then
+    if [[ "${lastExitCode}" -gt 0 ]]; then
       >&2 echo "Finished unexpectedly"
     else
       echo "Finished"
