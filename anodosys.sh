@@ -10,7 +10,12 @@ finish()
 
   if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     processId=$$
-    subProcessIds=( $(ps --forest -o pid,cmd -g "$(ps -o sid= -p ${processId})" | tail -n +2 | grep -e "[[:space:]]*[0-9]\+[[:space:]][^[:space:]]" | grep -e "\.sh" | awk '{print $1}') )
+    sessionId=$(ps -o sid= -p ${processId})
+    if [[ -n "${sessionId}" ]]; then
+      subProcessIds=( $(ps --forest -o pid,cmd -g "${sessionId}" | tail -n +2 | grep -e "[[:space:]]*[0-9]\+[[:space:]][^[:space:]]" | grep -e "\.sh" | awk '{print $1}') )
+    else
+      subProcessIds=()
+    fi
     declare -A runningProcessIds
     for subProcessId in "${subProcessIds[@]}"; do
       runningProcessIds["${subProcessId}"]=0
