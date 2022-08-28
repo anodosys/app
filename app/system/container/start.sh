@@ -44,7 +44,8 @@ while : ; do
         else
           "${currentPath}/../../server/container/start.sh" -s "${serverName}" &
         fi
-        processIds["${serverName}"]=$!
+        processId=$!
+        processIds["${serverName}"]="${processId}"
       fi
     fi
   done

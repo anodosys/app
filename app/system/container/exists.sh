@@ -34,7 +34,8 @@ for serverName in "${serverNames[@]}"; do
   else
     "${currentPath}/../../server/container/exists.sh" -s "${serverName}" &
   fi
-  processIds["${serverName}"]=$!
+  processId=$!
+  processIds["${serverName}"]="${processId}"
 done
 
 for serverName in "${!processIds[@]}"; do

@@ -100,7 +100,8 @@ fi
 processIds=( )
 for serverName in "${serverNames[@]}"; do
   createConfigurationFile "${configurationHash}" "${serverName}" &
-  processIds+=( $! )
+  processId=$!
+  processIds+=( "${processId}" )
 done
 
 for processId in ${processIds[*]}; do

@@ -48,7 +48,8 @@ while : ; do
         else
           "${currentPath}/../../server/container/remove.sh" -s "${serverName}" &
         fi
-        processIds["${serverName}"]=$!
+        processId=$!
+        processIds["${serverName}"]="${processId}"
       fi
     fi
   done

@@ -40,7 +40,8 @@ while : ; do
         else
           "${currentPath}/../../server/container/prepare.sh" -s "${serverName}" &
         fi
-        processIds["${serverName}"]=$!
+        processId=$!
+        processIds["${serverName}"]="${processId}"
       fi
     fi
   done

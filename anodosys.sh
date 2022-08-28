@@ -2,10 +2,30 @@
 
 finish()
 {
+  local processId
+
   if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
+    processId=$$
+    subProcessIds=( $(ps --forest -o pid,cmd -g "$(ps -o sid= -p ${processId})" | tail -n +2 | grep -e "[[:space:]]*[0-9]\+[[:space:]][^[:space:]]" | grep -e "\.sh" | awk '{print $1}') )
+    declare -A runningProcessIds
+    for subProcessId in "${subProcessIds[@]}"; do
+      runningProcessIds["${subProcessId}"]=0
+    done
+    while [[ "${#runningProcessIds[@]}" -gt 0 ]]; do
+      sleep 0.5
+      for runningProcessId in "${!runningProcessIds[@]}"; do
+        if [[ $(ps -p "${runningProcessId}" | wc -l) -eq 1 ]]; then
+          unset runningProcessIds["${runningProcessId}"]
+        fi
+      done
+    done
     # give the output buffer a chance
     sleep 1
-    echo "Finished"
+    if [[ "${#subProcessIds[@]}" -gt 0 ]]; then
+      >&2 echo "Finished unexpectedly"
+    else
+      echo "Finished"
+    fi
   fi
 }
 

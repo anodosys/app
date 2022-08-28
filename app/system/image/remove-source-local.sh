@@ -34,7 +34,8 @@ for serverName in "${serverNames[@]}"; do
   else
     "${currentPath}/../../server/image/remove-source-local.sh" -s "${serverName}" &
   fi
-  processIds["${serverName}"]=$!
+  processId=$!
+  processIds["${serverName}"]="${processId}"
 done
 
 for serverName in "${!processIds[@]}"; do

@@ -29,7 +29,8 @@ for serverName in "${serverNames[@]}"; do
   fi
 
   "${currentPath}/../../server/image/exists-target.sh" -s "${serverName}" &
-  processIds["${serverName}"]=$!
+  processId=$!
+  processIds["${serverName}"]="${processId}"
 done
 
 for serverName in "${!processIds[@]}"; do

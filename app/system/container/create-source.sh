@@ -40,7 +40,8 @@ while : ; do
         else
           "${currentPath}/../../server/container/create-source.sh" -s "${serverName}" &
         fi
-        processIds["${serverName}"]=$!
+        processId=$!
+        processIds["${serverName}"]="${processId}"
       fi
     fi
   done
