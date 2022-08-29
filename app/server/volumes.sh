@@ -54,7 +54,9 @@ for containerVolume in "${containerVolumes[@]}"; do
 
   readarray -d : -t containerVolumeParts < <(printf '%s' "${containerVolume}")
   sourcePath="${containerVolumeParts[0]}"
-  sourcePath=$(realpath "${sourcePath}")
+  if [[ -d "${sourcePath}" ]]; then
+    sourcePath=$(realpath "${sourcePath}")
+  fi
   targetPath="${containerVolumeParts[1]}"
   if test "${containerVolumeParts[2]+isset}"; then
     targetUser="${containerVolumeParts[2]}"

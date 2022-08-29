@@ -12,6 +12,7 @@ ACTION:
   add     Add extension
   update  Update extension
   remove  Remove extension
+  reset   Reset extension
 
 Example: ${scriptName} add example git git@bitbucket.org:org/example.git
 EOF
@@ -93,7 +94,7 @@ if [[ "${action}" == "help" ]]; then
   exit 1
 fi
 
-if [[ "${action}" != "add" ]] && [[ "${action}" != "update" ]] && [[ "${action}" != "remove" ]]; then
+if [[ "${action}" != "add" ]] && [[ "${action}" != "update" ]] && [[ "${action}" != "remove" ]] && [[ "${action}" != "reset" ]]; then
   >&2 echo "Invalid action: ${action} defined!"
   usage
   exit 1
@@ -161,14 +162,16 @@ if [[ "${action}" == "remove" ]]; then
   exit 0
 fi
 
-if [[ -d "${anodosysPath}/${extensionName}" ]]; then
-  >&2 echo "Extension already added in: ${anodosysPath}/${extensionName}"
-  exit 1
-fi
+if [[ "${action}" == "add" ]]; then
+  if [[ -d "${anodosysPath}/${extensionName}" ]]; then
+    >&2 echo "Extension already added in: ${anodosysPath}/${extensionName}"
+    exit 1
+  fi
 
-if [[ -d "${anodosysUserExtensionPath}/${extensionName}" ]]; then
-  >&2 echo "Extension already added in: ${anodosysUserExtensionPath}/${extensionName}"
-  exit 1
+  if [[ -d "${anodosysUserExtensionPath}/${extensionName}" ]]; then
+    >&2 echo "Extension already added in: ${anodosysUserExtensionPath}/${extensionName}"
+    exit 1
+  fi
 fi
 
 type="${3}"
