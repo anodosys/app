@@ -44,7 +44,7 @@ createConfigurationFile()
 
   configurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${serverName}.ini"
   if [[ ! -f "${configurationFile}" ]]; then
-    echo "Create configuration file at: ${configurationFile}"
+    #echo "Creating configuration file at: ${configurationFile}"
     rm -rf "${configurationFile}"
     touch "${configurationFile}"
     echo "#!/bin/bash -e" >> "${configurationFile}"
