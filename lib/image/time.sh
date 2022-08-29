@@ -38,7 +38,7 @@ imageTimeRemote()
     tokenFile="${anodosysUserVarPath}/auth/docker_io_$(echo "${imageName}" | sed 's/[^[:alnum:]]/_/g')"
     if [[ -f "${tokenFile}" ]]; then
       tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
-      if [[ "${tokenTime}" -lt 295 ]]; then
+      if [[ "${tokenTime}" -lt 55 ]]; then
         useTokenFile=1
       fi
     fi

@@ -302,6 +302,9 @@ completePath()
   if [[ "${key}" == "beforeContainerRunningScript" ]] || [[ "${key}" == "containerRunningScript" ]] || [[ "${key}" == "afterContainerRunningScript" ]]; then
     canCompletePath=1
   fi
+  if [[ "${key}" == "beforeContainerNotRunningScript" ]] || [[ "${key}" == "containerNotRunningScript" ]] || [[ "${key}" == "afterContainerNotRunningScript" ]]; then
+    canCompletePath=1
+  fi
   if [[ "${key}" == "beforeContainerPrepareScript" ]] || [[ "${key}" == "containerPrepareScript" ]] || [[ "${key}" == "afterContainerPrepareScript" ]]; then
     canCompletePath=1
   fi
@@ -315,6 +318,15 @@ completePath()
     canCompletePath=1
   fi
   if [[ "${key}" == "beforeContainerRemoveScript" ]] || [[ "${key}" == "containerRemoveScript" ]] || [[ "${key}" == "afterContainerRemoveScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeSystemStartScript" ]] || [[ "${key}" == "sytemStartScript" ]] || [[ "${key}" == "afterSystemStartScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeSystemStopScript" ]] || [[ "${key}" == "systemStopScript" ]] || [[ "${key}" == "afterSystemStopScript" ]]; then
+    canCompletePath=1
+  fi
+  if [[ "${key}" == "beforeSystemRemoveScript" ]] || [[ "${key}" == "systemRemoveScript" ]] || [[ "${key}" == "afterSystemRemoveScript" ]]; then
     canCompletePath=1
   fi
   if [[ "${canCompletePath}" == 1 ]]; then

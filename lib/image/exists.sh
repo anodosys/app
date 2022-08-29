@@ -33,7 +33,7 @@ imageExistsRemote()
   tokenFile="${anodosysUserVarPath}/auth/docker_io_$(echo "${imageName}" | sed 's/[^[:alnum:]]/_/g')"
   if [[ -f "${tokenFile}" ]]; then
     tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
-    if [[ "${tokenTime}" -lt 295 ]]; then
+    if [[ "${tokenTime}" -lt 55 ]]; then
       useTokenFile=1
     fi
   fi
@@ -47,7 +47,7 @@ imageExistsRemote()
 
   status=$(curl -s -w "%{http_code}" -o /dev/null -X GET -H "Authorization:Bearer ${token}" "https://registry-1.docker.io/v2/${imageName}/manifests/${imageTag}" | cat)
   if [[ "${status}" == 401 ]]; then
-    >&2 echo "Could not check remote image ${imageName}:${imageTag} because: unauthorized"
+    >&2 echo "Could not check remote image ${imageName}:${imageTag} exits because: unauthorized"
     exit 1
   else
     touch "${tokenFile}"

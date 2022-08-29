@@ -5,6 +5,11 @@ if [[ -z "${systemName}" ]]; then
   exit 1
 fi
 
+if [[ -z "${force}" ]]; then
+  >&2 echo "No force status specified!"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -55,7 +60,9 @@ containerName="${systemName}_${serverName}"
 
 if [[ $(containerExists "${containerName}") == 1 ]]; then
   >&2 echo "Container already exists: ${containerName}"
-  exit 1
+  if [[ "${force}" == 0 ]]; then
+    exit 1
+  fi
 else
   echo "Container does not exist: ${containerName}"
 fi

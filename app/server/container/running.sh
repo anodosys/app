@@ -1,0 +1,86 @@
+#!/bin/bash -e
+
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
+  exit 1
+fi
+
+if [[ -z "${force}" ]]; then
+  >&2 echo "No force status specified!"
+  exit 1
+fi
+
+scriptName="${0##*/}"
+
+usage()
+{
+cat >&2 << EOF
+
+usage: ${scriptName} options
+
+OPTIONS:
+  -h  Show this message
+  -s  Server name
+
+Example: ${scriptName} -s web
+EOF
+}
+
+trim()
+{
+  echo -n "$1" | xargs
+}
+
+serverName=
+
+while getopts hs:? option; do
+  case "${option}" in
+    h) usage; exit 1;;
+    s) serverName=$(trim "$OPTARG");;
+    ?) usage; exit 1;;
+  esac
+done
+
+if [[ -z "${serverName}" ]]; then
+  >&2 echo "No server name specified!"
+  usage
+  exit 1
+fi
+
+logName "${systemName}" "${serverName}"
+
+setServerConfiguration "${systemName}" "${serverName}"
+
+if [[ -n "${beforeContainerRunningScript}" ]]; then
+  echo "Before container running script: ${beforeContainerRunningScript}"
+  if [[ -n "${beforeContainerRunningParameters}" ]]; then
+    "${beforeContainerRunningScript}" "${beforeContainerRunningParameters[@]}"
+  else
+    "${beforeContainerRunningScript}"
+  fi
+fi
+
+if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
+  echo "Image requires interactive run"
+  exit 0
+fi
+
+containerName="${systemName}_${serverName}"
+
+if [[ $(containerRunning "${containerName}") == 0 ]]; then
+  >&2 echo "Container not running: ${containerName}"
+  if [[ "${force}" == 0 ]]; then
+    exit 1
+  fi
+else
+  echo "Container running: ${containerName}"
+fi
+
+if [[ -n "${afterContainerRunningScript}" ]]; then
+  echo "After container running script: ${afterContainerRunningScript}"
+  if [[ -n "${afterContainerRunningParameters}" ]]; then
+    "${afterContainerRunningScript}" "${afterContainerRunningParameters[@]}"
+  else
+    "${afterContainerRunningScript}"
+  fi
+fi

@@ -51,23 +51,31 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeContainerExistsScript}" ]]; then
-  echo "Before container exists script: ${beforeContainerExistsScript}"
-  "${beforeContainerExistsScript}"
+if [[ -n "${beforeContainerNotRunningScript}" ]]; then
+  echo "Before container not running script: ${beforeContainerNotRunningScript}"
+  if [[ -n "${beforeContainerNotRunningParameters}" ]]; then
+    "${beforeContainerNotRunningScript}" "${beforeContainerNotRunningParameters[@]}"
+  else
+    "${beforeContainerNotRunningScript}"
+  fi
 fi
 
 containerName="${systemName}_${serverName}"
 
-if [[ $(containerExists "${containerName}") == 0 ]]; then
-  >&2 echo "Container does not exist: ${containerName}"
+if [[ $(containerRunning "${containerName}") == 1 ]]; then
+  >&2 echo "Container already running: ${containerName}"
   if [[ "${force}" == 0 ]]; then
     exit 1
   fi
 else
-  echo "Container exists: ${containerName}"
+  echo "Container not running: ${containerName}"
 fi
 
-if [[ -n "${afterContainerExistsScript}" ]]; then
-  echo "After container exists script: ${afterContainerExistsScript}"
-  "${afterContainerExistsScript}"
+if [[ -n "${afterContainerNotRunningScript}" ]]; then
+  echo "After container not running script: ${afterContainerNotRunningScript}"
+  if [[ -n "${afterContainerNotRunningParameters}" ]]; then
+    "${afterContainerNotRunningScript}" "${afterContainerNotRunningParameters[@]}"
+  else
+    "${afterContainerNotRunningScript}"
+  fi
 fi

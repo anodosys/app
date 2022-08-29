@@ -7,16 +7,16 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-echo "- Container running -" | sed $'s,.*,\e[1;37m&\e[m,'
+echo "- Container not running -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 if [[ -z "${serverNames}" ]]; then
   >&2 echo "No server names specified!"
   exit 1
 fi
 
-if [[ -n "${beforeContainerRunningScript}" ]]; then
-  echo "Before container running script: ${beforeContainerRunningScript}"
-  "${beforeContainerRunningScript}"
+if [[ -n "${beforeContainerNotRunningScript}" ]]; then
+  echo "Before container not running script: ${beforeContainerNotRunningScript}"
+  "${beforeContainerNotRunningScript}"
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -27,11 +27,11 @@ for serverName in "${serverNames[@]}"; do
     continue
   fi
 
-  runningScript="${PWD}/${serverName}/container/running.sh"
-  if [[ -f "${runningScript}" ]]; then
-    "${runningScript}" -s "${serverName}" &
+  notRunningScript="${PWD}/${serverName}/container/not-running.sh"
+  if [[ -f "${notRunningScript}" ]]; then
+    "${notRunningScript}" -s "${serverName}" &
   else
-    "${currentPath}/../../server/container/running.sh" -s "${serverName}" &
+    "${currentPath}/../../server/container/not-running.sh" -s "${serverName}" &
   fi
   processId=$!
   processIds["${serverName}"]="${processId}"
@@ -42,7 +42,7 @@ for serverName in "${!processIds[@]}"; do
   wait "${processId}"
 done
 
-if [[ -n "${afterContainerRunningScript}" ]]; then
-  echo "After container running script: ${afterContainerRunningScript}"
-  "${afterContainerRunningScript}"
+if [[ -n "${afterContainerNotRunningScript}" ]]; then
+  echo "After container not running script: ${afterContainerNotRunningScript}"
+  "${afterContainerNotRunningScript}"
 fi
