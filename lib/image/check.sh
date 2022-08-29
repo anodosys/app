@@ -41,8 +41,10 @@ imageCheckRemote()
 
     localId=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.RepoDigests[]')
     localId="${localId##*@}"
+
     remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/")
     touch "${tokenFile}"
+
     remoteId=$(echo "${remoteData}" | jq -r '.images[] .digest')
     if [[ "${localId}" != "${remoteId}" ]]; then
       localTimestamp=$(date -d "$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.Created')" +%s)

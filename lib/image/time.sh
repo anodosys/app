@@ -26,22 +26,24 @@ imageTimeRemote()
   local userName="${3}"
   local password="${4}"
   local format="${5:-"%Y-%m-%d %H:%M:%S"}"
+  local useTokenFile
   local tokenFile
   local tokenTime
   local token
   local time
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
+    useTokenFile=0
     mkdir -p "${anodosysUserVarPath}/auth"
     tokenFile="${anodosysUserVarPath}/auth/docker_io_$(echo "${imageName}" | sed 's/[^[:alnum:]]/_/g')"
     if [[ -f "${tokenFile}" ]]; then
       tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
       if [[ "${tokenTime}" -gt 295 ]]; then
-        rm -rf "${tokenFile}"
+        useTokenFile=1
       fi
     fi
 
-    if [[ -f "${tokenFile}" ]]; then
+    if [[ "${useTokenFile}" == 1 ]]; then
       token=$(cat "${tokenFile}")
     else
       token=$(curl -s --user "${userName}:${password}" "https://auth.docker.io/token?service=registry.docker.io&scope=repository:${imageName}:pull" | jq -r '.token')
@@ -49,9 +51,10 @@ imageTimeRemote()
     fi
 
     time=$(curl -s -X GET -H "Authorization:Bearer ${token}" "https://registry-1.docker.io/v2/${imageName}/manifests/${imageTag}" | jq -r '.history[].v1Compatibility' | jq '.created' | sort | tail -n1)
+    touch "${tokenFile}"
+
     time=$(prepareValue "${time}")
     date --date="${time}" "+${format}"
-    touch "${tokenFile}"
   fi
 }
 

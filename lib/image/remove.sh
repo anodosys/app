@@ -66,6 +66,7 @@ imageRemoveRemote()
 
     logDisable
     result=$(curl -s -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
+    touch "${tokenFile}"
     logEnable
 
     if [[ -z "${result}" ]]; then
