@@ -42,8 +42,14 @@ imageCheckRemote()
     localId=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.RepoDigests[]')
     localId="${localId##*@}"
 
-    remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/")
-    touch "${tokenFile}"
+    remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" | cat)
+    error=$(echo "${remoteData}" | jq -r '.error //empty')
+    if [[ "${error}" == "true" ]]; then
+      >&2 echo "Could not check remote image ${imageName}:${imageTag} because: $(echo "${remoteData}" | jq -r '.detail //empty')"
+      exit 1
+    else
+      touch "${tokenFile}"
+    fi
 
     remoteId=$(echo "${remoteData}" | jq -r '.images[] .digest')
     if [[ "${localId}" != "${remoteId}" ]]; then

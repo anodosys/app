@@ -42,7 +42,7 @@ imageRemoveRemote()
   local tokenFile
   local tokenTime
   local token
-  local result
+  local remoteData
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     useTokenFile=0
@@ -65,15 +65,14 @@ imageRemoveRemote()
     echo "Removing remote image: ${imageName}:${imageTag}"
 
     logDisable
-    result=$(curl -s -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
-    touch "${tokenFile}"
+    remoteData=$(curl -s -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
     logEnable
 
-    if [[ -z "${result}" ]]; then
+    if [[ -z "${remoteData}" ]]; then
+      touch "${tokenFile}"
       echo "Successfully removed remote image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
     else
-      >&2 echo "Could not remove remote image: ${imageName}:${imageTag}"
-      >&2 echo "${result}"
+      >&2 echo "Could not remove remote image ${imageName}:${imageTag} because: $(echo "${remoteData}" | jq -r '.detail //empty')"
       exit 1
     fi
   else

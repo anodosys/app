@@ -22,7 +22,7 @@ containerVolumeCheck()
       volumeName=$(trim "${volumeName}")
 
       if [[ $(volumeExists "${volumeName}") == 1 ]]; then
-        echo "Checking volume: ${volumeName}"
+        #echo "Checking volume: ${volumeName}"
 
         sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
         targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
@@ -39,8 +39,6 @@ containerVolumeCheck()
             user=$(stat -L -c "%U" "${sourcePath}")
             accessRights=$(stat -L -c "%a" "${sourcePath}")
           fi
-
-          echo "Source path: ${sourcePath} has user: ${user}, target user: ${targetUser}, access rights: ${accessRights}"
 
           if [[ "${user}" != "${targetUser}" ]]; then
             if [[ "${mode}" == "w" ]]; then
