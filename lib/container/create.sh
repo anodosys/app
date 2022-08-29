@@ -1,10 +1,5 @@
 #!/bin/bash -e
 
-if [[ -z "${anodosysUserVarPath}" ]]; then
-  >&2 echo "No anodosys user var path specified!"
-  exit 1
-fi
-
 containerCreate()
 {
   local imageName="${1}"

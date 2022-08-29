@@ -27,7 +27,8 @@ imageExistsRemote()
   local token
   local status
 
-  tokenFile="${anodosysUserVarPath}/auth_docker_io_$(echo "${imageName}" | sed 's/[^[:alnum:]]/_/g'))"
+  mkdir -p "${anodosysUserVarPath}/auth"
+  tokenFile="${anodosysUserVarPath}/auth/docker_io_$(echo "${imageName}" | sed 's/[^[:alnum:]]/_/g')"
   if [[ -f "${tokenFile}" ]]; then
     tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
     if [[ "${tokenTime}" -gt 295 ]]; then
@@ -43,6 +44,7 @@ imageExistsRemote()
   fi
 
   status=$(curl -s -w "%{http_code}" -o /dev/null -X GET -H "Authorization:Bearer ${token}" "https://registry-1.docker.io/v2/${imageName}/manifests/${imageTag}")
+  touch "${tokenFile}"
   if [[ "${status}" == 200 ]]; then
     echo 1
   else

@@ -8,7 +8,7 @@ finish()
   local runningProcessIds
   local runningProcessId
 
-  if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
+  if [[ "${action}" != "reset" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
@@ -71,6 +71,7 @@ ACTION:
   volumes   Show the details of all volumes
   status    Show a current status of images and containers
   list      List all known systems
+  reset     Remove all generated data
 
 Example: ${scriptName} build
 EOF
@@ -120,7 +121,7 @@ if [[ -n "${server}" ]]; then
   export server
 fi
 
-if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "bash" ]] && [[ -n "${2}" ]]; then
+if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "config" ]] && [[ -n "${2}" ]]; then
   systemName="${2}"
 fi
 
@@ -169,12 +170,13 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "systems" ]]; then
+if [[ "${action}" != "reset" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "systems" ]]; then
   logName "${systemName}"
 fi
 
 setServerConfiguration "${systemName}" "system"
 
+source "${anodosysAppPath}/reset.sh"
 source "${anodosysAppPath}/cmd.sh"
 source "${anodosysAppPath}/config.sh"
 source "${anodosysAppPath}/names.sh"

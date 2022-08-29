@@ -46,7 +46,8 @@ imageRemoveRemote()
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     useTokenFile=0
-    tokenFile="${anodosysUserVarPath}/hub_docker_com"
+    mkdir -p "${anodosysUserVarPath}/auth"
+    tokenFile="${anodosysUserVarPath}/auth/hub_docker_com"
     if [[ -f "${tokenFile}" ]]; then
       tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
       if [[ "${tokenTime}" -lt 55 ]]; then

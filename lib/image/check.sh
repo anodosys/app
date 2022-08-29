@@ -23,7 +23,8 @@ imageCheckRemote()
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     useTokenFile=0
-    tokenFile="${anodosysUserVarPath}/hub_docker_com"
+    mkdir -p "${anodosysUserVarPath}/auth"
+    tokenFile="${anodosysUserVarPath}/auth/hub_docker_com"
     if [[ -f "${tokenFile}" ]]; then
       tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
       if [[ "${tokenTime}" -lt 55 ]]; then
@@ -41,6 +42,7 @@ imageCheckRemote()
     localId=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.RepoDigests[]')
     localId="${localId##*@}"
     remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/")
+    touch "${tokenFile}"
     remoteId=$(echo "${remoteData}" | jq -r '.images[] .digest')
     if [[ "${localId}" != "${remoteId}" ]]; then
       localTimestamp=$(date -d "$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.Created')" +%s)
