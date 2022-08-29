@@ -48,8 +48,17 @@ if [[ -n "${anodosysPath}" ]]; then
   mkdir -p "${anodosysUserVarConfigurationPath}"
   export anodosysUserVarConfigurationPath
 
-  anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+  if [[ -d "${anodosysExtensionPath}" ]]; then
+    anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+  else
+    anodosysSharedExtensions=()
+  fi
   export anodosysSharedExtensions
-  anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+
+  if [[ -d "${anodosysUserExtensionPath}" ]]; then
+    anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+  else
+    anodosysUserExtensions=()
+  fi
   export anodosysUserExtensions
 fi

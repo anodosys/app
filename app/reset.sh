@@ -15,6 +15,8 @@ if [[ "${action}" == "reset" ]]; then
   if [[ "${type}" == "all" ]] && [[ -d "${anodosysUserVarPath}" ]]; then
     echo "Removing all files in path: ${anodosysUserVarPath:?}"
     rm -rf "${anodosysUserVarPath:?}/*"
+    mkdir -p "${anodosysUserVarPath:?}/configuration"
+    mkdir -p "${anodosysUserVarPath:?}/extension"
   fi
   if [[ -d "${anodosysUserVarPath}/${type}" ]]; then
     echo "Removing all files in path: ${anodosysUserVarPath:?}/${type}"

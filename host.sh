@@ -26,7 +26,11 @@ else
   anodosysSharedExtensions=()
 fi
 
-anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+if [[ -d "${anodosysUserExtensionPath}" ]]; then
+  anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+else
+  anodosysUserExtensions=()
+fi
 
 (
   [[ -n $ZSH_VERSION && $ZSH_EVAL_CONTEXT =~ :file$ ]] ||
