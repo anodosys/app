@@ -11,16 +11,18 @@ if [[ -z "${action}" ]]; then
 fi
 
 if [[ "${action}" == "reset" ]]; then
-  type="${2:-all}"
-  if [[ "${type}" == "all" ]] && [[ -d "${anodosysUserVarPath}" ]]; then
-    echo "Removing all files in path: ${anodosysUserVarPath:?}"
-    rm -rf "${anodosysUserVarPath:?}/*"
-    mkdir -p "${anodosysUserVarPath:?}/configuration"
-    mkdir -p "${anodosysUserVarPath:?}/extension"
-  fi
-  if [[ -d "${anodosysUserVarPath}/${type}" ]]; then
-    echo "Removing all files in path: ${anodosysUserVarPath:?}/${type}"
-    rm -rf "${anodosysUserVarPath:?}/${type}/*"
+  type="${2}"
+  if [[ -n "${type}" ]]; then
+    if [[ "${type}" == "all" ]] && [[ -d "${anodosysUserVarPath}" ]]; then
+      echo "Removing all files in path: ${anodosysUserVarPath:?}"
+      rm -rf "${anodosysUserVarPath:?}/*"
+      mkdir -p "${anodosysUserVarPath:?}/configuration"
+      mkdir -p "${anodosysUserVarPath:?}/extension"
+    fi
+    if [[ -d "${anodosysUserVarPath}/${type}" ]]; then
+      echo "Removing all files in path: ${anodosysUserVarPath:?}/${type}"
+      rm -rf "${anodosysUserVarPath:?}/${type}/*"
+    fi
   fi
   exit 0
 fi

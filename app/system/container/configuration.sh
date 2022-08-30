@@ -26,6 +26,7 @@ usage: ${scriptName} options
 OPTIONS:
   -h  Show this message
   -c  Configuration hash
+  -r  Reset configuration files
 
 Example: ${scriptName} -c 1234567890
 EOF
@@ -40,10 +41,11 @@ createConfigurationFile()
 {
   local configurationHash="${1}"
   local serverName="${2}"
+  local reset="${3:-0}"
   local configurationFile
 
   configurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${serverName}.ini"
-  if [[ ! -f "${configurationFile}" ]]; then
+  if [[ ! -f "${configurationFile}" ]] || [[ "${reset}" == 1 ]]; then
     #echo "Creating configuration file at: ${configurationFile}"
     rm -rf "${configurationFile}"
     touch "${configurationFile}"
@@ -56,11 +58,13 @@ createConfigurationFile()
 }
 
 configurationHash=
+reset=0
 
-while getopts hc:? option; do
+while getopts hc:r? option; do
   case "${option}" in
     h) usage; exit 1;;
     c) configurationHash=$(trim "$OPTARG");;
+    r) reset=1;;
     ?) usage; exit 1;;
   esac
 done
@@ -78,7 +82,7 @@ if [[ -z "${systemName}" ]]; then
   exit 1
 fi
 
-createConfigurationFile "${configurationHash}" "system"
+createConfigurationFile "${configurationHash}" "system" "${reset}"
 
 configurationHashFile="${anodosysUserVarConfigurationPath}/${configurationHash}_system.ini"
 configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_system.ini"
@@ -99,7 +103,7 @@ fi
 
 processIds=( )
 for serverName in "${serverNames[@]}"; do
-  createConfigurationFile "${configurationHash}" "${serverName}" &
+  createConfigurationFile "${configurationHash}" "${serverName}" "${reset}" &
   processId=$!
   processIds+=( "${processId}" )
 done

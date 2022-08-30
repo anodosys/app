@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${reset}" ]]; then
+  >&2 echo "No reset specified!"
+  exit 1
+fi
+
 if [[ -z "${anodosysAppPath}" ]]; then
   >&2 echo "No app path specified!"
   exit 1
@@ -108,9 +113,11 @@ collectConfigurationFiles()
 prepareConfigurationFiles()
 {
   local mainConfigurationFileName="${1}"
-  local mainConfigurationFileContentHash
+  shift
+  local reset="${1}"
   shift
   local configurationFiles=( "${@}" )
+  local mainConfigurationFileContentHash
   local configurationFile
   local configurationFileNameHash
   local configurationFileContentHash
@@ -126,7 +133,7 @@ prepareConfigurationFiles()
     configurationFileNameHash=$(echo "${configurationFile}" | md5sum | awk '{print $1}')
     configurationFileContentHash=$(md5sum "${configurationFile}" | awk '{print $1}')
     preparedConfigurationFile="${anodosysUserVarConfigurationPath}/${mainConfigurationFileContentHash}_${configurationFileNameHash}_${configurationFileContentHash}.json"
-    if [[ ! -f "${preparedConfigurationFile}" ]]; then
+    if [[ ! -f "${preparedConfigurationFile}" ]] || [[ "${reset}" == 1 ]]; then
       >&2 echo "Preparing configuration file at: ${configurationFile}"
       configurationJson=$(cat "${configurationFile}")
       preparedConfigurationJson=$(prepareConfigurationJson "${configurationFile}" "${configurationJson}")
@@ -415,7 +422,7 @@ export configurationFileName
 
 configurationFiles=( $(collectConfigurationFiles "${configurationFileName}") )
 configurationFiles=( $(tr ' ' '\n' <<<"${configurationFiles[@]}" | awk '!u[$0]++' | tr '\n' ' ') )
-configurationFiles=( $(prepareConfigurationFiles "${configurationFileName}" "${configurationFiles[@]}") )
+configurationFiles=( $(prepareConfigurationFiles "${configurationFileName}" "${reset}" "${configurationFiles[@]}") )
 configurationHash=$(for configurationFile in "${configurationFiles[@]}"; do md5sum "${configurationFile}"; done | md5sum | awk '{print $1}')
 anodosysConfigurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}.json"
 export anodosysConfigurationFile
@@ -425,4 +432,8 @@ if [[ ! -f "${anodosysConfigurationFile}" ]]; then
   jq -s 'def deepmerge(a;b): reduce b[] as $item (a; reduce ($item | keys_unsorted[]) as $key (.; $item[$key] as $val | ($val | type) as $type | .[$key] = if ($type == "object") then deepmerge({}; [if .[$key] == null then {} else .[$key] end, $val]) elif ($type == "array") then (.[$key] + $val | unique) else $val end)); deepmerge({}; .)' "${configurationFiles[@]}" > "${anodosysConfigurationFile}"
 fi
 
-"${anodosysAppPath}/system/container/configuration.sh" -c "${configurationHash}"
+if [[ "${reset}" == 1 ]]; then
+  "${anodosysAppPath}/system/container/configuration.sh" -c "${configurationHash}" -r
+else
+  "${anodosysAppPath}/system/container/configuration.sh" -c "${configurationHash}"
+fi

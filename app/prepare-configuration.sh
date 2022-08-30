@@ -31,6 +31,11 @@ prepareConfigurationVariables()
 {
   local serverName="${1}"
   local outputVars="${2:-no}"
+  local keys
+  local key
+  local values
+  local value
+
   keys=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} | keys_unsorted[]") )
   for key in "${keys[@]}"; do
     oldIFS="${IFS}"

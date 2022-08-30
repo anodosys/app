@@ -162,6 +162,13 @@ if [[ ! -f "${fileName}" ]]; then
   exit 1
 fi
 
+if [[ "${action}" == "reset" ]]; then
+  reset=1
+else
+  reset=0
+fi
+export reset
+
 anodosysConfigurationFile=
 source "${anodosysAppPath}/configuration.sh"
 
