@@ -117,22 +117,29 @@ prepareConfigurationFiles()
   local reset="${1}"
   shift
   local configurationFiles=( "${@}" )
+  local mainConfigurationFileNameHash
   local mainConfigurationFileContentHash
   local configurationFile
+  local configurationFileName
   local configurationFileNameHash
   local configurationFileContentHash
   local preparedConfigurationFiles
+  local preparedConfigurationPath
   local preparedConfigurationFile
   local configurationJson
   local preparedConfigurationJson
 
+  mainConfigurationFileNameHash=$(echo "${mainConfigurationFileName}" | md5sum | awk '{print $1}')
   mainConfigurationFileContentHash=$(md5sum "${mainConfigurationFileName}" | awk '{print $1}')
 
   preparedConfigurationFiles=( )
   for configurationFile in "${configurationFiles[@]}"; do
+    configurationFileName=$(basename "${configurationFile}")
     configurationFileNameHash=$(echo "${configurationFile}" | md5sum | awk '{print $1}')
     configurationFileContentHash=$(md5sum "${configurationFile}" | awk '{print $1}')
-    preparedConfigurationFile="${anodosysUserVarConfigurationPath}/${mainConfigurationFileContentHash}_${configurationFileNameHash}_${configurationFileContentHash}.json"
+    preparedConfigurationPath="${anodosysUserVarConfigurationPath}/${mainConfigurationFileNameHash}/${mainConfigurationFileContentHash}/${configurationFileNameHash}/${configurationFileContentHash}"
+    mkdir -p "${preparedConfigurationPath}"
+    preparedConfigurationFile="${preparedConfigurationPath}/${configurationFileName}"
     if [[ ! -f "${preparedConfigurationFile}" ]] || [[ "${reset}" == 1 ]]; then
       >&2 echo "Preparing configuration file at: ${configurationFile}"
       configurationJson=$(cat "${configurationFile}")
@@ -408,7 +415,10 @@ setServerConfiguration()
 {
   local systemName="${1}"
   local serverName="${2}"
+  local configurationFile
+
   configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_${serverName}.ini"
+
   if [[ -f "${configurationFile}" ]]; then
     source "${configurationFile}"
   fi
