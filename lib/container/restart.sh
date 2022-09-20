@@ -4,6 +4,10 @@ containerRestart()
 {
   local containerName="${1}"
   local retry="${2:-no}"
+  local result
+  local ports
+  local counter
+
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     echo "Restarting container: ${containerName}"
     result=$(docker restart "${containerName}" 2>&1 | cat)

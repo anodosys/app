@@ -9,6 +9,7 @@ containerVolumeCheck()
   local targetPath
   local targetUser
   local mode
+  local empty
   local user
   local accessRights
 

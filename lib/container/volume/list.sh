@@ -3,6 +3,7 @@
 containerVolumeList()
 {
   local containerName="${1}"
+
   docker inspect -f "{{ json .Mounts }}" "${containerName}" | jq -r '.[].Name // empty'
 }
 

@@ -9,6 +9,8 @@ imageRemove()
 {
   local imageName="${1}"
   local imageTag="${2}"
+  local result
+
   if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
     if [[ $(imageUsed "${imageName}" "${imageTag}") == 0 ]]; then
       echo "Removing image: ${imageName}:${imageTag}"

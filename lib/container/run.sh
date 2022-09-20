@@ -4,6 +4,7 @@ containerRun()
 {
   local imageName="${1}"
   local containerName="${2}"
+
   if [[ $(containerRunning "${containerName}") == 0 ]]; then
     echo "Running container: ${containerName}"
     docker run -itd --name "${containerName}" "${imageName}"

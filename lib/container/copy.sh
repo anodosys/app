@@ -5,6 +5,7 @@ containerCopy()
   local containerName="${1}"
   local localFileName="${2}"
   local remoteFileName="${3}"
+
   if [[ -z "${remoteFileName}" ]]; then
     remoteFileName=$(basename "${localFileName}")
   fi
@@ -25,6 +26,7 @@ containerCopyQuiet()
   local containerName="${1}"
   local localFileName="${2}"
   local remoteFileName="${3}"
+
   if [[ -z "${remoteFileName}" ]]; then
     remoteFileName=$(basename "${localFileName}")
   fi

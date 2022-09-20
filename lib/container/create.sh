@@ -9,6 +9,8 @@ containerCreate()
   local networkName="${1}"
   shift
   local parameters=("$@")
+  local parameter
+  local parameterParts
   local command
   local sourcePath
   local targetPath

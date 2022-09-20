@@ -3,6 +3,8 @@
 networkRemove()
 {
   local networkName="${1}"
+  local result
+
   if [[ $(networkExists "${networkName}") == 1 ]]; then
     echo "Removing network: ${networkName}"
     result=$(docker network rm "${networkName}" 2>&1 | cat)

@@ -5,6 +5,8 @@ imageUsed()
   local imageName="${1}"
   local imageTag="${2}"
   local imageId
+  local containerIds
+  local imageIds
   local nextImageId
   local historyImageId
 

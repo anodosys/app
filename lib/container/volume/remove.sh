@@ -6,6 +6,7 @@ containerVolumeRemove()
   local sourcePath="${2}"
   local sourceName=
   local volumeName
+
   if [[ -e "${sourcePath}" ]]; then
     sourcePath=$(realpath "${sourcePath}")
   fi

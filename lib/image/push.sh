@@ -4,6 +4,7 @@ imagePush()
 {
   local imageName="${1}"
   local imageTag="${2}"
+
   if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
     echo "Pushing image: ${imageName}:${imageTag}"
     exec >/dev/tty

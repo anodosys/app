@@ -6,6 +6,8 @@ imageCreate()
   local imageTag="${2}"
   local containerName="${3}"
   local buildImageEntryPoint="${4}"
+  local result
+
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     echo "Creating image: ${imageName}:${imageTag} from container: ${containerName}"
     if [[ -n "${buildImageEntryPoint}" ]]; then

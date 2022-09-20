@@ -80,7 +80,7 @@ steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCre
 steps["start"]="containerExists,containerNotRunning,containerStart,containerRunning,systemStart"
 steps["stop"]="containerExists,containerRunning,containerStop,containerNotRunning,systemStop"
 steps["restart"]="action:stop,action:start"
-steps["remove"]="containerExists,containerStop,containerRemove,networkRemove,systemRemove"
+steps["remove"]="containerExists,containerNotRunning,containerRemove,networkRemove,systemRemove"
 steps["clean"]="containerStop,containerRemove,networkRemove,imageRemoveTargetLocal"
 steps["destroy"]="action:clean,imageRemoveSourceLocal,imageRemoveTargetRemote"
 

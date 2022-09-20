@@ -19,6 +19,7 @@ containerRecreate()
   local targetPath
   local targetUser
   local mode
+
   imageName=$(docker inspect -f "{{ json .Config }}" "${containerName}" | jq -r ".Image // empty")
   networkName=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r ".Networks | keys[0]")
   parameters=( )

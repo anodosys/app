@@ -3,6 +3,10 @@
 containerRemove()
 {
   local containerName="${1}"
+  local volumeNames
+  local volumeName
+  local result
+
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     oldIFS="${IFS}"
     IFS=$'\n'

@@ -3,6 +3,8 @@
 networkCreate()
 {
   local networkName="${1}"
+  local result
+
   if [[ $(networkExists "${networkName}") == 0 ]]; then
     echo "Creating network: ${networkName}"
     result=$(docker network create "${networkName}" 2>&1 | cat)

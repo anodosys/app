@@ -4,8 +4,8 @@ containerPortAvailable()
 {
   local containerName="${1}"
   local ports
-  local portParts
   local port
+  local portParts
   local protocol
   local portAvailable
 

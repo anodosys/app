@@ -2,7 +2,9 @@
 
 finish()
 {
+  local lastExitCode
   local processId
+  local sessionId
   local subProcessIds
   local subProcessId
   local runningProcessIds

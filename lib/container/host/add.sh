@@ -3,7 +3,9 @@
 containerHostNameAdd()
 {
   local containerName="${1}"
-  local ipAddress=
+  local ipAddress
+  local lineNumber
+
   ipAddress=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r '.Networks[].IPAddress')
   if [[ -f /etc/hosts ]]; then
     if [[ -w /etc/hosts ]]; then

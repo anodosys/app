@@ -3,6 +3,8 @@
 volumeRemove()
 {
   local volumeName="${1}"
+  local result
+
   if [[ $(volumeExists "${volumeName}") == 1 ]]; then
     echo "Removing volume: ${volumeName}"
     result=$(docker volume rm -f "${volumeName}" 2>&1 | cat)

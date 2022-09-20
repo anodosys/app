@@ -7,6 +7,7 @@ containerExecute()
   local localFileName="${1}"
   shift
   local parameters=("$@")
+  local remoteFileName
 
   if [[ -f "${localFileName}" ]]; then
     if [[ $(containerRunning "${containerName}") == 1 ]]; then
@@ -34,6 +35,8 @@ containerExecuteQuiet()
   local localFileName="${1}"
   shift
   local parameters=("$@")
+  local remoteFileName
+
   if [[ -f "${localFileName}" ]]; then
     if [[ $(containerRunning "${containerName}") == 1 ]]; then
       containerCopyQuiet "${containerName}" "${localFileName}"

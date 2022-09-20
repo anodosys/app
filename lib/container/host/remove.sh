@@ -3,6 +3,8 @@
 containerHostNameRemove()
 {
   local containerName="${1}"
+  local lineNumber
+
   if [[ -f /etc/hosts ]]; then
     if [[ $(grep -E "\s+${containerName}\s*$" /etc/hosts | wc -l) -gt 0 ]]; then
       lineNumber=$(grep -En "\s+${containerName}\s*$" /etc/hosts | awk -F: '{print $1}')

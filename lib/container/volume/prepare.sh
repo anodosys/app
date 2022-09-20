@@ -8,12 +8,14 @@ containerVolumePrepare()
   local groupUserList
   local sourcePath
   local targetPath
-  local targetUser
+  local empty
+  local userId
   local groupId
+  local rights
+  local targetUser
   local groupName
   local userNames
   local userNameList
-  local userId
   local result
 
   if [[ $(containerRunning "${containerName}") == 1 ]]; then

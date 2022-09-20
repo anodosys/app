@@ -3,6 +3,8 @@
 containerStop()
 {
   local containerName="${1}"
+  local result
+
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     echo "Stopping container: ${containerName}"
     result=$(docker stop "${containerName}" 2>&1 | cat)
