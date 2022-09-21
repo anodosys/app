@@ -3,6 +3,7 @@
 prepareValue()
 {
   local text="$*"
+
   text="${text#"${text%%[![:space:]]*}"}"
   text="${text%"${text##*[![:space:]]}"}"
   text=$(printf '%s' "${text}")
@@ -13,6 +14,30 @@ prepareValue()
 
 # shellcheck disable=SC2034
 typeset -fx prepareValue
+
+getArrayValue()
+{
+  local key="${1}"
+  shift
+  local defaultValue="${1}"
+  shift
+  local array=("$@")
+  local value
+
+  if test "${array[${key}]+isset}"; then
+    value="${array[${key}]}"
+    if [[ -z "${value}" ]]; then
+      value="${defaultValue}"
+    fi
+  else
+    value="${defaultValue}"
+  fi
+
+  echo -n "${value}"
+}
+
+# shellcheck disable=SC2034
+typeset -fx getArrayValue
 
 currentTimeStamp=$(date +%s)
 export currentTimeStamp

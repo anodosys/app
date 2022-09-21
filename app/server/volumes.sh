@@ -84,6 +84,6 @@ for containerVolume in "${containerVolumes[@]}"; do
   printf '%-15s' "${targetUser}"
   echo -n " | "
 
-  printf '%-5s' "${mode}"
+  printf '%-4s' "${mode}"
   echo ""
 done

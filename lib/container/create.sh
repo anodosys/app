@@ -35,22 +35,14 @@ containerCreate()
         readarray -d : -t parameterParts < <(printf '%s' "${parameter:7}")
         sourcePath="${parameterParts[0]}"
         targetPath="${parameterParts[1]}"
-        if test "${parameterParts[2]+isset}"; then
-          targetUser="${parameterParts[2]}"
-          if [[ -z "${targetUser}" ]]; then
-            targetUser="local"
-          fi
-        else
-          targetUser="local"
-        fi
-        if test "${parameterParts[3]+isset}"; then
-          mode="${parameterParts[3]}"
-          if [[ -z "${mode}" ]]; then
-            mode="r"
-          fi
-        else
-          mode="r"
-        fi
+        targetUser=$(getArrayValue 2 "local" "${parameterParts[@]}")
+        mode=$(getArrayValue 3 "r" "${parameterParts[@]}")
+        userId=$(getArrayValue 4 "-" "${parameterParts[@]}")
+        user=$(getArrayValue 5 "-" "${parameterParts[@]}")
+        groupId=$(getArrayValue 6 "-" "${parameterParts[@]}")
+        group=$(getArrayValue 7 "-" "${parameterParts[@]}")
+        rights=$(getArrayValue 8 "-" "${parameterParts[@]}")
+        empty=$(getArrayValue 9 "-" "${parameterParts[@]}")
         if [[ ! -e "${sourcePath}" ]]; then
           echo "Creating source path: ${sourcePath}"
           mkdir -p "${sourcePath}" | cat
@@ -73,7 +65,7 @@ containerCreate()
           exit 1
         fi
         sourcePath=$(realpath "${sourcePath}")
-        containerVolumeCreate "${containerName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}"
+        containerVolumeCreate "${containerName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}" "${userId}" "${user}" "${groupId}" "${group}" "${rights}" "${empty}"
         sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
         volumeName="${containerName}_${sourceName}"
         command+=" --mount source=${volumeName},destination=${targetPath}"

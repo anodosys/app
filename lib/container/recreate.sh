@@ -19,6 +19,12 @@ containerRecreate()
   local targetPath
   local targetUser
   local mode
+  local userId
+  local user
+  local groupId
+  local group
+  local rights
+  local empty
 
   imageName=$(docker inspect -f "{{ json .Config }}" "${containerName}" | jq -r ".Image // empty")
   networkName=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r ".Networks | keys[0]")
@@ -43,14 +49,39 @@ containerRecreate()
     targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
     targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
     mode=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".mode // empty")
+    userId=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".userId // empty")
+    user=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".user // empty")
+    groupId=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".groupId // empty")
+    group=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".group // empty")
+    rights=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".rights // empty")
+    empty=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".empty // empty")
     if [[ -z "${targetUser}" ]]; then
       targetUser="local"
     fi
     if [[ -z "${mode}" ]]; then
       mode="r"
     fi
-    parameters+=("volume:${sourcePath}:${targetPath}:${targetUser}:${mode}")
+    if [[ -z "${userId}" ]]; then
+      userId="-"
+    fi
+    if [[ -z "${user}" ]]; then
+      user="-"
+    fi
+    if [[ -z "${groupId}" ]]; then
+      groupId="-"
+    fi
+    if [[ -z "${group}" ]]; then
+      group="-"
+    fi
+    if [[ -z "${rights}" ]]; then
+      rights="-"
+    fi
+    if [[ -z "${empty}" ]]; then
+      empty="-"
+    fi
+    parameters+=("volume:${sourcePath}:${targetPath}:${targetUser}:${mode}:${userId}:${user}:${groupId}:${group}:${rights}:${empty}")
   done
+
   containerRemove "${containerName}"
   containerCreate "${imageName}" "${containerName}" "${networkName}" "${parameters[@]}"
 }

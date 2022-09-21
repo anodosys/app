@@ -25,7 +25,7 @@ containerStart()
         if [[ "${retry}" == "no" ]]; then
           mountingIssue=$(echo "${result}" | grep "error while mounting volume" | wc -l)
           if [[ "${mountingIssue}" -gt 0 ]]; then
-            echo "Container has mounting issue"
+            >&2 echo "Container has mounting issue"
             containerRecreate "${containerName}"
             containerStart "${containerName}" "yes"
             exit 0
