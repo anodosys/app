@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-declare -Ag parameters
+declare -Ag prepareParameters
 unparsedParameters=( )
 while [[ "$#" -gt 0 ]]; do
   parameter="${1}"
@@ -8,34 +8,38 @@ while [[ "$#" -gt 0 ]]; do
   if [[ "${parameter:0:2}" == "--" ]] || [[ "${parameter}" =~ ^-[[:alpha:]][[:space:]]+ ]] || [[ "${parameter}" =~ ^-\?$ ]]; then
     if [[ "${parameter}" =~ ^--[[:alpha:]]+[[:space:]]+ ]]; then
       parameter="${parameter:2}"
-      key=$(echo "${parameter}" | grep -oP '[[:alpha:]]+(?=\s)' | tr -d "\n")
-      value=$(echo "${parameter:${#key}}" | xargs)
+      prepareParametersKey=$(echo "${parameter}" | grep -oP '[[:alpha:]]+(?=\s)' | tr -d "\n")
+      prepareParametersValue=$(echo "${parameter:${#prepareParametersKey}}" | xargs)
       # shellcheck disable=SC2034
-      parameters["${key}"]="${value}"
-      eval "${key}=\"${value}\""
+      prepareParameters["${prepareParametersKey}"]="${prepareParametersValue}"
+      eval "${prepareParametersKey}=\"${prepareParametersValue}\""
+      #echo eval "${prepareParametersKey}=\"${prepareParametersValue}\""
       continue
     fi
     if [[ "${parameter:0:2}" == "--" ]]; then
-      key="${parameter:2}"
+      prepareParametersKey="${parameter:2}"
     elif [[ "${parameter}" =~ ^-\?$ ]]; then
-      key="help"
+      prepareParametersKey="help"
     else
-      key="${parameter:1}"
+      prepareParametersKey="${parameter:1}"
     fi
     if [[ "$#" -eq 0 ]]; then
-      parameters["${key}"]=1
-      eval "${key}=1"
+      prepareParameters["${prepareParametersKey}"]=1
+      eval "${prepareParametersKey}=1"
+      #echo eval "${prepareParametersKey}=1"
     else
-      value="${1}"
-      if [[ "${value:0:2}" == "--" ]]; then
-        parameters["${key}"]=1
-        eval "${key}=1"
+      prepareParametersValue="${1}"
+      if [[ "${prepareParametersValue:0:2}" == "--" ]]; then
+        prepareParameters["${prepareParametersKey}"]=1
+        eval "${prepareParametersKey}=1"
+        #echo eval "${prepareParametersKey}=1"
         continue
       fi
       shift
       # shellcheck disable=SC2034
-      parameters["${key}"]="${value}"
-      eval "${key}=\"${value}\""
+      prepareParameters["${prepareParametersKey}"]="${prepareParametersValue}"
+      eval "${prepareParametersKey}=\"${prepareParametersValue}\""
+      #echo eval "${prepareParametersKey}=\"${prepareParametersValue}\""
     fi
   else
     unparsedParameters+=("${parameter}")
@@ -43,9 +47,13 @@ while [[ "$#" -gt 0 ]]; do
 done
 set -- "${unparsedParameters[@]}"
 
-if test "${parameters["help"]+isset}" || test "${parameters["?"]+isset}"; then
-  if [[ $(declare -F "usage" | wc -l) -gt 0 ]]; then
+if test "${prepareParameters["help"]+isset}" || test "${prepareParameters["?"]+isset}"; then
+  helpRequested=1
+  if [[ "${#unparsedParameters[@]}" -eq 0 ]] && [[ $(declare -F "usage" | wc -l) -gt 0 ]]; then
     usage
     exit 0
   fi
+else
+  helpRequested=0
 fi
+export helpRequested

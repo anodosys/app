@@ -9,22 +9,22 @@ setServerConfiguration "${systemName}" "system"
 
 echo "- System remove -" | sed $'s,.*,\e[1;37m&\e[m,'
 
-if [[ -n "${beforeSystemRemoveScript}" ]]; then
-  echo "Before system remove script: ${beforeSystemRemoveScript}"
-  if [[ -n "${beforeSystemRemoveParameters}" ]]; then
-    "${beforeSystemRemoveScript}" "${beforeSystemRemoveParameters[@]}"
+if [[ -n "${beforeRemoveScript}" ]]; then
+  echo "Before system remove script: ${beforeRemoveScript}"
+  if [[ -n "${beforeRemoveParameters}" ]]; then
+    "${beforeRemoveScript}" "${beforeRemoveParameters[@]}"
   else
-    "${beforeSystemRemoveScript}"
+    "${beforeRemoveScript}"
   fi
 fi
 
 systemRemove "${systemName}"
 
-if [[ -n "${afterSystemRemoveScript}" ]]; then
-  echo "After system remove script: ${afterSystemRemoveScript}"
-  if [[ -n "${afterSystemRemoveParameters}" ]]; then
-    "${afterSystemRemoveScript}" "${afterSystemRemoveParameters[@]}"
+if [[ -n "${afterRemoveScript}" ]]; then
+  echo "After system remove script: ${afterRemoveScript}"
+  if [[ -n "${afterRemoveParameters}" ]]; then
+    "${afterRemoveScript}" "${afterRemoveParameters[@]}"
   else
-    "${afterSystemRemoveScript}"
+    "${afterRemoveScript}"
   fi
 fi

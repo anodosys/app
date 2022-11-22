@@ -7,6 +7,9 @@ if [[ -n "${anodosysPath}" ]]; then
   anodosysConfigurationPath="${anodosysPath}/configuration"
   export anodosysConfigurationPath
 
+  anodosysConstructPath="${anodosysPath}/construct"
+  export anodosysConstructPath
+
   anodosysScriptPath="${anodosysPath}/script"
   export anodosysScriptPath
 
@@ -27,6 +30,10 @@ if [[ -n "${anodosysPath}" ]]; then
   anodosysUserConfigurationPath="${anodosysUserPath}/configuration"
   mkdir -p "${anodosysUserConfigurationPath}"
   export anodosysUserConfigurationPath
+
+  anodosysUserConstructPath="${anodosysUserPath}/construct"
+  mkdir -p "${anodosysUserConstructPath}"
+  export anodosysUserConstructPath
 
   anodosysUserExtensionPath="${anodosysUserPath}/extension"
   mkdir -p "${anodosysUserExtensionPath}"

@@ -10,7 +10,7 @@ finish()
   local runningProcessIds
   local runningProcessId
 
-  if [[ "${action}" != "reset" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
+  if [[ "${action}" != "construct" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
@@ -53,28 +53,29 @@ cat >&2 << EOF
 usage: ${scriptName} <ACTION>
 
 ACTION:
-  init      Pull the images required for building
-  build     Build the target images and push if required
-  rebuild   Re-build the target images and push if required
-  install   Build the containers, but do not create images
-  image     Build the image from running containers
-  push      Push the build images to remote
-  clean     Remove the containers and the build images
-  destroy   Clean and remove the build images pushed to remote
-  prepare   Pull the images required for creating
-  create    Create the container from build images
-  start     Start the containers
-  restart   Re-start the containers
-  stop      Stop the constainers
-  remove    Remove the constainers
-  cmd       Execute a command in a container
-  bash      Open a bash shell in a container
-  config    Show the complete configuration
-  names     Show the names of images and containers
-  volumes   Show the details of all volumes
-  status    Show a current status of images and containers
-  list      List all known systems
-  reset     Remove all generated data
+  construct  Create or update system components
+  init       Pull the images required for building
+  build      Build the target images and push if required
+  rebuild    Re-build the target images and push if required
+  install    Build the containers, but do not create images
+  image      Build the image from running containers
+  push       Push the build images to remote
+  clean      Remove the containers and the build images
+  destroy    Clean and remove the build images pushed to remote
+  prepare    Pull the images required for creating
+  create     Create the container from build images
+  start      Start the containers
+  restart    Re-start the containers
+  stop       Stop the constainers
+  remove     Remove the constainers
+  cmd        Execute a command in a container
+  bash       Open a bash shell in a container
+  config     Show the complete configuration
+  names      Show the names of images and containers
+  volumes    Show the details of all volumes
+  status     Show a current status of images and containers
+  list       List all known systems
+  reset      Remove all generated data
 
 Example: ${scriptName} build
 EOF
@@ -120,7 +121,11 @@ export force
 
 source "${anodosysAppPath}/lib.sh"
 
+source "${anodosysAppPath}/construct.sh"
+
 source "${anodosysAppPath}/systems.sh"
+
+source "${anodosysAppPath}/step-scripts.sh"
 
 if [[ -n "${server}" ]]; then
   export server

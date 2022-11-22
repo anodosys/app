@@ -14,23 +14,23 @@ setServerConfiguration "${systemName}" "system"
 
 echo "- System stop -" | sed $'s,.*,\e[1;37m&\e[m,'
 
-if [[ -n "${beforeSystemStopScript}" ]]; then
-  echo "Before system stop script: ${beforeSystemStopScript}"
-  if [[ -n "${beforeSystemStopParameters}" ]]; then
-    "${beforeSystemStopScript}" "${beforeSystemStopParameters[@]}"
+if [[ -n "${beforeStopScript}" ]]; then
+  echo "Before system stop script: ${beforeStopScript}"
+  if [[ -n "${beforeStopParameters}" ]]; then
+    "${beforeStopScript}" "${beforeStopParameters[@]}"
   else
-    "${beforeSystemStopScript}"
+    "${beforeStopScript}"
   fi
 fi
 
 systemAdd "${systemName}" "${configurationFileName}"
 systemStop "${systemName}"
 
-if [[ -n "${afterSystemStopScript}" ]]; then
-  echo "After system stop script: ${afterSystemStopScript}"
-  if [[ -n "${afterSystemStopParameters}" ]]; then
-    "${afterSystemStopScript}" "${afterSystemStopParameters[@]}"
+if [[ -n "${afterStopScript}" ]]; then
+  echo "After system stop script: ${afterStopScript}"
+  if [[ -n "${afterStopParameters}" ]]; then
+    "${afterStopScript}" "${afterStopParameters[@]}"
   else
-    "${afterSystemStopScript}"
+    "${afterStopScript}"
   fi
 fi

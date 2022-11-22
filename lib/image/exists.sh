@@ -10,7 +10,11 @@ imageExists()
   local imageName="${1}"
   local imageTag="${2}"
 
-  docker images | grep -E "^${imageName}\\s+${imageTag}\\s" | wc -l
+  if [[ -n "${imageTag}" ]]; then
+    docker image ls -a | grep -E "^${imageName}\\s+${imageTag}\\s" | wc -l
+  else
+    docker image ls -a | awk '{print $3}' | grep -E "^${imageName}$" | wc -l
+  fi
 }
 
 # shellcheck disable=SC2034

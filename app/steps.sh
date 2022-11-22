@@ -5,6 +5,12 @@ if [[ -z "${anodosysAppPath}" ]]; then
   exit 1
 fi
 
+# shellcheck disable=SC2154
+if [[ "${#stepScripts[@]}" -eq 0 ]]; then
+  >&2 echo "No step scripts defined"
+  exit 1
+fi
+
 getActionSteps()
 {
   local stepAction="${1}"
@@ -36,38 +42,6 @@ getActionSteps()
   echo "${completeStepActionSteps[@]}"
 }
 
-declare -A stepScripts
-stepScripts["containerCreateSource"]="${anodosysAppPath}/system/container/create-source.sh"
-stepScripts["containerCreateTarget"]="${anodosysAppPath}/system/container/create-target.sh"
-stepScripts["containerDismantle"]="${anodosysAppPath}/system/container/dismantle.sh"
-stepScripts["containerExists"]="${anodosysAppPath}/system/container/exists.sh"
-stepScripts["containerInstall"]="${anodosysAppPath}/system/container/install.sh"
-stepScripts["containerNotExists"]="${anodosysAppPath}/system/container/not-exists.sh"
-stepScripts["containerNotRunning"]="${anodosysAppPath}/system/container/not-running.sh"
-stepScripts["containerPrepare"]="${anodosysAppPath}/system/container/prepare.sh"
-stepScripts["containerRemove"]="${anodosysAppPath}/system/container/remove.sh"
-stepScripts["containerRunning"]="${anodosysAppPath}/system/container/running.sh"
-stepScripts["containerStart"]="${anodosysAppPath}/system/container/start.sh"
-stepScripts["containerStop"]="${anodosysAppPath}/system/container/stop.sh"
-stepScripts["imageCreate"]="${anodosysAppPath}/system/image/create.sh"
-stepScripts["imageExistsSource"]="${anodosysAppPath}/system/image/exists-source.sh"
-stepScripts["imageExistsSourceRemote"]="${anodosysAppPath}/system/image/exists-source-remote.sh"
-stepScripts["imageExistsTarget"]="${anodosysAppPath}/system/image/exists-target.sh"
-stepScripts["imageExistsTargetRemote"]="${anodosysAppPath}/system/image/exists-target-remote.sh"
-stepScripts["imageNotExistsTarget"]="${anodosysAppPath}/system/image/not-exists-target.sh"
-stepScripts["imagePullSource"]="${anodosysAppPath}/system/image/pull-source.sh"
-stepScripts["imagePullTarget"]="${anodosysAppPath}/system/image/pull-target.sh"
-stepScripts["imagePush"]="${anodosysAppPath}/system/image/push.sh"
-stepScripts["imageRemoveSourceLocal"]="${anodosysAppPath}/system/image/remove-source-local.sh"
-stepScripts["imageRemoveTargetLocal"]="${anodosysAppPath}/system/image/remove-target-local.sh"
-stepScripts["imageRemoveTargetRemote"]="${anodosysAppPath}/system/image/remove-target-remote.sh"
-stepScripts["networkCreate"]="${anodosysAppPath}/system/network/create.sh"
-stepScripts["networkRemove"]="${anodosysAppPath}/system/network/remove.sh"
-stepScripts["systemAdd"]="${anodosysAppPath}/system/add.sh"
-stepScripts["systemRemove"]="${anodosysAppPath}/system/remove.sh"
-stepScripts["systemStart"]="${anodosysAppPath}/system/start.sh"
-stepScripts["systemStop"]="${anodosysAppPath}/system/stop.sh"
-
 declare -A steps
 steps["init"]="imageExistsSourceRemote,imagePullSource"
 steps["build"]="imageNotExistsTarget,action:install,action:image,action:remove,action:push"
@@ -76,11 +50,11 @@ steps["install"]="containerNotExists,imageExistsSource,imagePullSource,networkCr
 steps["image"]="containerExists,containerStop,imageRemoveTargetLocal,imageCreate"
 steps["push"]="imageExistsTarget,imageRemoveTargetRemote,imagePush"
 steps["prepare"]="imageExistsTargetRemote,imagePullTarget"
-steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCreate,containerCreateTarget,systemAdd"
-steps["start"]="containerExists,containerNotRunning,containerStart,containerRunning,systemStart"
-steps["stop"]="containerExists,containerRunning,containerStop,containerNotRunning,systemStop"
+steps["create"]="containerNotExists,imageExistsTarget,imagePullTarget,networkCreate,containerCreateTarget,add"
+steps["start"]="containerExists,containerNotRunning,containerStart,containerRunning,containerFinishing,start"
+steps["stop"]="containerExists,containerRunning,containerStop,containerNotRunning,stop"
 steps["restart"]="action:stop,action:start"
-steps["remove"]="containerExists,containerNotRunning,containerRemove,networkRemove,systemRemove"
+steps["remove"]="containerExists,containerNotRunning,containerRemove,networkRemove,remove"
 steps["clean"]="containerStop,containerRemove,networkRemove,imageRemoveTargetLocal"
 steps["destroy"]="action:clean,imageRemoveSourceLocal,imageRemoveTargetRemote"
 

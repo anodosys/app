@@ -57,6 +57,34 @@ createConfigurationFile()
   fi
 }
 
+completeConfigurationVariables()
+{
+  local configurationHash="${1}"
+  local serverName="${2}"
+  local configurationFile
+  local serverPlaceholders
+  local serverPlaceholder
+  local serverPlaceholderParts
+  local anotherServerName
+  local anotherServerKey
+  local anotherServerConfigurationFile
+  local anotherServerConfig
+  local anotherServerVarName
+
+  configurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${serverName}.ini"
+  serverPlaceholders=( $(grep -oEi '<([[:alpha:]]*):[[:alpha:]]*>' "${configurationFile}" | sort -u) )
+  for serverPlaceholder in "${serverPlaceholders[@]}"; do
+    serverPlaceholderParts=( $(echo "${serverPlaceholder}" | grep -oEi '[[:alpha:]]*') )
+    anotherServerName="${serverPlaceholderParts[0]}"
+    anotherServerKey="${serverPlaceholderParts[1]}"
+    anotherServerConfigurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${anotherServerName}.ini"
+    anotherServerConfig=$(grep "^${anotherServerKey}=" "${anotherServerConfigurationFile}")
+    eval "${anotherServerName}__${anotherServerConfig}"
+    anotherServerVarName="${anotherServerName}__${anotherServerKey}"
+    sed -i "s/<${anotherServerName}:${anotherServerKey}>/${!anotherServerVarName}/g" "${configurationFile}"
+  done
+}
+
 configurationHash=
 reset=0
 
@@ -110,6 +138,10 @@ done
 
 for processId in ${processIds[*]}; do
   wait "${processId}"
+done
+
+for serverName in "${serverNames[@]}"; do
+  completeConfigurationVariables "${configurationHash}" "${serverName}"
 done
 
 for serverName in "${serverNames[@]}"; do

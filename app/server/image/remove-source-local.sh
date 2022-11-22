@@ -56,12 +56,7 @@ if [[ -z "${imageName}" ]] || [[ -z "${imageTag}" ]]; then
   exit 0
 fi
 
-if [[ $(imageUsed "${imageName}" "${imageTag}") == 1 ]]; then
-  echo "Cannot not remove image: ${imageName}:${imageTag} because it is in use"
-  exit 0
-fi
-
-imageRemove "${imageName}" "${imageTag}"
+imageRemove "${imageName}" "${imageTag}" "warn"
 
 if [[ -n "${afterImageRemoveSourceLocalScript}" ]]; then
   echo "After image remove soource local script: ${afterImageRemoveSourceLocalScript}"

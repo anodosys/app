@@ -5,6 +5,11 @@ if [[ -z "${anodosysConfigurationFile}" ]]; then
   exit 1
 fi
 
+if [[ -z "${anodosysUserVarConfigurationPath}" ]]; then
+  >&2 echo "No anodosys user var configuration path defined"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -35,9 +40,62 @@ prepareConfigurationVariables()
   local key
   local values
   local value
+  local placeholderKey
+  local placeholderKeys=()
 
   keys=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} | keys_unsorted[]") )
   for key in "${keys[@]}"; do
+    oldIFS="${IFS}"
+    IFS=$'\n'
+    values=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} .${key} | if type==\"array\" then values[] else if type==\"null\" then \"\" else . end end") )
+    IFS="${oldIFS}"
+    if [[ "${#values[@]}" -gt 1 ]]; then
+      placeholderKey=0
+      for value in "${values[@]}"; do
+        if [[ "${value}" =~ \<.*?\> ]]; then
+          placeholderKey=1
+        fi
+      done
+      if [[ "${placeholderKey}" == 1 ]]; then
+        placeholderKeys+=("${key}")
+        continue
+      fi
+      if [ -z ${!key+x} ]; then
+        eval "${key}=( )"
+        if [[ "${outputVars}" == "yes" ]]; then
+          echo "${key}=( )"
+        fi
+      fi
+      for value in "${values[@]}"; do
+        value=$(echo "${value}" | sed 's/<\([[:alnum:]]\+\)>/${\1}/g')
+        value=$(prepareValue "${value}")
+        eval "${key}+=(\"${value}\")"
+        if [[ "${outputVars}" == "yes" ]]; then
+          eval "value=\"${value}\""
+          echo "${key}+=(\"${value}\")"
+          #>&2 echo "1: ${key}+=(\"${value}\")"
+        fi
+      done
+    elif [[ "${#values[@]}" -eq 1 ]]; then
+      value="${values[0]}"
+      if [[ "${value}" =~ \<.*?\> ]]; then
+        placeholderKeys+=("${key}")
+      else
+        if [ -z ${!key+x} ]; then
+          value=$(echo "${value}" | sed 's/<\([[:alnum:]]\+\)>/${\1}/g')
+          value=$(prepareValue "${value}")
+          eval "${key}=\"${value}\""
+          if [[ "${outputVars}" == "yes" ]]; then
+            eval "value=\"${value}\""
+            echo "${key}=\"${value}\""
+            #>&2 echo "2: ${key}=\"${value}\""
+          fi
+        fi
+      fi
+    fi
+  done
+
+  for key in "${placeholderKeys[@]}"; do
     oldIFS="${IFS}"
     IFS=$'\n'
     values=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} .${key} | if type==\"array\" then values[] else if type==\"null\" then \"\" else . end end") )
@@ -50,20 +108,25 @@ prepareConfigurationVariables()
         fi
       fi
       for value in "${values[@]}"; do
+        value=$(echo "${value}" | sed 's/<\([[:alnum:]]\+\)>/${\1}/g')
         value=$(prepareValue "${value}")
         eval "${key}+=(\"${value}\")"
         if [[ "${outputVars}" == "yes" ]]; then
           eval "value=\"${value}\""
           echo "${key}+=(\"${value}\")"
+          #>&2 echo "3: ${key}+=(\"${value}\")"
         fi
       done
     elif [[ "${#values[@]}" -eq 1 ]]; then
-      value=$(prepareValue "${values[0]}")
       if [ -z ${!key+x} ]; then
+        value="${values[0]}"
+        value=$(echo "${value}" | sed 's/<\([[:alnum:]]\+\)>/${\1}/g')
+        value=$(prepareValue "${value}")
         eval "${key}=\"${value}\""
         if [[ "${outputVars}" == "yes" ]]; then
           eval "value=\"${value}\""
           echo "${key}=\"${value}\""
+          #>&2 echo "4: ${key}=\"${value}\""
         fi
       fi
     fi

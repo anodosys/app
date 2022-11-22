@@ -14,23 +14,23 @@ setServerConfiguration "${systemName}" "system"
 
 echo "- System start -" | sed $'s,.*,\e[1;37m&\e[m,'
 
-if [[ -n "${beforeSystemStartScript}" ]]; then
-  echo "Before system start script: ${beforeSystemStartScript}"
-  if [[ -n "${beforeSystemStartParameters}" ]]; then
-    "${beforeSystemStartScript}" "${beforeSystemStartParameters[@]}"
+if [[ -n "${beforeStartScript}" ]]; then
+  echo "Before system start script: ${beforeStartScript}"
+  if [[ -n "${beforeStartParameters}" ]]; then
+    "${beforeStartScript}" "${beforeStartParameters[@]}"
   else
-    "${beforeSystemStartScript}"
+    "${beforeStartScript}"
   fi
 fi
 
 systemAdd "${systemName}" "${configurationFileName}"
 systemStart "${systemName}"
 
-if [[ -n "${afterSystemStartScript}" ]]; then
-  echo "After system start script: ${afterSystemStartScript}"
-  if [[ -n "${afterSystemStartParameters}" ]]; then
-    "${afterSystemStartScript}" "${afterSystemStartParameters[@]}"
+if [[ -n "${afterStartScript}" ]]; then
+  echo "After system start script: ${afterStartScript}"
+  if [[ -n "${afterStartParameters}" ]]; then
+    "${afterStartScript}" "${afterStartParameters[@]}"
   else
-    "${afterSystemStartScript}"
+    "${afterStartScript}"
   fi
 fi

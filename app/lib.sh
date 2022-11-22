@@ -1,5 +1,15 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysLibPath}" ]]; then
+  >&2 echo "No anodosys lib path specified!"
+  exit 1
+fi
+
+if [[ -z "${anodosysUserLibPath}" ]]; then
+  >&2 echo "No anodosys user lib path specified!"
+  exit 1
+fi
+
 prepareValue()
 {
   local text="$*"
@@ -92,7 +102,7 @@ duration()
 # shellcheck disable=SC2034
 typeset -fx duration
 
-if [[ -n "${anodosysLibPath}" ]] && [[ -d "${anodosysLibPath}" ]]; then
+if [[ -d "${anodosysLibPath}" ]]; then
   libFiles=( $(find "${anodosysLibPath}" -type f -name "*.sh") )
 
   for libFile in "${libFiles[@]}"; do
@@ -100,7 +110,7 @@ if [[ -n "${anodosysLibPath}" ]] && [[ -d "${anodosysLibPath}" ]]; then
   done
 fi
 
-if [[ -n "${anodosysUserLibPath}" ]] && [[ -d "${anodosysUserLibPath}" ]]; then
+if [[ -d "${anodosysUserLibPath}" ]]; then
   libFiles=( $(find "${anodosysUserLibPath}" -type f -name "*.sh") )
 
   for libFile in "${libFiles[@]}"; do

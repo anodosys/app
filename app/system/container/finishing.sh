@@ -12,22 +12,31 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-echo "- Container create target -" | sed $'s,.*,\e[1;37m&\e[m,'
+echo "- Container finishing -" | sed $'s,.*,\e[1;37m&\e[m,'
+
+if [[ -f "${anodosysUserVarPath}/finisihing/${systemName}" ]]; then
+  echo "Finishing already processed"
+  exit 0
+fi
 
 if [[ -z "${serverNames}" ]]; then
   >&2 echo "No server names specified!"
   exit 1
 fi
 
-if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
-  echo "Before container target script: ${beforeContainerCreateTargetScript}"
-  "${beforeContainerCreateTargetScript}"
+if [[ -n "${beforeContainerFinishingScript}" ]]; then
+  echo "Before container finishing script: ${beforeContainerFinishingScript}"
+  if [[ -n "${beforeContainerFinishingParameters}" ]]; then
+    "${beforeContainerFinishingScript}" "${beforeContainerFinishingParameters[@]}"
+  else
+    "${beforeContainerFinishingScript}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
-# creates the containers from the target image
 declare -A processedServerNameList
+
 while : ; do
   declare -A processIds
   for serverName in "${serverNames[@]}"; do
@@ -38,12 +47,12 @@ while : ; do
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
       if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
-        createScript="${PWD}/${serverName}/container/create-target.sh"
-        if [[ -f "${createScript}" ]]; then
-          echo "[${serverName}] Creating container of server: ${serverName} with custom script: ${createScript}"
-          "${createScript}" -s "${serverName}" &
+        finishingScript="${PWD}/${serverName}/container/finishing.sh"
+        if [[ -f "${finishingScript}" ]]; then
+          echo "[${serverName}] Finishing container of server: ${serverName} with custom script: ${finishingScript}"
+          "${finishingScript}" -s "${serverName}" &
         else
-          "${currentPath}/../../server/container/create-target.sh" -s "${serverName}" &
+          "${currentPath}/../../server/container/finishing.sh" -s "${serverName}" &
         fi
         processId=$!
         processIds["${serverName}"]="${processId}"
@@ -70,10 +79,14 @@ while : ; do
   fi
 done
 
-if [[ -n "${afterContainerCreateTargetScript}" ]]; then
-  echo "After container create target script: ${afterContainerCreateTargetScript}"
-  "${afterContainerCreateTargetScript}"
+if [[ -n "${afterContainerFinishingScript}" ]]; then
+  echo "After container finishing script: ${afterContainerFinishingScript}"
+  if [[ -n "${afterContainerFinishingParameters}" ]]; then
+    "${afterContainerFinishingScript}" "${afterContainerFinishingParameters[@]}"
+  else
+    "${afterContainerFinishingScript}"
+  fi
 fi
 
 mkdir -p "${anodosysUserVarPath}/finisihing"
-rm -rf "${anodosysUserVarPath}/finisihing/${systemName}"
+touch "${anodosysUserVarPath}/finisihing/${systemName}"

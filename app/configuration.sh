@@ -55,6 +55,12 @@ if [[ -z "${fileName}" ]]; then
   exit 1
 fi
 
+# shellcheck disable=SC2154
+if [[ "${#stepScripts[@]}" -eq 0 ]]; then
+  >&2 echo "No step scripts defined"
+  exit 1
+fi
+
 collectConfigurationFiles()
 {
   local anodosysFileName="${1}"
@@ -250,99 +256,20 @@ completePath()
   if [[ "${key}" == "actionStartScript" ]] || [[ "${key}" == "actionFinishScript" ]]; then
     canCompletePath=1
   fi
-  if [[ "${key}" == "beforeNetworkCreateScript" ]] || [[ "${key}" == "networkCreateScript" ]] || [[ "${key}" == "afterNetworkCreateScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeNetworkRemoveScript" ]] || [[ "${key}" == "networkRemoveScript" ]] || [[ "${key}" == "afterNetworkRemoveScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageExistsSourceScript" ]] || [[ "${key}" == "imageExistsSourceScript" ]] || [[ "${key}" == "afterImageExistsSourceScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageExistsSourceRemoteScript" ]] || [[ "${key}" == "imageExistsSourceRemoteScript" ]] || [[ "${key}" == "afterImageExistsSourceRemoteScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageExistsTargetScript" ]] || [[ "${key}" == "imageExistsTargetScript" ]] || [[ "${key}" == "afterImageExistsTargetScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageExistsTargetRemoteScript" ]] || [[ "${key}" == "imageExistsTargetRemoteScript" ]] || [[ "${key}" == "afterImageExistsTargetRemoteScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageNotExistsTargetScript" ]] || [[ "${key}" == "imageNotExistsTargetScript" ]] || [[ "${key}" == "afterImageNotExistsTargetScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImagePullSourceScript" ]] || [[ "${key}" == "imagePullSourceScript" ]] || [[ "${key}" == "afterImagePullSourceScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImagePullTargetScript" ]] || [[ "${key}" == "imagePullTargetScript" ]] || [[ "${key}" == "afterImagePullTargetScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageCreateScript" ]] || [[ "${key}" == "imageCreateScript" ]] || [[ "${key}" == "afterImageCreateScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImagePushScript" ]] || [[ "${key}" == "imagePushScript" ]] || [[ "${key}" == "afterImagePushScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageRemoveSourceLocalScript" ]] || [[ "${key}" == "imageRemoveSourceLocalScript" ]] || [[ "${key}" == "afterImageRemoveSourceLocalScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageRemoveTargetLocalScript" ]] || [[ "${key}" == "imageRemoveTargetLocalScript" ]] || [[ "${key}" == "afterImageRemoveTargetLocalScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageRemoveSourceRemoteScript" ]] || [[ "${key}" == "imageRemoveSourceRemoteScript" ]] || [[ "${key}" == "afterImageRemoveSourceRemoteScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeImageRemoveTargetRemoteScript" ]] || [[ "${key}" == "imageRemoveTargetRemoteScript" ]] || [[ "${key}" == "afterImageRemoveTargetRemoteScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerConfigurationScript" ]] || [[ "${key}" == "containerConfigurationScript" ]] || [[ "${key}" == "afterContainerConfigurationScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerExistsScript" ]] || [[ "${key}" == "containerExistsScript" ]] || [[ "${key}" == "afterContainerExistsScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerNotExistsScript" ]] || [[ "${key}" == "containerNotExistsScript" ]] || [[ "${key}" == "afterContainerNotExistsScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerCreateSourceScript" ]] || [[ "${key}" == "containerCreateSourceScript" ]] || [[ "${key}" == "afterContainerCreateSourceScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerCreateTargetScript" ]] || [[ "${key}" == "containerCreateTargetScript" ]] || [[ "${key}" == "afterContainerCreateTargetScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerStartScript" ]] || [[ "${key}" == "containerStartScript" ]] || [[ "${key}" == "afterContainerStartScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerRunningScript" ]] || [[ "${key}" == "containerRunningScript" ]] || [[ "${key}" == "afterContainerRunningScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerNotRunningScript" ]] || [[ "${key}" == "containerNotRunningScript" ]] || [[ "${key}" == "afterContainerNotRunningScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerPrepareScript" ]] || [[ "${key}" == "containerPrepareScript" ]] || [[ "${key}" == "afterContainerPrepareScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerInstallScript" ]] || [[ "${key}" == "containerInstallScript" ]] || [[ "${key}" == "afterContainerInstallScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerDismantleScript" ]] || [[ "${key}" == "containerDismantleScript" ]] || [[ "${key}" == "afterContainerDismantleScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerStopScript" ]] || [[ "${key}" == "containerStopScript" ]] || [[ "${key}" == "afterContainerStopScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeContainerRemoveScript" ]] || [[ "${key}" == "containerRemoveScript" ]] || [[ "${key}" == "afterContainerRemoveScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeSystemStartScript" ]] || [[ "${key}" == "sytemStartScript" ]] || [[ "${key}" == "afterSystemStartScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeSystemStopScript" ]] || [[ "${key}" == "systemStopScript" ]] || [[ "${key}" == "afterSystemStopScript" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "beforeSystemRemoveScript" ]] || [[ "${key}" == "systemRemoveScript" ]] || [[ "${key}" == "afterSystemRemoveScript" ]]; then
-    canCompletePath=1
-  fi
+
+  local stepName
+  local beforeStepScriptName
+  local stepScriptName
+  local afterStepScriptName
+  for stepName in "${!stepScripts[@]}"; do
+    beforeStepScriptName="before${stepName^}Script"
+    stepScriptName="${stepName}Script"
+    afterStepScriptName="after${stepName^}Script"
+    if [[ "${key}" == "${beforeStepScriptName}" ]] || [[ "${key}" == "${stepScriptName}" ]] || [[ "${key}" == "${afterStepScriptName}" ]]; then
+      canCompletePath=1
+    fi
+  done
+
   if [[ "${canCompletePath}" == 1 ]]; then
     eval "value=\"${value}\""
     if [[ "${value:0:1}" != "/" ]]; then

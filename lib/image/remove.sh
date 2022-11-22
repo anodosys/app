@@ -9,25 +9,57 @@ imageRemove()
 {
   local imageName="${1}"
   local imageTag="${2}"
+  local checkUsed="${3:-error}"
   local result
 
-  if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-    if [[ $(imageUsed "${imageName}" "${imageTag}") == 0 ]]; then
-      echo "Removing image: ${imageName}:${imageTag}"
-      result=$(docker image rm "${imageName}:${imageTag}" 2>&1 | cat)
-      if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-        echo "Successfully removed image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
+  if [[ -z "${imageTag}" ]] || [[ "${imageTag}" == "-" ]]; then
+    if [[ $(imageExists "${imageName}") == 1 ]]; then
+      if [[ "${checkUsed}" == "no" ]] || [[ $(imageUsed "${imageName}") == 0 ]]; then
+        echo "Removing image: ${imageName}"
+        result=$(docker image rm "${imageName}" 2>&1 | cat)
+        if [[ $(imageExists "${imageName}") == 0 ]]; then
+          echo "Successfully removed image: ${imageName}" | sed $'s,.*,\e[0;32m&\e[m,'
+        else
+          >&2 echo "Could not remove image: ${imageName}"
+          >&2 echo "${result}"
+          exit 1
+        fi
       else
-        >&2 echo "Could not remove image: ${imageName}:${imageTag}"
-        >&2 echo "${result}"
-        exit 1
+        if [[ "${checkUsed}" == "error" ]]; then
+          >&2 echo "Could not remove image: ${imageName} because it is in use"
+          exit 1
+        elif [[ "${checkUsed}" == "warn" ]]; then
+          echo "Could not remove image: ${imageName} because it is in use" | sed $'s,.*,\e[0;33m&\e[m,'
+          exit 0
+        fi
       fi
     else
-      >&2 echo "Could not remove image: ${imageName}:${imageTag} because it is in use"
-      exit 1
+      echo "No need to remove image: ${imageName}"
     fi
   else
-    echo "No need to remove image: ${imageName}:${imageTag}"
+    if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
+      if [[ "${checkUsed}" == "no" ]] || [[ $(imageUsed "${imageName}" "${imageTag}") == 0 ]]; then
+        echo "Removing image: ${imageName}:${imageTag}"
+        result=$(docker image rm "${imageName}:${imageTag}" 2>&1 | cat)
+        if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
+          echo "Successfully removed image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
+        else
+          >&2 echo "Could not remove image: ${imageName}:${imageTag}"
+          >&2 echo "${result}"
+          exit 1
+        fi
+      else
+        if [[ "${checkUsed}" == "error" ]]; then
+          >&2 echo "Could not remove image: ${imageName}:${imageTag} because it is in use"
+          exit 1
+        elif [[ "${checkUsed}" == "warn" ]]; then
+          echo "Could not remove image: ${imageName}:${imageTag} because it is in use" | sed $'s,.*,\e[0;33m&\e[m,'
+          exit 0
+        fi
+      fi
+    else
+      echo "No need to remove image: ${imageName}:${imageTag}"
+    fi
   fi
 }
 

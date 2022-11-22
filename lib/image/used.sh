@@ -4,35 +4,83 @@ imageUsed()
 {
   local imageName="${1}"
   local imageTag="${2}"
+
+  if [[ $(imageUsedByContainer "${imageName}" "${imageTag}") == 0 ]] && [[ $(imageUsedByImage "${imageName}" "${imageTag}") == 0 ]]; then
+    echo "0"
+  else
+    echo "1"
+  fi
+}
+
+# shellcheck disable=SC2034
+typeset -fx imageUsed
+
+imageUsedByContainer()
+{
+  local imageName="${1}"
+  local imageTag="${2}"
   local imageId
+  local imageFullId
   local containerIds
+
+  if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
+    if [[ -n "${imageTag}" ]]; then
+      imageId=$(imageId "${imageName}" "${imageTag}")
+      imageFullId=$(docker image inspect --format '{{.Id}}' "${imageName}:${imageTag}")
+    else
+      imageFullId=$(docker image inspect --format '{{.Id}}' "${imageName}")
+    fi
+
+    containerIds=( $(docker container ls -aq) )
+    if [[ "${#containerIds[@]}" -gt 0 ]]; then
+      for containerId in "${containerIds[@]}"; do
+        if [[ $(docker container inspect "${containerId}" --format "{{ if eq .Image \"${imageFullId}\" }}{{.Id}}{{end}}" | grep -v '^$' | wc -l) -gt 0 ]]; then
+          echo "${containerId}"
+          exit 0
+        fi
+      done
+    fi
+  fi
+
+  echo "0"
+}
+
+# shellcheck disable=SC2034
+typeset -fx imageUsedByContainer
+
+imageUsedByImage()
+{
+  local imageName="${1}"
+  local imageTag="${2}"
+  local imageId
   local imageIds
   local nextImageId
   local historyImageId
 
   if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-    imageId=$(docker image inspect --format '{{.Id}}' "${imageName}:${imageTag}")
-    # shellcheck disable=SC2046
-    if [[ -n "${imageId}" ]]; then
-      containerIds=( $(docker container ls -aq) )
-      if [[ "${#containerIds[@]}" -gt 0 ]]; then
-        if [[ $(docker container inspect "${containerIds[@]}" --format "{{ if eq .Image \"${imageId}\" }}{{.Id}}{{end}}" | grep -v '^$' | wc -l) -gt 0 ]]; then
-          echo "1"
-          exit 0
-        fi
-      fi
+    if [[ -n "${imageTag}" ]]; then
+      imageId=$(imageId "${imageName}" "${imageTag}")
     else
-      imageIds=( $(docker image ls -a | tail -n +2 | awk '{print $3}') )
-      if [[ "${#imageIds[@]}" -gt 0 ]]; then
-        if [[ $(for nextImageId in "${imageIds[@]}"; do if [[ "${nextImageId}" != "${imageId}" ]]; then for historyImageId in $(docker image history "${nextImageId}" | awk '{print $1}'); do if [[ "${historyImageId}" == "${imageId}" ]]; then echo "${nextImageId}"; fi; done; fi; done | wc -l) -gt 0 ]]; then
-          echo "1"
-          exit 0
+      imageId="${imageName}"
+    fi
+
+    imageIds=( $(docker image ls -a | tail -n +2 | awk '{print $3}') )
+    if [[ "${#imageIds[@]}" -gt 0 ]]; then
+      for nextImageId in "${imageIds[@]}"; do
+        if [[ "${nextImageId}" != "${imageId}" ]]; then
+          for historyImageId in $(docker image history "${nextImageId}" | awk '{print $1}'); do
+            if [[ "${historyImageId}" == "${imageId}" ]]; then
+              echo "${nextImageId}"
+              exit 0
+            fi
+          done
         fi
-      fi
+      done
     fi
   fi
+
   echo "0"
 }
 
 # shellcheck disable=SC2034
-typeset -fx imageUsed
+typeset -fx imageUsedByImage
