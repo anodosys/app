@@ -12,22 +12,31 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-echo "- Container create target -" | sed $'s,.*,\e[1;37m&\e[m,'
+echo "- Container commencement -" | sed $'s,.*,\e[1;37m&\e[m,'
+
+if [[ -f "${anodosysUserVarPath}/commencement/${systemName}" ]]; then
+  echo "Commencement already processed"
+  exit 0
+fi
 
 if [[ -z "${serverNames}" ]]; then
   >&2 echo "No server names specified!"
   exit 1
 fi
 
-if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
-  echo "Before container target script: ${beforeContainerCreateTargetScript}"
-  "${beforeContainerCreateTargetScript}"
+if [[ -n "${beforeContainerCommencementScript}" ]]; then
+  echo "Before container commencement script: ${beforeContainerCommencementScript}"
+  if [[ -n "${beforeContainerCommencementParameters}" ]]; then
+    "${beforeContainerCommencementScript}" "${beforeContainerCommencementParameters[@]}"
+  else
+    "${beforeContainerCommencementScript}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
-# creates the containers from the target image
 declare -A processedServerNameList
+
 while : ; do
   declare -A processIds
   for serverName in "${serverNames[@]}"; do
@@ -38,12 +47,12 @@ while : ; do
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
       if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
-        createScript="${PWD}/${serverName}/container/create-target.sh"
-        if [[ -f "${createScript}" ]]; then
-          echo "[${serverName}] Creating container of server: ${serverName} with custom script: ${createScript}"
-          "${createScript}" -s "${serverName}" &
+        commencementScript="${PWD}/${serverName}/container/commencement.sh"
+        if [[ -f "${commencementScript}" ]]; then
+          echo "[${serverName}] Commencement container of server: ${serverName} with custom script: ${commencementScript}"
+          "${commencementScript}" -s "${serverName}" &
         else
-          "${currentPath}/../../server/container/create-target.sh" -s "${serverName}" &
+          "${currentPath}/../../server/container/commencement.sh" -s "${serverName}" &
         fi
         processId=$!
         processIds["${serverName}"]="${processId}"
@@ -70,14 +79,14 @@ while : ; do
   fi
 done
 
-if [[ -n "${afterContainerCreateTargetScript}" ]]; then
-  echo "After container create target script: ${afterContainerCreateTargetScript}"
-  "${afterContainerCreateTargetScript}"
+if [[ -n "${afterContainerCommencementScript}" ]]; then
+  echo "After container commencement script: ${afterContainerCommencementScript}"
+  if [[ -n "${afterContainerCommencementParameters}" ]]; then
+    "${afterContainerCommencementScript}" "${afterContainerCommencementParameters[@]}"
+  else
+    "${afterContainerCommencementScript}"
+  fi
 fi
 
 mkdir -p "${anodosysUserVarPath}/commencement"
-rm -rf "${anodosysUserVarPath}/commencement/${systemName}"
-mkdir -p "${anodosysUserVarPath}/production"
-rm -rf "${anodosysUserVarPath}/production/${systemName}"
-mkdir -p "${anodosysUserVarPath}/finishing"
-rm -rf "${anodosysUserVarPath}/finishing/${systemName}"
+touch "${anodosysUserVarPath}/commencement/${systemName}"

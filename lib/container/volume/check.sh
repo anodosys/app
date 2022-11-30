@@ -42,19 +42,19 @@ containerVolumeCheck()
           fi
 
           if [[ "${user}" != "${targetUser}" ]]; then
-            if [[ "${mode}" == "w" ]]; then
-              if [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
-                >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
-                exit 1
-              else
-                echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is writable for group"
-              fi
-            else
+            if [[ "${mode}" == "r" ]]; then
               if [[ "${accessRights:1:1}" != 4 ]] && [[ "${accessRights:1:1}" != 5 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
                 >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not readable for group"
                 exit 1
               else
                 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is readable for group"
+              fi
+            elif [[ "${mode}" == "w" ]]; then
+              if [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
+                >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
+                exit 1
+              else
+                echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is writable for group"
               fi
             fi
           else

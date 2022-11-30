@@ -12,6 +12,7 @@ containerVolumePrepare()
   local userId
   local groupId
   local rights
+  local mode
   local targetUser
   local groupName
   local userNames
@@ -48,15 +49,27 @@ containerVolumePrepare()
         fi
 
         targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
-        if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ -n "${targetUser}" ]]; then
-          groupId=$(stat -c '%g' "${sourcePath}")
-          if test "${groupUserList[${groupId}]+isset}"; then
-            groupUserList[${groupId}]+=",${targetUser}"
+        mode=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".mode // empty")
+
+        if [[ "${mode}" == "r" ]] || [[ "${mode}" == "w" ]]; then
+          if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ -n "${targetUser}" ]]; then
+            groupId=$(stat -c '%g' "${sourcePath}")
+            if test "${groupUserList[${groupId}]+isset}"; then
+              groupUserList[${groupId}]+=",${targetUser}"
+            else
+              groupUserList[${groupId}]="${targetUser}"
+            fi
           else
-            groupUserList[${groupId}]="${targetUser}"
+            echo "No need to prepare volume: ${volumeName}"
           fi
-        else
-          echo "No need to prepare volume: ${volumeName}"
+        elif [[ "${mode}" == "o" ]]; then
+          user=$(containerCommandQuiet "${containerName}" "stat -L -c \"%U\" ${targetPath}")
+          if [[ "${user}" != "${targetUser}" ]]; then
+            echo "Changing owner of path: ${targetPath} to: ${targetUser}"
+            containerCommand "${containerName}" "chown ${targetUser} ${targetPath}"
+          else
+            echo "No need to change owner of path: ${targetPath} to: ${targetUser}"
+          fi
         fi
       else
         >&2 echo "Volume does not exist: ${volumeName}"

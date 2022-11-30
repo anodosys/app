@@ -14,7 +14,7 @@ setServerConfiguration "${systemName}" "system"
 
 echo "- Container finishing -" | sed $'s,.*,\e[1;37m&\e[m,'
 
-if [[ -f "${anodosysUserVarPath}/finisihing/${systemName}" ]]; then
+if [[ -f "${anodosysUserVarPath}/finishing/${systemName}" ]]; then
   echo "Finishing already processed"
   exit 0
 fi
@@ -88,5 +88,5 @@ if [[ -n "${afterContainerFinishingScript}" ]]; then
   fi
 fi
 
-mkdir -p "${anodosysUserVarPath}/finisihing"
-touch "${anodosysUserVarPath}/finisihing/${systemName}"
+mkdir -p "${anodosysUserVarPath}/finishing"
+touch "${anodosysUserVarPath}/finishing/${systemName}"
