@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -31,11 +36,6 @@ while getopts hs:? option; do
   esac
 done
 
-if [[ -z "${systemName}" ]]; then
-  >&2 echo "No system name specified!"
-  exit 1
-fi
-
 if [[ -z "${serverName}" ]]; then
   >&2 echo "No server name specified!"
   usage
@@ -46,22 +46,23 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+containerName="${systemName}_${serverName}"
+
 if [[ -n "${beforeContainerDismantleScript}" ]]; then
   echo "Before container dismantle script: ${beforeContainerDismantleScript}"
   if [[ -n "${beforeContainerDismantleParameters}" ]]; then
-    "${beforeContainerDismantleScript}" "${beforeContainerDismantleParameters[@]}"
+    "${beforeContainerDismantleScript}" --containerName "${containerName}" "${beforeContainerDismantleParameters[@]}"
   else
-    "${beforeContainerDismantleScript}"
+    "${beforeContainerDismantleScript}" --containerName "${containerName}"
   fi
 fi
 
-containerName="${systemName}_${serverName}"
-
 if [[ -n "${containerDismantleScript}" ]]; then
+  echo "Container dismantle script: ${containerDismantleScript}"
   if [[ -n "${containerDismantleParameters}" ]]; then
-    containerExecute "${containerName}" "${containerDismantleScript}" "${containerDismantleParameters[@]}"
+    "${containerDismantleScript}" --containerName "${containerName}" "${containerDismantleParameters[@]}"
   else
-    containerExecute "${containerName}" "${containerDismantleScript}"
+    "${containerDismantleScript}" --containerName "${containerName}"
   fi
 elif [[ -n "${containerDismantle}" ]]; then
   containerCommand "${containerName}" "${containerDismantle}"
@@ -72,8 +73,8 @@ fi
 if [[ -n "${afterContainerDismantleScript}" ]]; then
   echo "After container dismantle script: ${afterContainerDismantleScript}"
   if [[ -n "${afterContainerDismantleParameters}" ]]; then
-    "${afterContainerDismantleScript}" "${afterContainerDismantleParameters[@]}"
+    "${afterContainerDismantleScript}" --containerName "${containerName}" "${afterContainerDismantleParameters[@]}"
   else
-    "${afterContainerDismantleScript}"
+    "${afterContainerDismantleScript}" --containerName "${containerName}"
   fi
 fi

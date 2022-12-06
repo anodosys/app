@@ -46,9 +46,10 @@ logName "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
-finished=$(containerCommandQuiet "${containerName}" "test -f /.commenced.flag && echo -n \"true\" || echo -n \"false\"")
+commenced=$(containerCommandQuiet "${containerName}" "test -f /.commenced.flag && echo -n \"true\" || echo -n \"false\"")
 
-if [[ "${finished}" == "true" ]]; then
+if [[ "${commenced}" == "true" ]]; then
+  echo "Nothing to commence"
   exit 0
 fi
 
@@ -64,6 +65,7 @@ if [[ -n "${beforeContainerCommencementScript}" ]]; then
 fi
 
 if [[ -n "${containerCommencementScript}" ]]; then
+  echo "Container commencement script: ${beforeContainerCommencementScript}"
   if [[ -n "${containerCommencementParameters}" ]]; then
     "${containerCommencementScript}" --containerName "${containerName}" "${containerCommencementParameters[@]}"
   else
@@ -72,7 +74,7 @@ if [[ -n "${containerCommencementScript}" ]]; then
 elif [[ -n "${containerCommencement}" ]]; then
   containerCommand "${containerName}" "${containerCommencement}"
 else
-  echo "Nothing to finish"
+  echo "Nothing to commence"
 fi
 
 if [[ -n "${afterContainerCommencementScript}" ]]; then

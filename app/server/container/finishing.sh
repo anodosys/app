@@ -49,6 +49,7 @@ containerName="${systemName}_${serverName}"
 finished=$(containerCommandQuiet "${containerName}" "test -f /.finished.flag && echo -n \"true\" || echo -n \"false\"")
 
 if [[ "${finished}" == "true" ]]; then
+  echo "Nothing to finish"
   exit 0
 fi
 

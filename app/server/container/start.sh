@@ -46,12 +46,14 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+containerName="${systemName}_${serverName}"
+
 if [[ -n "${beforeContainerStartScript}" ]]; then
   echo "Before container start script: ${beforeContainerStartScript}"
   if [[ -n "${beforeContainerStartParameters}" ]]; then
-    "${beforeContainerStartScript}" "${beforeContainerStartParameters[@]}"
+    "${beforeContainerStartScript}" --containerName "${containerName}" "${beforeContainerStartParameters[@]}"
   else
-    "${beforeContainerStartScript}"
+    "${beforeContainerStartScript}" --containerName "${containerName}"
   fi
 fi
 
@@ -60,15 +62,13 @@ if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]
   exit 0
 fi
 
-containerName="${systemName}_${serverName}"
-
 containerStart "${containerName}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
   if [[ -n "${afterContainerStartParameters}" ]]; then
-    "${afterContainerStartScript}" "${afterContainerStartParameters[@]}"
+    "${afterContainerStartScript}" --containerName "${containerName}" "${afterContainerStartParameters[@]}"
   else
-    "${afterContainerStartScript}"
+    "${afterContainerStartScript}" --containerName "${containerName}"
   fi
 fi

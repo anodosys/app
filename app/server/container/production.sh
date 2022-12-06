@@ -46,9 +46,10 @@ logName "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
-finished=$(containerCommandQuiet "${containerName}" "test -f /.produced.flag && echo -n \"true\" || echo -n \"false\"")
+produced=$(containerCommandQuiet "${containerName}" "test -f /.produced.flag && echo -n \"true\" || echo -n \"false\"")
 
-if [[ "${finished}" == "true" ]]; then
+if [[ "${produced}" == "true" ]]; then
+  echo "Nothing to produce"
   exit 0
 fi
 
@@ -72,7 +73,7 @@ if [[ -n "${containerProductionScript}" ]]; then
 elif [[ -n "${containerProduction}" ]]; then
   containerCommand "${containerName}" "${containerProduction}"
 else
-  echo "Nothing to finish"
+  echo "Nothing to produce"
 fi
 
 if [[ -n "${afterContainerProductionScript}" ]]; then

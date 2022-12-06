@@ -78,10 +78,14 @@ completeConfigurationVariables()
     anotherServerName="${serverPlaceholderParts[0]}"
     anotherServerKey="${serverPlaceholderParts[1]}"
     anotherServerConfigurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${anotherServerName}.ini"
-    anotherServerConfig=$(grep "^${anotherServerKey}=" "${anotherServerConfigurationFile}")
-    eval "${anotherServerName}__${anotherServerConfig}"
-    anotherServerVarName="${anotherServerName}__${anotherServerKey}"
-    sed -i "s/<${anotherServerName}:${anotherServerKey}>/${!anotherServerVarName}/g" "${configurationFile}"
+    anotherServerConfig=$(grep "^${anotherServerKey}=" "${anotherServerConfigurationFile}" | cat)
+    if [[ -n "${anotherServerConfig}" ]]; then
+      eval "${anotherServerName}__${anotherServerConfig}"
+      anotherServerVarName="${anotherServerName}__${anotherServerKey}"
+      sed -i "s/<${anotherServerName}:${anotherServerKey}>/${!anotherServerVarName}/g" "${configurationFile}"
+    else
+      sed -i "s/<${anotherServerName}:${anotherServerKey}>//g" "${configurationFile}"
+    fi
   done
 }
 

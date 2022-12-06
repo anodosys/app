@@ -46,18 +46,23 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-if [[ -n "${beforeContainerInstallScript}" ]]; then
-  echo "Before container install script: ${beforeContainerInstallScript}"
-  "${beforeContainerInstallScript}"
-fi
-
 containerName="${systemName}_${serverName}"
 
-if [[ -n "${containerInstallScript}" ]]; then
-  if [[ -n "${containerInstallParameters}" ]]; then
-    containerExecute "${containerName}" "${containerInstallScript}" "${containerInstallParameters[@]}"
+if [[ -n "${beforeContainerInstallScript}" ]]; then
+  echo "Before container install script: ${beforeContainerInstallScript}"
+  if [[ -n "${beforeContainerInstallParameters}" ]]; then
+    "${beforeContainerInstallScript}" --containerName "${containerName}" "${beforeContainerInstallParameters[@]}"
   else
-    containerExecute "${containerName}" "${containerInstallScript}"
+    "${beforeContainerInstallScript}" --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${containerInstallScript}" ]]; then
+  echo "Container install script: ${containerInstallScript}"
+  if [[ -n "${containerInstallParameters}" ]]; then
+    "${containerInstallScript}" --containerName "${containerName}" "${containerInstallParameters[@]}"
+  else
+    "${containerInstallScript}" --containerName "${containerName}"
   fi
 elif [[ -n "${containerInstall}" ]]; then
   containerCommand "${containerName}" "${containerInstall}"
@@ -67,5 +72,9 @@ fi
 
 if [[ -n "${afterContainerInstallScript}" ]]; then
   echo "After container install script: ${afterContainerInstallScript}"
-  "${afterContainerInstallScript}"
+  if [[ -n "${afterContainerInstallParameters}" ]]; then
+    "${afterContainerInstallScript}" --containerName "${containerName}" "${afterContainerInstallParameters[@]}"
+  else
+    "${afterContainerInstallScript}" --containerName "${containerName}"
+  fi
 fi

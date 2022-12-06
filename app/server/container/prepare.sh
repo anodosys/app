@@ -51,16 +51,16 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+containerName="${systemName}_${serverName}"
+
 if [[ -n "${beforeContainerPrepareScript}" ]]; then
   echo "Before container prepare script: ${beforeContainerPrepareScript}"
   if [[ -n "${beforeContainerPrepareParameters}" ]]; then
-    "${beforeContainerPrepareScript}" "${beforeContainerPrepareParameters[@]}"
+    "${beforeContainerPrepareScript}" --containerName "${containerName}" "${beforeContainerPrepareParameters[@]}"
   else
-    "${beforeContainerPrepareScript}"
+    "${beforeContainerPrepareScript}" --containerName "${containerName}"
   fi
 fi
-
-containerName="${systemName}_${serverName}"
 
 configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_${serverName}.ini"
 containerCopy "${containerName}" "${configurationFile}" "/container.sh"
@@ -72,10 +72,11 @@ if [[ -n "${containerPrepareFiles}" ]]; then
 fi
 
 if [[ -n "${containerPrepareScript}" ]]; then
+  echo "Container prepare script: ${containerPrepareScript}"
   if [[ -n "${containerPrepareParameters}" ]]; then
-    containerExecute "${containerName}" "${containerPrepareScript}" "${containerPrepareParameters[@]}"
+    "${containerPrepareScript}" --containerName "${containerName}" "${containerPrepareParameters[@]}"
   else
-    containerExecute "${containerName}" "${containerPrepareScript}"
+    "${containerPrepareScript}" --containerName "${containerName}"
   fi
 elif [[ -n "${containerPrepare}" ]]; then
   containerCommand "${containerName}" "${containerPrepare}"
@@ -85,5 +86,9 @@ fi
 
 if [[ -n "${afterContainerPrepareScript}" ]]; then
   echo "After container prepare script: ${afterContainerPrepareScript}"
-  "${afterContainerPrepareScript}"
+  if [[ -n "${afterContainerPrepareParameters}" ]]; then
+    "${afterContainerPrepareScript}" --containerName "${containerName}" "${afterContainerPrepareParameters[@]}"
+  else
+    "${afterContainerPrepareScript}" --containerName "${containerName}"
+  fi
 fi
