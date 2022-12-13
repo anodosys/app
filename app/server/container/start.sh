@@ -62,7 +62,11 @@ if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]
   exit 0
 fi
 
-containerStart "${containerName}"
+if [[ -z "${skipPortsAvailable}" ]]; then
+  skipPortsAvailable="false"
+fi
+
+containerStart "${containerName}" no "${skipPortsAvailable}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
