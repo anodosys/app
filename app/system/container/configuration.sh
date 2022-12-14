@@ -85,10 +85,8 @@ completeConfigurationVariables()
       anotherServerVarName="${anotherServerName}__${anotherServerKey}"
       anotherServerValue="${!anotherServerVarName}"
       anotherServerValue=$(echo "${anotherServerValue}" | sed 's/\//\\\//g')
-      echo sed -i "s/<${anotherServerName}:${anotherServerKey}>/${anotherServerValue}/g" "${configurationFile}"
       sed -i "s/<${anotherServerName}:${anotherServerKey}>/${anotherServerValue}/g" "${configurationFile}"
     else
-      echo sed -i "s/<${anotherServerName}:${anotherServerKey}>//g" "${configurationFile}"
       sed -i "s/<${anotherServerName}:${anotherServerKey}>//g" "${configurationFile}"
     fi
   done
