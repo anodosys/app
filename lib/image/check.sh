@@ -19,6 +19,7 @@ imageCheckRemote()
   local localId
   local remoteId
   local localTimestamp
+  local lastPushedTimestamps
   local remoteTimestamp
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
@@ -54,7 +55,8 @@ imageCheckRemote()
     remoteId=$(echo "${remoteData}" | jq -r '.images[] .digest')
     if [[ "${localId}" != "${remoteId}" ]]; then
       localTimestamp=$(date -d "$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.Created')" +%s)
-      remoteTimestamp=$(date -d "$(echo "${remoteData}" | jq -r '.images[] .last_pushed')" +%s)
+      lastPushedTimestamps=( $(echo "${remoteData}" | jq -r '.images[] .last_pushed' | sort -r) )
+      remoteTimestamp=$(date -d "${lastPushedTimestamps[0]}" +%s)
       if [[ "${remoteTimestamp}" -gt "${localTimestamp}" ]]; then
         echo 1
         exit 0
