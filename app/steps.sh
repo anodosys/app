@@ -45,7 +45,8 @@ getActionSteps()
 declare -A steps
 steps["init"]="imageExistsSourceRemote,imagePullSource"
 steps["build"]="imageNotExistsTarget,action:rebuild"
-steps["rebuild"]="action:source,action:install,action:image,action:remove,action:push"
+steps["rebuild"]="action:erect,action:image,action:push"
+steps["erect"]="action:source,action:install"
 steps["source"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,add"
 steps["install"]="containerHost,containerStart,containerRunning,containerPrepare,containerInstall,containerDismantle,start"
 steps["image"]="containerExists,containerStop,imageRemoveTargetLocal,imageCreate"
@@ -57,8 +58,9 @@ steps["start"]="containerExists,containerNotRunning,containerHost,containerStart
 steps["stop"]="containerExists,containerRunning,containerStop,containerNotRunning,stop"
 steps["restart"]="action:stop,action:start"
 steps["remove"]="containerExists,containerNotRunning,containerRemove,networkRemove,remove"
-steps["clean"]="containerStop,containerRemove,networkRemove,imageRemoveTargetLocal"
-steps["destroy"]="action:clean,imageRemoveSourceLocal,imageRemoveTargetRemote"
+steps["erase"]="action:stop,action:remove"
+steps["clean"]="containerNotExists,imageRemoveTargetLocal"
+steps["destroy"]="containerNotExists,imageRemoveSourceLocal,imageRemoveTargetRemote"
 
 if [[ -n "${actionStartScript}" ]]; then
   echo "Action start script: ${actionStartScript}"
