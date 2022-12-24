@@ -57,14 +57,16 @@ ACTION:
   init       Pull the images required for building
   build      Build the target images and push if required
   rebuild    Re-build the target images and push if required
-  install    Build the containers, but do not create images
+  source     Create the containers from source images
+  install    Build the containers with created containers from source images
   image      Build the image from running containers
-  push       Push the build images to remote
-  clean      Remove the containers and the build images
-  destroy    Clean and remove the build images pushed to remote
+  push       Push the built images to remote
+  clean      Remove the containers and the built images
+  destroy    Clean and remove the built images pushed to remote
   prepare    Pull the images required for creating
-  create     Create the container from build images
-  start      Start the containers
+  run        Create the container from built images and start them
+  create     Create the container from built images
+  start      Start the containers with created containers from built images
   restart    Re-start the containers
   stop       Stop the constainers
   remove     Remove the constainers

@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysUserVarPath}" ]]; then
+  >&2 echo "No anodosys user var path specified!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -46,10 +51,8 @@ logName "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
-finished=$(containerCommandQuiet "${containerName}" "test -f /.finished.flag && echo -n \"true\" || echo -n \"false\"")
-
-if [[ "${finished}" == "true" ]]; then
-  echo "Nothing to finish"
+if [[ -f "${anodosysUserVarPath}/finishing/${containerName}" ]]; then
+  echo "Finishing already processed"
   exit 0
 fi
 
@@ -85,4 +88,5 @@ if [[ -n "${afterContainerFinishingScript}" ]]; then
   fi
 fi
 
-containerCommandQuiet "${containerName}" "touch /.finished.flag"
+mkdir -p "${anodosysUserVarPath}/finishing"
+touch "${anodosysUserVarPath}/finishing/${containerName}"

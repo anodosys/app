@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysUserVarPath}" ]]; then
+  >&2 echo "No anodosys user var path specified!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -46,10 +51,8 @@ logName "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
-produced=$(containerCommandQuiet "${containerName}" "test -f /.produced.flag && echo -n \"true\" || echo -n \"false\"")
-
-if [[ "${produced}" == "true" ]]; then
-  echo "Nothing to produce"
+if [[ -f "${anodosysUserVarPath}/production/${containerName}" ]]; then
+  echo "Production already processed"
   exit 0
 fi
 
@@ -85,4 +88,5 @@ if [[ -n "${afterContainerProductionScript}" ]]; then
   fi
 fi
 
-containerCommandQuiet "${containerName}" "touch /.produced.flag"
+mkdir -p "${anodosysUserVarPath}/production"
+touch "${anodosysUserVarPath}/production/${containerName}"

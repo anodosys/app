@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysUserVarPath}" ]]; then
+  >&2 echo "No anodosys user var path specified!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -77,3 +82,10 @@ if [[ -n "${afterContainerRemoveScript}" ]]; then
   echo "After container remove script: ${afterContainerRemoveScript}"
   "${afterContainerRemoveScript}"
 fi
+
+mkdir -p "${anodosysUserVarPath}/commencement"
+rm -rf "${anodosysUserVarPath}/commencement/${systemName}"
+mkdir -p "${anodosysUserVarPath}/production"
+rm -rf "${anodosysUserVarPath}/production/${systemName}"
+mkdir -p "${anodosysUserVarPath}/finishing"
+rm -rf "${anodosysUserVarPath}/finishing/${systemName}"

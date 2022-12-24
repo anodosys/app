@@ -64,7 +64,7 @@ if [[ -n "${buildImageTag}" ]]; then
   imageTag="${buildImageTag}"
 fi
 
-imageRemove "${imageName}" "${imageTag}"
+imageRemove "${imageName}" "${imageTag}" "warn"
 
 if [[ -n "${afterImageRemoveTargetLocalScript}" ]]; then
   echo "After image remove target local script: ${afterImageRemoveTargetLocalScript}"

@@ -1,0 +1,73 @@
+#!/bin/bash -e
+
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
+  exit 1
+fi
+
+scriptName="${0##*/}"
+
+usage()
+{
+cat >&2 << EOF
+
+usage: ${scriptName} options
+
+OPTIONS:
+  -h  Show this message
+  -s  Server name
+
+Example: ${scriptName} -s web
+EOF
+}
+
+trim()
+{
+  echo -n "$1" | xargs
+}
+
+serverName=
+
+while getopts hs:? option; do
+  case "${option}" in
+    h) usage; exit 1;;
+    s) serverName=$(trim "$OPTARG");;
+    ?) usage; exit 1;;
+  esac
+done
+
+if [[ -z "${serverName}" ]]; then
+  >&2 echo "No server name specified!"
+  usage
+  exit 1
+fi
+
+logName "${systemName}" "${serverName}"
+
+setServerConfiguration "${systemName}" "${serverName}"
+
+containerName="${systemName}_${serverName}"
+
+if [[ -n "${beforeContainerHostScript}" ]]; then
+  echo "Before container host script: ${beforeContainerHostScript}"
+  if [[ -n "${beforeContainerHostParameters}" ]]; then
+    "${beforeContainerHostScript}" --containerName "${containerName}" "${beforeContainerHostParameters[@]}"
+  else
+    "${beforeContainerHostScript}" --containerName "${containerName}"
+  fi
+fi
+
+echo "Checking if ports are blocked for container: ${containerName}"
+if [[ $(containerPortBlocked "${containerName}") == 1 ]]; then
+  >&2 echo "Cannot start container because ports are blocked"
+  exit 1
+fi
+
+if [[ -n "${afterContainerHostScript}" ]]; then
+  echo "After container host script: ${afterContainerHostScript}"
+  if [[ -n "${afterContainerHostParameters}" ]]; then
+    "${afterContainerHostScript}" --containerName "${containerName}" "${afterContainerHostParameters[@]}"
+  else
+    "${afterContainerHostScript}" --containerName "${containerName}"
+  fi
+fi
