@@ -58,8 +58,8 @@ steps["start"]="containerExists,containerNotRunning,containerHost,containerStart
 steps["stop"]="containerExists,containerRunning,containerStop,containerNotRunning,stop"
 steps["restart"]="action:stop,action:start"
 steps["remove"]="containerExists,containerNotRunning,containerRemove,networkRemove,remove"
-steps["erase"]="action:stop,action:remove"
 steps["clean"]="containerNotExists,imageRemoveTargetLocal"
+steps["erase"]="action:stop,action:remove,action:clean"
 steps["destroy"]="containerNotExists,imageRemoveSourceLocal,imageRemoveTargetRemote"
 
 if [[ -n "${actionStartScript}" ]]; then
