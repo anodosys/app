@@ -46,7 +46,7 @@ declare -A steps
 steps["init"]="imageExistsSourceRemote,imagePullSource"
 steps["build"]="imageNotExistsTarget,action:rebuild"
 steps["rebuild"]="action:erect,action:image,action:push,action:remove"
-steps["erect"]="action:source,action:install"
+steps["rise"]="action:source,action:install"
 steps["source"]="containerNotExists,imageExistsSource,imagePullSource,networkCreate,containerCreateSource,add"
 steps["install"]="containerHost,containerStart,containerRunning,containerPrepare,containerInstall,containerDismantle,start"
 steps["image"]="containerExists,containerStop,imageRemoveTargetLocal,imageCreate"
