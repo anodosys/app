@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysUserVarPath}" ]]; then
+  >&2 echo "No anodosys user var path specified!"
+  exit 1
+fi
+
 containerRecreate()
 {
   local containerName="${1}"
@@ -83,6 +88,14 @@ containerRecreate()
   done
 
   containerRemove "${containerName}"
+
+  mkdir -p "${anodosysUserVarPath}/commencement"
+  rm -rf "${anodosysUserVarPath}/commencement/${containerName}"
+  mkdir -p "${anodosysUserVarPath}/production"
+  rm -rf "${anodosysUserVarPath}/production/${containerName}"
+  mkdir -p "${anodosysUserVarPath}/finishing"
+  rm -rf "${anodosysUserVarPath}/finishing/${containerName}"
+
   containerCreate "${imageName}" "${containerName}" "${networkName}" "${parameters[@]}"
 }
 
