@@ -1,5 +1,20 @@
 #!/bin/bash -e
 
+prepareValue()
+{
+  local text="$*"
+
+  text="${text#"${text%%[![:space:]]*}"}"
+  text="${text%"${text##*[![:space:]]}"}"
+  text=$(printf '%s' "${text}")
+  text="${text%\"}"
+  text="${text#\"}"
+  echo -n "${text}"
+}
+
+# shellcheck disable=SC2034
+typeset -fx prepareValue
+
 finish()
 {
   local lastExitCode
@@ -10,7 +25,7 @@ finish()
   local runningProcessIds
   local runningProcessId
 
-  if [[ "${action}" != "construct" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
+  if [[ "${action}" != "" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "list" ]]; then
     lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})

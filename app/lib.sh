@@ -10,21 +10,6 @@ if [[ -z "${anodosysUserLibPath}" ]]; then
   exit 1
 fi
 
-prepareValue()
-{
-  local text="$*"
-
-  text="${text#"${text%%[![:space:]]*}"}"
-  text="${text%"${text##*[![:space:]]}"}"
-  text=$(printf '%s' "${text}")
-  text="${text%\"}"
-  text="${text#\"}"
-  echo -n "${text}"
-}
-
-# shellcheck disable=SC2034
-typeset -fx prepareValue
-
 getArrayValue()
 {
   local key="${1}"
