@@ -84,8 +84,9 @@ ACTION:
   stop       Stop the constainers
   restart    Re-start the containers
   remove     Remove the constainers
-  erase      Stop and remove the containers
   clean      Remove the the built images
+  purge      Stop and remove the containers
+  erase      Stop and remove the containers and remove the build images
   destroy    Remove the built images locally and remotely
 
   cmd        Execute a command in a container
