@@ -44,7 +44,7 @@ containerCreate()
         rights=$(getArrayValue 8 "-" "${parameterParts[@]}")
         empty=$(getArrayValue 9 "-" "${parameterParts[@]}")
         if [[ ! -e "${sourcePath}" ]]; then
-          echo "Creating source path: ${sourcePath}"
+          echo "Creating container source path: ${sourcePath}"
           mkdir -p "${sourcePath}" | cat
           if [[ -d "${sourcePath}" ]]; then
             echo "Successfully created source path: ${sourcePath}" | sed $'s,.*,\e[1;36m&\e[m,'
@@ -69,6 +69,8 @@ containerCreate()
         sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
         volumeName="${containerName}_${sourceName}"
         command+=" --mount source=${volumeName},destination=${targetPath}"
+      elif [[ "${parameter:0:12}" == "environment:" ]]; then
+        command+=" --env ${parameter:12}"
       fi
     done
     command+=" --name \"${containerName}\" \"${imageName}\""

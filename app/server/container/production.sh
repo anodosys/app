@@ -61,17 +61,31 @@ setServerConfiguration "${systemName}" "${serverName}"
 if [[ -n "${beforeContainerProductionScript}" ]]; then
   echo "Before container production script: ${beforeContainerProductionScript}"
   if [[ -n "${beforeContainerProductionParameters}" ]]; then
-    "${beforeContainerProductionScript}" "${beforeContainerProductionParameters[@]}"
+    "${beforeContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerProductionParameters[@]}"
   else
-    "${beforeContainerProductionScript}"
+    "${beforeContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
 if [[ -n "${containerProductionScript}" ]]; then
   if [[ -n "${containerProductionParameters}" ]]; then
-    "${containerProductionScript}" --containerName "${containerName}" "${containerProductionParameters[@]}"
+    "${containerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerProductionParameters[@]}"
   else
-    "${containerProductionScript}" --containerName "${containerName}"
+    "${containerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 elif [[ -n "${containerProduction}" ]]; then
   containerCommand "${containerName}" "${containerProduction}"
@@ -82,9 +96,16 @@ fi
 if [[ -n "${afterContainerProductionScript}" ]]; then
   echo "After container production script: ${afterContainerProductionScript}"
   if [[ -n "${afterContainerProductionParameters}" ]]; then
-    "${afterContainerProductionScript}" "${afterContainerProductionParameters[@]}"
+    "${afterContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerProductionParameters[@]}"
   else
-    "${afterContainerProductionScript}"
+    "${afterContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 

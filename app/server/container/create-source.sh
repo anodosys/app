@@ -49,9 +49,16 @@ setServerConfiguration "${systemName}" "${serverName}"
 if [[ -n "${beforeContainerCreateSourceScript}" ]]; then
   echo "Before container create source script: ${beforeContainerCreateSourceScript}"
   if [[ -n "${beforeContainerCreateSourceParameters}" ]]; then
-    "${beforeContainerCreateSourceScript}" "${beforeContainerCreateSourceParameters[@]}"
+    "${beforeContainerCreateSourceScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerCreateSourceParameters[@]}"
   else
-    "${beforeContainerCreateSourceScript}"
+    "${beforeContainerCreateSourceScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
@@ -117,9 +124,28 @@ for containerVolume in "${containerVolumes[@]}"; do
   optionalParameters+=( "volume:${containerVolume}" )
 done
 
+if [[ -z "${containerVariables}" ]]; then
+  containerVariables=()
+fi
+
+for containerVariable in "${containerVariables[@]}"; do
+  optionalParameters+=( "environment:${containerVariable}" )
+done
+
 containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateSourceScript}" ]]; then
   echo "After container create source script: ${afterContainerCreateSourceScript}"
-  "${afterContainerCreateSourceScript}"
+  if [[ -n "${afterContainerCreateSourceParameters}" ]]; then
+    "${afterContainerCreateSourceScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerCreateSourceParameters[@]}"
+  else
+    "${afterContainerCreateSourceScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi

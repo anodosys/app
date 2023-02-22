@@ -54,9 +54,16 @@ setServerConfiguration "${systemName}" "${serverName}"
 if [[ -n "${beforeContainerRunningScript}" ]]; then
   echo "Before container running script: ${beforeContainerRunningScript}"
   if [[ -n "${beforeContainerRunningParameters}" ]]; then
-    "${beforeContainerRunningScript}" "${beforeContainerRunningParameters[@]}"
+    "${beforeContainerRunningScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerRunningParameters[@]}"
   else
-    "${beforeContainerRunningScript}"
+    "${beforeContainerRunningScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
@@ -79,8 +86,15 @@ fi
 if [[ -n "${afterContainerRunningScript}" ]]; then
   echo "After container running script: ${afterContainerRunningScript}"
   if [[ -n "${afterContainerRunningParameters}" ]]; then
-    "${afterContainerRunningScript}" "${afterContainerRunningParameters[@]}"
+    "${afterContainerRunningScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerRunningParameters[@]}"
   else
-    "${afterContainerRunningScript}"
+    "${afterContainerRunningScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi

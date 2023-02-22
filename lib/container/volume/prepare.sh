@@ -78,7 +78,7 @@ containerVolumePrepare()
           user=$(containerCommandQuiet "${containerName}" "stat -L -c \"%U\" ${targetPath}")
           if [[ "${user}" != "${targetUser}" ]]; then
             echo "Changing owner of path: ${targetPath} to: ${targetUser}"
-            containerCommand "${containerName}" "chown ${targetUser} ${targetPath}"
+            containerCommand "${containerName}" "chown ${targetUser}: ${targetPath}"
           else
             echo "No need to change owner of path: ${targetPath} to: ${targetUser}"
           fi

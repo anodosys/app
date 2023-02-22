@@ -51,9 +51,16 @@ containerName="${systemName}_${serverName}"
 if [[ -n "${beforeContainerStartScript}" ]]; then
   echo "Before container start script: ${beforeContainerStartScript}"
   if [[ -n "${beforeContainerStartParameters}" ]]; then
-    "${beforeContainerStartScript}" --containerName "${containerName}" "${beforeContainerStartParameters[@]}"
+    "${beforeContainerStartScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerStartParameters[@]}"
   else
-    "${beforeContainerStartScript}" --containerName "${containerName}"
+    "${beforeContainerStartScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
@@ -66,13 +73,24 @@ if [[ -z "${skipPortsAvailable}" ]]; then
   skipPortsAvailable="false"
 fi
 
-containerStart "${containerName}" no "${skipPortsAvailable}"
+if [[ -z "${follow}" ]]; then
+  follow="false"
+fi
+
+containerStart "${containerName}" no "${skipPortsAvailable}" "${follow}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
   if [[ -n "${afterContainerStartParameters}" ]]; then
-    "${afterContainerStartScript}" --containerName "${containerName}" "${afterContainerStartParameters[@]}"
+    "${afterContainerStartScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerStartParameters[@]}"
   else
-    "${afterContainerStartScript}" --containerName "${containerName}"
+    "${afterContainerStartScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi

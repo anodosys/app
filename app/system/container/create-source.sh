@@ -32,7 +32,7 @@ while : ; do
 
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
-      if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
+      if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         createScript="${PWD}/${serverName}/container/create-source.sh"
         if [[ -f "${createScript}" ]]; then
           echo "[${serverName}] Creating container of server: ${serverName} with custom script: ${createScript}"
@@ -47,6 +47,10 @@ while : ; do
   done
 
   for serverName in "${!processIds[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     processId="${processIds[${serverName}]}"
     wait "${processId}"
     processedServerNameList["${serverName}"]=1
@@ -54,6 +58,10 @@ while : ; do
 
   processed=1
   for serverName in "${serverNames[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processed=0
       break

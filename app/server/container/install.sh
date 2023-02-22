@@ -51,18 +51,32 @@ containerName="${systemName}_${serverName}"
 if [[ -n "${beforeContainerInstallScript}" ]]; then
   echo "Before container install script: ${beforeContainerInstallScript}"
   if [[ -n "${beforeContainerInstallParameters}" ]]; then
-    "${beforeContainerInstallScript}" --containerName "${containerName}" "${beforeContainerInstallParameters[@]}"
+    "${beforeContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerInstallParameters[@]}"
   else
-    "${beforeContainerInstallScript}" --containerName "${containerName}"
+    "${beforeContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
 if [[ -n "${containerInstallScript}" ]]; then
   echo "Container install script: ${containerInstallScript}"
   if [[ -n "${containerInstallParameters}" ]]; then
-    "${containerInstallScript}" --containerName "${containerName}" "${containerInstallParameters[@]}"
+    "${containerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerInstallParameters[@]}"
   else
-    "${containerInstallScript}" --containerName "${containerName}"
+    "${containerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 elif [[ -n "${containerInstall}" ]]; then
   containerCommand "${containerName}" "${containerInstall}"
@@ -73,8 +87,15 @@ fi
 if [[ -n "${afterContainerInstallScript}" ]]; then
   echo "After container install script: ${afterContainerInstallScript}"
   if [[ -n "${afterContainerInstallParameters}" ]]; then
-    "${afterContainerInstallScript}" --containerName "${containerName}" "${afterContainerInstallParameters[@]}"
+    "${afterContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerInstallParameters[@]}"
   else
-    "${afterContainerInstallScript}" --containerName "${containerName}"
+    "${afterContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi

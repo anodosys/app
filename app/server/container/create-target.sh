@@ -5,6 +5,16 @@ if [[ -z "${systemName}" ]]; then
   exit 1
 fi
 
+if [[ -z "${anodosysUserVarPath}" ]]; then
+  >&2 echo "No anodosys user var path specified!"
+  exit 1
+fi
+
+if [[ -z "${force}" ]]; then
+  >&2 echo "No force status specified!"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -49,9 +59,16 @@ setServerConfiguration "${systemName}" "${serverName}"
 if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
   echo "Before container create target script: ${beforeContainerCreateTargetScript}"
   if [[ -n "${beforeContainerCreateTargetParameters}" ]]; then
-    "${beforeContainerCreateTargetScript}" "${beforeContainerCreateTargetParameters[@]}"
+    "${beforeContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerCreateTargetParameters[@]}"
   else
-    "${beforeContainerCreateTargetScript}"
+    "${beforeContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
@@ -125,9 +142,39 @@ for containerVolume in "${containerVolumes[@]}"; do
   optionalParameters+=( "volume:${containerVolume}" )
 done
 
+if [[ -z "${containerVariables}" ]]; then
+  containerVariables=()
+fi
+
+for containerVariable in "${containerVariables[@]}"; do
+  optionalParameters+=( "environment:${containerVariable}" )
+done
+
+if [[ $(containerExists "${containerName}") == 1 ]] && [[ "${force}" == 1 ]]; then
+  containerRemove "${containerName}"
+
+  mkdir -p "${anodosysUserVarPath}/commencement"
+  rm -rf "${anodosysUserVarPath}/commencement/${containerName}"
+  mkdir -p "${anodosysUserVarPath}/production"
+  rm -rf "${anodosysUserVarPath}/production/${containerName}"
+  mkdir -p "${anodosysUserVarPath}/finishing"
+  rm -rf "${anodosysUserVarPath}/finishing/${containerName}"
+fi
+
 containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateTargetScript}" ]]; then
   echo "After container create target script: ${afterContainerCreateTargetScript}"
-  "${afterContainerCreateTargetScript}"
+  if [[ -n "${afterContainerCreateTargetParameters}" ]]; then
+    "${afterContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerCreateTargetParameters[@]}"
+  else
+    "${afterContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi

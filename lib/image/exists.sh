@@ -34,10 +34,14 @@ imageExistsRemote()
   local tokenTime
   local token
 
+  if ! [[ "${imageName}" =~ '/' ]]; then
+    imageName="library/${imageName}"
+  fi
+
   status=$(curl -s -w "%{http_code}" -o /dev/null "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" | cat)
   if [[ "${status}" == 200 ]]; then
     echo 1
-  else
+  elif [[ -n "${userName}" ]] && [[ -n "${password}" ]]; then
     useTokenFile=0
     mkdir -p "${anodosysUserVarPath}/auth"
     tokenFile="${anodosysUserVarPath}/auth/docker_io_$(echo "${imageName}" | sed 's/[^[:alnum:]]/_/g')"
@@ -68,6 +72,8 @@ imageExistsRemote()
     else
       echo 0
     fi
+  else
+    echo 0
   fi
 }
 

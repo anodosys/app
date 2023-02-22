@@ -74,13 +74,15 @@ if [[ -z "${imageTag}" ]]; then
 fi
 
 if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-  if [[ -z "${repositoryUserName}" ]]; then
+  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 2 ]]; then
+    imagePull "${imageName}" "${imageTag}"
+  elif [[ -z "${repositoryUserName}" ]]; then
     >&2 echo "No repository user name for server: ${serverName}"
     exit 1
   elif [[ -z "${repositoryPassword}" ]]; then
     >&2 echo "No repository password for server: ${serverName}"
     exit 1
-  elif [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+  elif [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 2 ]]; then
     imagePull "${imageName}" "${imageTag}"
   else
     >&2 echo "Target image does not exist: ${imageName}:${imageTag}"
@@ -89,16 +91,25 @@ if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
 else
   if [[ "${skipImageCheck}" == "true" ]]; then
     echo "Skipping target image check for server: ${serverName}"
-  elif [[ -z "${repositoryUserName}" ]]; then
-    >&2 echo "No repository user name for server: ${serverName}"
-    exit 1
-  elif [[ -z "${repositoryPassword}" ]]; then
-    >&2 echo "No repository password for server: ${serverName}"
-    exit 1
-  elif [[ $(imageCheckRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
-    imagePull "${imageName}" "${imageTag}" yes
   else
-    echo "No need to pull target image: ${imageName}:${imageTag}"
+    imageCheckRemoteResult=$(imageCheckRemote "${imageName}" "${imageTag}")
+    if [[ "${imageCheckRemoteResult}" == 2 ]]; then
+      imagePull "${imageName}" "${imageTag}" yes
+    elif [[ "${imageCheckRemoteResult}" == 0 ]]; then
+      if [[ -z "${repositoryUserName}" ]]; then
+        >&2 echo "No repository user name for server: ${serverName}"
+        exit 1
+      elif [[ -z "${repositoryPassword}" ]]; then
+        >&2 echo "No repository password for server: ${serverName}"
+        exit 1
+      elif [[ $(imageCheckRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 2 ]]; then
+        imagePull "${imageName}" "${imageTag}" yes
+      else
+        echo "No need to pull target image: ${imageName}:${imageTag}"
+      fi
+    else
+      echo "No need to pull target image: ${imageName}:${imageTag}"
+    fi
   fi
 fi
 

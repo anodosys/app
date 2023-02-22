@@ -61,18 +61,32 @@ setServerConfiguration "${systemName}" "${serverName}"
 if [[ -n "${beforeContainerCommencementScript}" ]]; then
   echo "Before container commencement script: ${beforeContainerCommencementScript}"
   if [[ -n "${beforeContainerCommencementParameters}" ]]; then
-    "${beforeContainerCommencementScript}" "${beforeContainerCommencementParameters[@]}"
+    "${beforeContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerCommencementParameters[@]}"
   else
-    "${beforeContainerCommencementScript}"
+    "${beforeContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
 if [[ -n "${containerCommencementScript}" ]]; then
   echo "Container commencement script: ${beforeContainerCommencementScript}"
   if [[ -n "${containerCommencementParameters}" ]]; then
-    "${containerCommencementScript}" --containerName "${containerName}" "${containerCommencementParameters[@]}"
+    "${containerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerCommencementParameters[@]}"
   else
-    "${containerCommencementScript}" --containerName "${containerName}"
+    "${containerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 elif [[ -n "${containerCommencement}" ]]; then
   containerCommand "${containerName}" "${containerCommencement}"
@@ -83,9 +97,16 @@ fi
 if [[ -n "${afterContainerCommencementScript}" ]]; then
   echo "After container commencement script: ${afterContainerCommencementScript}"
   if [[ -n "${afterContainerCommencementParameters}" ]]; then
-    "${afterContainerCommencementScript}" "${afterContainerCommencementParameters[@]}"
+    "${afterContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerCommencementParameters[@]}"
   else
-    "${afterContainerCommencementScript}"
+    "${afterContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 

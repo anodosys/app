@@ -75,6 +75,10 @@ while : ; do
   done
 
   for serverName in "${!processIds[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     processId="${processIds[${serverName}]}"
     wait "${processId}"
     processedServerNameList["${serverName}"]=1
@@ -82,6 +86,10 @@ while : ; do
 
   processed=1
   for serverName in "${serverNames[@]}"; do
+    if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+      continue
+    fi
+
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processed=0
       break

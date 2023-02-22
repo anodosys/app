@@ -43,7 +43,7 @@ prepareConfigurationVariables()
   local placeholderKey
   local placeholderKeys=()
 
-  keys=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} | keys_unsorted[]") )
+  keys=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} //empty | keys_unsorted[]") )
   for key in "${keys[@]}"; do
     oldIFS="${IFS}"
     IFS=$'\n'

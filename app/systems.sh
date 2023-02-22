@@ -42,6 +42,8 @@ if [[ "${action}" == "list" ]]; then
       done
       echo ""
     fi
+  else
+    echo "No systems available"
   fi
   exit 0
 fi

@@ -5,6 +5,7 @@ containerStart()
   local containerName="${1}"
   local retry="${2:-no}"
   local skipPortsAvailable="${3:-false}"
+  local follow="${4:-false}"
   local result
   local mountingIssue
   local ports
@@ -22,14 +23,15 @@ containerStart()
       result=$(docker start "${containerName}" 2>&1 | cat)
       if [[ "${result}" == "${containerName}" ]]; then
         echo "Successfully started container: ${containerName}" | sed $'s,.*,\e[0;32m&\e[m,'
+        if [[ "${follow}" == "true" ]]; then
+          docker logs --follow "${containerName}" &
+        fi
       else
         if [[ "${retry}" == "no" ]]; then
           mountingIssue=$(echo "${result}" | grep "error while mounting volume" | wc -l)
           if [[ "${mountingIssue}" -gt 0 ]]; then
             >&2 echo "Container has mounting issue"
-            containerRecreate "${containerName}"
-            containerStart "${containerName}" "yes" "${skipPortsAvailable}"
-            exit 0
+            exit 1
           fi
         fi
         >&2 echo "Could not start container: ${containerName}"
@@ -56,13 +58,15 @@ containerStart()
           else
             if [[ "${retry}" == "no" ]]; then
               echo "Container not running: ${containerName}, try again"
-              containerStart "${containerName}" "yes" "${skipPortsAvailable}"
+              containerStart "${containerName}" "yes" "${skipPortsAvailable}" "${follow}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1
             fi
           fi
         fi
+      else
+        echo "Skipping checking for ports available"
       fi
     else
       echo "No need to start container: ${containerName}"

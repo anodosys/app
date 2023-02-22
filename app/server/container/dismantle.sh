@@ -51,18 +51,32 @@ containerName="${systemName}_${serverName}"
 if [[ -n "${beforeContainerDismantleScript}" ]]; then
   echo "Before container dismantle script: ${beforeContainerDismantleScript}"
   if [[ -n "${beforeContainerDismantleParameters}" ]]; then
-    "${beforeContainerDismantleScript}" --containerName "${containerName}" "${beforeContainerDismantleParameters[@]}"
+    "${beforeContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerDismantleParameters[@]}"
   else
-    "${beforeContainerDismantleScript}" --containerName "${containerName}"
+    "${beforeContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
 if [[ -n "${containerDismantleScript}" ]]; then
   echo "Container dismantle script: ${containerDismantleScript}"
   if [[ -n "${containerDismantleParameters}" ]]; then
-    "${containerDismantleScript}" --containerName "${containerName}" "${containerDismantleParameters[@]}"
+    "${containerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerDismantleParameters[@]}"
   else
-    "${containerDismantleScript}" --containerName "${containerName}"
+    "${containerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 elif [[ -n "${containerDismantle}" ]]; then
   containerCommand "${containerName}" "${containerDismantle}"
@@ -73,8 +87,15 @@ fi
 if [[ -n "${afterContainerDismantleScript}" ]]; then
   echo "After container dismantle script: ${afterContainerDismantleScript}"
   if [[ -n "${afterContainerDismantleParameters}" ]]; then
-    "${afterContainerDismantleScript}" --containerName "${containerName}" "${afterContainerDismantleParameters[@]}"
+    "${afterContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerDismantleParameters[@]}"
   else
-    "${afterContainerDismantleScript}" --containerName "${containerName}"
+    "${afterContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi

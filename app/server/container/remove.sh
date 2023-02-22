@@ -53,7 +53,18 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -n "${beforeContainerRemoveScript}" ]]; then
   echo "Before container remove script: ${beforeContainerRemoveScript}"
-  "${beforeContainerRemoveScript}"
+  if [[ -n "${beforeContainerRemoveParameters}" ]]; then
+    "${beforeContainerRemoveScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerRemoveParameters[@]}"
+  else
+    "${beforeContainerRemoveScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi
 
 containerName="${systemName}_${serverName}"
@@ -73,7 +84,18 @@ done
 
 if [[ -n "${afterContainerRemoveScript}" ]]; then
   echo "After container remove script: ${afterContainerRemoveScript}"
-  "${afterContainerRemoveScript}"
+  if [[ -n "${afterContainerRemoveParameters}" ]]; then
+    "${afterContainerRemoveScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerRemoveParameters[@]}"
+  else
+    "${afterContainerRemoveScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi
 
 mkdir -p "${anodosysUserVarPath}/commencement"

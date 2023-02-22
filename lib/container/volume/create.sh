@@ -17,7 +17,7 @@ containerVolumeCreate()
   local volumeName
 
   if [[ ! -e "${sourcePath}" ]]; then
-    echo "Creating source path: ${sourcePath}"
+    echo "Creating container volume source path: ${sourcePath}"
     mkdir -p "${sourcePath}" | cat
     if [[ -d "${sourcePath}" ]]; then
       echo "Successfully created source path: ${sourcePath}" | sed $'s,.*,\e[1;36m&\e[m,'

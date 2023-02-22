@@ -51,9 +51,16 @@ containerName="${systemName}_${serverName}"
 if [[ -n "${beforeContainerHostScript}" ]]; then
   echo "Before container host script: ${beforeContainerHostScript}"
   if [[ -n "${beforeContainerHostParameters}" ]]; then
-    "${beforeContainerHostScript}" --containerName "${containerName}" "${beforeContainerHostParameters[@]}"
+    "${beforeContainerHostScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerHostParameters[@]}"
   else
-    "${beforeContainerHostScript}" --containerName "${containerName}"
+    "${beforeContainerHostScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
@@ -66,8 +73,15 @@ fi
 if [[ -n "${afterContainerHostScript}" ]]; then
   echo "After container host script: ${afterContainerHostScript}"
   if [[ -n "${afterContainerHostParameters}" ]]; then
-    "${afterContainerHostScript}" --containerName "${containerName}" "${afterContainerHostParameters[@]}"
+    "${afterContainerHostScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerHostParameters[@]}"
   else
-    "${afterContainerHostScript}" --containerName "${containerName}"
+    "${afterContainerHostScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi

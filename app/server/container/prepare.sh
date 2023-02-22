@@ -56,9 +56,16 @@ containerName="${systemName}_${serverName}"
 if [[ -n "${beforeContainerPrepareScript}" ]]; then
   echo "Before container prepare script: ${beforeContainerPrepareScript}"
   if [[ -n "${beforeContainerPrepareParameters}" ]]; then
-    "${beforeContainerPrepareScript}" --containerName "${containerName}" "${beforeContainerPrepareParameters[@]}"
+    "${beforeContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerPrepareParameters[@]}"
   else
-    "${beforeContainerPrepareScript}" --containerName "${containerName}"
+    "${beforeContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
@@ -74,9 +81,16 @@ fi
 if [[ -n "${containerPrepareScript}" ]]; then
   echo "Container prepare script: ${containerPrepareScript}"
   if [[ -n "${containerPrepareParameters}" ]]; then
-    "${containerPrepareScript}" --containerName "${containerName}" "${containerPrepareParameters[@]}"
+    "${containerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerPrepareParameters[@]}"
   else
-    "${containerPrepareScript}" --containerName "${containerName}"
+    "${containerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 elif [[ -n "${containerPrepare}" ]]; then
   containerCommand "${containerName}" "${containerPrepare}"
@@ -87,8 +101,15 @@ fi
 if [[ -n "${afterContainerPrepareScript}" ]]; then
   echo "After container prepare script: ${afterContainerPrepareScript}"
   if [[ -n "${afterContainerPrepareParameters}" ]]; then
-    "${afterContainerPrepareScript}" --containerName "${containerName}" "${afterContainerPrepareParameters[@]}"
+    "${afterContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerPrepareParameters[@]}"
   else
-    "${afterContainerPrepareScript}" --containerName "${containerName}"
+    "${afterContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi

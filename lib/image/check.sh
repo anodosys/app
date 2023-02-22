@@ -15,6 +15,7 @@ imageCheckRemote()
   local tokenFile
   local tokenTime
   local token
+  local localData
   local remoteData
   local localId
   local remoteId
@@ -22,7 +23,21 @@ imageCheckRemote()
   local lastPushedTimestamps
   local remoteTimestamp
 
-  if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
+  if [[ "${imageName}" =~ '/' ]]; then
+    remoteImageName="${imageName}"
+  else
+    remoteImageName="library/${imageName}"
+  fi
+
+  localData=
+  remoteData=
+  tokenFile=
+
+  localData=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}")
+
+  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+    remoteData=$(curl -s "https://hub.docker.com/v2/repositories/${remoteImageName}/tags/${imageTag}/" | cat)
+  elif [[ -n "${userName}" ]] && [[ -n "${password}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     useTokenFile=0
     mkdir -p "${anodosysUserVarPath}/auth"
     tokenFile="${anodosysUserVarPath}/auth/hub_docker_com"
@@ -40,30 +55,41 @@ imageCheckRemote()
       echo -n "${token}" > "${tokenFile}"
     fi
 
-    localId=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.RepoDigests[]')
-    localId="${localId##*@}"
+    remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${remoteImageName}/tags/${imageTag}/" | cat)
+  fi
 
-    remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" | cat)
+  if [[ -n "${remoteData}" ]]; then
     error=$(echo "${remoteData}" | jq -r '.error //empty')
     if [[ "${error}" == "true" ]]; then
       >&2 echo "Could not check remote image ${imageName}:${imageTag} because: $(echo "${remoteData}" | jq -r '.detail //empty')"
       exit 1
     else
-      touch "${tokenFile}"
+      if [[ -n "${tokenFile}" ]]; then
+        touch "${tokenFile}"
+      fi
     fi
 
-    remoteId=$(echo "${remoteData}" | jq -r '.images[] .digest')
+    localId=$(echo "${localData}" | jq -r '.RepoDigests[]')
+    localId="${localId##*@}"
+
+    remoteId=$(echo "${remoteData}" | jq -r '.digest //empty')
+    if [[ -z "${remoteId}" ]]; then
+      remoteId=$(echo "${remoteData}" | jq -r '.images[] .digest //empty')
+    fi
+
     if [[ "${localId}" != "${remoteId}" ]]; then
-      localTimestamp=$(date -d "$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}" | jq -r '.Created')" +%s)
+      localTimestamp=$(date -d "$(echo "${localData}" | jq -r '.Created')" +%s)
       lastPushedTimestamps=( $(echo "${remoteData}" | jq -r '.images[] .last_pushed' | sort -r) )
       remoteTimestamp=$(date -d "${lastPushedTimestamps[0]}" +%s)
       if [[ "${remoteTimestamp}" -gt "${localTimestamp}" ]]; then
-        echo 1
-        exit 0
+        echo 2
       fi
+    else
+      echo 1
     fi
+  else
+    echo 0
   fi
-  echo 0
 }
 
 # shellcheck disable=SC2034

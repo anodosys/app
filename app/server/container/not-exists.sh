@@ -53,7 +53,18 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -n "${beforeContainerNotExistsScript}" ]]; then
   echo "Before container not exists script: ${beforeContainerNotExistsScript}"
-  "${beforeContainerNotExistsScript}"
+  if [[ -n "${beforeContainerNotExistsParameters}" ]]; then
+    "${beforeContainerNotExistsScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerNotExistsParameters[@]}"
+  else
+    "${beforeContainerNotExistsScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi
 
 containerName="${systemName}_${serverName}"
@@ -69,5 +80,16 @@ fi
 
 if [[ -n "${afterContainerNotExistsScript}" ]]; then
   echo "After container not exists script: ${afterContainerNotExistsScript}"
-  "${afterContainerNotExistsScript}"
+  if [[ -n "${afterContainerNotExistsParameters}" ]]; then
+    "${afterContainerNotExistsScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerNotExistsParameters[@]}"
+  else
+    "${afterContainerNotExistsScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi

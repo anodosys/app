@@ -61,17 +61,31 @@ setServerConfiguration "${systemName}" "${serverName}"
 if [[ -n "${beforeContainerFinishingScript}" ]]; then
   echo "Before container finishing script: ${beforeContainerFinishingScript}"
   if [[ -n "${beforeContainerFinishingParameters}" ]]; then
-    "${beforeContainerFinishingScript}" "${beforeContainerFinishingParameters[@]}"
+    "${beforeContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerFinishingParameters[@]}"
   else
-    "${beforeContainerFinishingScript}"
+    "${beforeContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 
 if [[ -n "${containerFinishingScript}" ]]; then
   if [[ -n "${containerFinishingParameters}" ]]; then
-    "${containerFinishingScript}" --containerName "${containerName}" "${containerFinishingParameters[@]}"
+    "${containerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerFinishingParameters[@]}"
   else
-    "${containerFinishingScript}" --containerName "${containerName}"
+    "${containerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 elif [[ -n "${containerFinishing}" ]]; then
   containerCommand "${containerName}" "${containerFinishing}"
@@ -82,9 +96,16 @@ fi
 if [[ -n "${afterContainerFinishingScript}" ]]; then
   echo "After container finishing script: ${afterContainerFinishingScript}"
   if [[ -n "${afterContainerFinishingParameters}" ]]; then
-    "${afterContainerFinishingScript}" "${afterContainerFinishingParameters[@]}"
+    "${afterContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerFinishingParameters[@]}"
   else
-    "${afterContainerFinishingScript}"
+    "${afterContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
   fi
 fi
 

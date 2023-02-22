@@ -56,6 +56,11 @@ containerVolumeCheck()
               else
                 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is writable for group"
               fi
+            elif [[ "${mode}" == "o" ]]; then
+              echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is required to be owned by target user"
+            else
+              >&2 echo "Unknown volume mode: ${mode} to mount source path: ${sourcePath} to target path: ${targetPath}"
+              exit 1
             fi
           else
             echo "No different user for volume: ${volumeName}"

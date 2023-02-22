@@ -62,7 +62,9 @@ if [[ -z "${imageTag}" ]]; then
 fi
 
 echo "Checking if remote source image exists: ${imageName}:${imageTag}"
-if [[ -z "${repositoryUserName}" ]]; then
+if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
+  echo "Remote source image exists"
+elif [[ -z "${repositoryUserName}" ]]; then
   >&2 echo "No repository user name for server: ${serverName}"
   exit 1
 elif [[ -z "${repositoryPassword}" ]]; then

@@ -48,7 +48,18 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -n "${beforeContainerStopScript}" ]]; then
   echo "Before container stop script: ${beforeContainerStopScript}"
-  "${beforeContainerStopScript}"
+  if [[ -n "${beforeContainerStopParameters}" ]]; then
+    "${beforeContainerStopScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerStopParameters[@]}"
+  else
+    "${beforeContainerStopScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi
 
 containerName="${systemName}_${serverName}"
@@ -57,5 +68,16 @@ containerStop "${containerName}"
 
 if [[ -n "${afterContainerStopScript}" ]]; then
   echo "After container stop script: ${afterContainerStopScript}"
-  "${afterContainerStopScript}"
+  if [[ -n "${afterContainerStopParameters}" ]]; then
+    "${afterContainerStopScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerStopParameters[@]}"
+  else
+    "${afterContainerStopScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
 fi
