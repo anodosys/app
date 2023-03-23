@@ -10,6 +10,25 @@ if [[ -z "${anodosysUserLibPath}" ]]; then
   exit 1
 fi
 
+currentTimeStamp=$(date +%s)
+export currentTimeStamp
+
+updateJson()
+{
+  local filePath="${1}"
+  local key="${2}"
+  local value="${3}"
+
+  if [[ ! -f "${filePath}" ]]; then
+    echo "{}" > "${filePath}"
+  fi
+  content=$(jq -j ".${key} = \"${value}\"" "${filePath}")
+  echo -E "${content}" > "${filePath}"
+}
+
+# shellcheck disable=SC2034
+typeset -fx updateJson
+
 getArrayValue()
 {
   local key="${1}"
@@ -33,9 +52,6 @@ getArrayValue()
 
 # shellcheck disable=SC2034
 typeset -fx getArrayValue
-
-currentTimeStamp=$(date +%s)
-export currentTimeStamp
 
 duration()
 {

@@ -84,6 +84,10 @@ if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]
   exit 0
 fi
 
+if [[ -z "${useNamedVolumes}" ]]; then
+  useNamedVolumes="false"
+fi
+
 optionalParameters=( )
 
 if [[ -n "${imageEntryPoint}" ]]; then
@@ -132,7 +136,7 @@ for containerVariable in "${containerVariables[@]}"; do
   optionalParameters+=( "environment:${containerVariable}" )
 done
 
-containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${optionalParameters[@]}"
+containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${useNamedVolumes}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateSourceScript}" ]]; then
   echo "After container create source script: ${afterContainerCreateSourceScript}"

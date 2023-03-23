@@ -8,6 +8,8 @@ containerCreate()
   shift
   local networkName="${1}"
   shift
+  local useNamedVolumes="${1}"
+  shift
   local parameters=("$@")
   local parameter
   local parameterParts
@@ -65,10 +67,14 @@ containerCreate()
           exit 1
         fi
         sourcePath=$(realpath "${sourcePath}")
-        containerVolumeCreate "${containerName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}" "${userId}" "${user}" "${groupId}" "${group}" "${rights}" "${empty}"
-        sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
-        volumeName="${containerName}_${sourceName}"
-        command+=" --mount source=${volumeName},destination=${targetPath}"
+        containerVolumeCreate "${containerName}" "${useNamedVolumes}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}" "${userId}" "${user}" "${groupId}" "${group}" "${rights}" "${empty}"
+        if [[ "${useNamedVolumes}" == "true" ]]; then
+          sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
+          volumeName="${containerName}_${sourceName}"
+          command+=" --mount source=${volumeName},destination=${targetPath}"
+        else
+          command+=" --volume=${sourcePath}:${targetPath}"
+        fi
       elif [[ "${parameter:0:12}" == "environment:" ]]; then
         command+=" --env ${parameter:12}"
       fi

@@ -1,10 +1,16 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysUserVarVolumePath}" ]]; then
+  >&2 echo "No anodosys user var volume path defined"
+  exit 1
+fi
+
 containerVolumeCheck()
 {
   local containerName="${1}"
-  local volumeNames
-  local volumeName
+  local volumeSourcePaths
+  local volumeSourcePath
+  local volumeMetadataFilePath
   local sourcePath
   local targetPath
   local targetUser
@@ -16,26 +22,27 @@ containerVolumeCheck()
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     oldIFS="${IFS}"
     IFS=$'\n'
-    volumeNames=( $(containerVolumeList "${containerName}" ) )
+    volumeSourcePaths=( $(containerVolumeSourcePathList "${containerName}" ) )
     IFS="${oldIFS}"
 
-    for volumeName in "${volumeNames[@]}"; do
-      volumeName=$(trim "${volumeName}")
+    for volumeSourcePath in "${volumeSourcePaths[@]}"; do
+      volumeSourcePath=$(trim "${volumeSourcePath}")
+      volumeMetadataFilePath=$(volumeMetadataFilePath "${volumeSourcePath}")
 
-      if [[ $(volumeExists "${volumeName}") == 1 ]]; then
-        #echo "Checking volume: ${volumeName}"
+      if [[ -f "${volumeMetadataFilePath}" ]]; then
+        #echo "Checking source path: ${volumeSourcePath}"
 
-        sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
-        targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
-        targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
-        mode=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".mode // empty")
+        sourcePath=$(volumeMetadataGet "${volumeSourcePath}" "sourcePath")
+        targetPath=$(volumeMetadataGet "${volumeSourcePath}" "targetPath")
+        targetUser=$(volumeMetadataGet "${volumeSourcePath}" "targetUser")
+        mode=$(volumeMetadataGet "${volumeSourcePath}" "mode")
 
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "local" ]]; then
-          empty=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".empty // empty")
+          empty=$(volumeMetadataGet "${volumeSourcePath}" "empty")
 
           if [[ -n "${sourcePath}" ]] && [[ "${empty}" == "true" ]]; then
-            user=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".user // empty")
-            accessRights=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".rights // empty")
+            user=$(volumeMetadataGet "${volumeSourcePath}" "user")
+            accessRights=$(volumeMetadataGet "${volumeSourcePath}" "accessRights")
           else
             user=$(stat -L -c "%U" "${sourcePath}")
             accessRights=$(stat -L -c "%a" "${sourcePath}")
@@ -63,13 +70,13 @@ containerVolumeCheck()
               exit 1
             fi
           else
-            echo "No different user for volume: ${volumeName}"
+            echo "No different user for source path: ${volumeSourcePath}"
           fi
         else
-          echo "No need to check volume: ${volumeName}"
+          echo "No need to check source path: ${volumeSourcePath}"
         fi
       else
-        >&2 echo "Volume does not exist: ${volumeName}"
+        >&2 echo "Source path meta file does not exist: ${volumeSourcePath}"
         exit 1
       fi
     done

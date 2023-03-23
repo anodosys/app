@@ -3,16 +3,17 @@
 containerVolumeCreate()
 {
   local containerName="${1}"
-  local sourcePath="${2}"
-  local targetPath="${3}"
-  local targetUser="${4:-local}"
-  local mode="${5:-r}"
-  local userId="${6}"
-  local user="${7}"
-  local groupId="${8}"
-  local group="${9}"
-  local rights="${10}"
-  local empty="${11}"
+  local namedVolume="${2:-false}"
+  local sourcePath="${3}"
+  local targetPath="${4}"
+  local targetUser="${5:-local}"
+  local mode="${6:-r}"
+  local userId="${7}"
+  local user="${8}"
+  local groupId="${9}"
+  local group="${10}"
+  local rights="${11}"
+  local empty="${12}"
   local sourceName
   local volumeName
 
@@ -60,7 +61,10 @@ containerVolumeCreate()
     volumeRemove "${volumeName}"
   fi
 
-  volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}" "${userId}" "${user}" "${groupId}" "${group}" "${rights}" "${empty}"
+  volumeMetadataCreate "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}" "${userId}" "${user}" "${groupId}" "${group}" "${rights}" "${empty}"
+  if [[ "${namedVolume}" == "true" ]]; then
+    volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}"
+  fi
 }
 
 # shellcheck disable=SC2034

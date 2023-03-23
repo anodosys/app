@@ -3,8 +3,9 @@
 containerVolumePrepare()
 {
   local containerName="${1}"
-  local volumeNames
-  local volumeName
+  local volumeSourcePaths
+  local volumeSourcePath
+  local volumeMetadataFilePath
   local groupUserList
   local sourcePath
   local targetPath
@@ -22,24 +23,25 @@ containerVolumePrepare()
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     oldIFS="${IFS}"
     IFS=$'\n'
-    volumeNames=( $(containerVolumeList "${containerName}" ) )
+    volumeSourcePaths=( $(containerVolumeSourcePathList "${containerName}" ) )
     IFS="${oldIFS}"
 
     declare -A groupUserList
-    for volumeName in "${volumeNames[@]}"; do
-      volumeName=$(trim "${volumeName}")
+    for volumeSourcePath in "${volumeSourcePaths[@]}"; do
+      volumeSourcePath=$(trim "${volumeSourcePath}")
+      volumeMetadataFilePath=$(volumeMetadataFilePath "${volumeSourcePath}")
 
-      if [[ $(volumeExists "${volumeName}") == 1 ]]; then
-        echo "Preparing volume: ${volumeName}"
+      if [[ -f "${volumeMetadataFilePath}" ]]; then
+        echo "Preparing source path: ${volumeSourcePath}"
 
-        sourcePath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".sourcePath // empty")
-        targetPath=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetPath // empty")
-        empty=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".empty // empty")
+        sourcePath=$(volumeMetadataGet "${volumeSourcePath}" "sourcePath")
+        targetPath=$(volumeMetadataGet "${volumeSourcePath}" "targetPath")
+        empty=$(volumeMetadataGet "${volumeSourcePath}" "empty")
 
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${empty}" == "true" ]]; then
-          userId=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".userId // empty")
-          groupId=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".groupId // empty")
-          rights=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".rights // empty")
+          userId=$(volumeMetadataGet "${volumeSourcePath}" "userId")
+          groupId=$(volumeMetadataGet "${volumeSourcePath}" "groupId")
+          rights=$(volumeMetadataGet "${volumeSourcePath}" "rights")
           if [[ -n "${userId}" ]] && [[ -n "${groupId}" ]]; then
             containerCommand "${containerName}" "chown ${userId}:${groupId} ${targetPath}"
             if [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%u\" \$(readlink ${targetPath}) || stat -c \"%u\" ${targetPath}") == "${userId}" ]] && [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%g\" \$(readlink ${targetPath}) || stat -c \"%g\" ${targetPath}") == "${groupId}" ]]; then
@@ -60,8 +62,8 @@ containerVolumePrepare()
           fi
         fi
 
-        targetUser=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".targetUser // empty")
-        mode=$(docker volume inspect -f "{{ json .Labels }}" "${volumeName}" | jq -r ".mode // empty")
+        targetUser=$(volumeMetadataGet "${volumeSourcePath}" "targetUser")
+        mode=$(volumeMetadataGet "${volumeSourcePath}" "mode")
 
         if [[ "${mode}" == "r" ]] || [[ "${mode}" == "w" ]]; then
           if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ -n "${targetUser}" ]]; then
@@ -72,7 +74,7 @@ containerVolumePrepare()
               groupUserList[${groupId}]="${targetUser}"
             fi
           else
-            echo "No need to prepare volume: ${volumeName}"
+            echo "No need to prepare source path: ${volumeSourcePath}"
           fi
         elif [[ "${mode}" == "o" ]]; then
           user=$(containerCommandQuiet "${containerName}" "stat -L -c \"%U\" ${targetPath}")
@@ -84,7 +86,7 @@ containerVolumePrepare()
           fi
         fi
       else
-        >&2 echo "Volume does not exist: ${volumeName}"
+        >&2 echo "Source path meta file does not exist: ${volumeSourcePath}"
         exit 1
       fi
     done

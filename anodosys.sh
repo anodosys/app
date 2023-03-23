@@ -137,8 +137,10 @@ source "${anodosysAppPath}/log.sh"
 
 fileName=
 force=0
+local=0
 source "${anodosysAppPath}/prepare-parameters.sh"
 export force
+export local
 
 source "${anodosysAppPath}/lib.sh"
 

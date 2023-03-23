@@ -69,7 +69,11 @@ fi
 
 containerName="${systemName}_${serverName}"
 
-containerRemove "${containerName}"
+if [[ -z "${useNamedVolumes}" ]]; then
+  useNamedVolumes="false"
+fi
+
+containerRemove "${containerName}" "${useNamedVolumes}"
 
 if [[ -z "${containerVolumes}" ]]; then
   containerVolumes=()
