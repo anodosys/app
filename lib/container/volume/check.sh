@@ -42,7 +42,7 @@ containerVolumeCheck()
 
           if [[ -n "${sourcePath}" ]] && [[ "${empty}" == "true" ]]; then
             user=$(volumeMetadataGet "${volumeSourcePath}" "user")
-            accessRights=$(volumeMetadataGet "${volumeSourcePath}" "accessRights")
+            accessRights=$(volumeMetadataGet "${volumeSourcePath}" "rights")
           else
             user=$(stat -L -c "%U" "${sourcePath}")
             accessRights=$(stat -L -c "%a" "${sourcePath}")

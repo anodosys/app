@@ -42,6 +42,7 @@ containerVolumePrepare()
           userId=$(volumeMetadataGet "${volumeSourcePath}" "userId")
           groupId=$(volumeMetadataGet "${volumeSourcePath}" "groupId")
           rights=$(volumeMetadataGet "${volumeSourcePath}" "rights")
+
           if [[ -n "${userId}" ]] && [[ -n "${groupId}" ]]; then
             containerCommand "${containerName}" "chown ${userId}:${groupId} ${targetPath}"
             if [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%u\" \$(readlink ${targetPath}) || stat -c \"%u\" ${targetPath}") == "${userId}" ]] && [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%g\" \$(readlink ${targetPath}) || stat -c \"%g\" ${targetPath}") == "${groupId}" ]]; then
@@ -51,6 +52,7 @@ containerVolumePrepare()
               exit 1
             fi
           fi
+
           if [[ -n "${rights}" ]]; then
             containerCommand "${containerName}" "chmod ${rights} ${targetPath}"
             if [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%a\" \$(readlink ${targetPath}) || stat -c \"%a\" ${targetPath}") == "${rights}" ]]; then
