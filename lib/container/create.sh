@@ -18,6 +18,12 @@ containerCreate()
   local targetPath
   local targetUser
   local mode
+  local userId
+  local user
+  local groupId
+  local group
+  local rights
+  local empty
   local sourceName
   local volumeName
   local result
