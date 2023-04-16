@@ -13,6 +13,8 @@ containerVolumeRemove()
   sourceName=$(echo "${sourcePath}" | sed 's/[^[:alnum:]]/_/g')
   volumeName="${containerName}_${sourceName}"
   volumeRemove "${volumeName}"
+
+  volumeMetadataRemove "${containerName}" "${sourcePath}"
 }
 
 # shellcheck disable=SC2034

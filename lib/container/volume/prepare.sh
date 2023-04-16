@@ -29,19 +29,19 @@ containerVolumePrepare()
     declare -A groupUserList
     for volumeSourcePath in "${volumeSourcePaths[@]}"; do
       volumeSourcePath=$(trim "${volumeSourcePath}")
-      volumeMetadataFilePath=$(volumeMetadataFilePath "${volumeSourcePath}")
+      volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${volumeSourcePath}")
 
       if [[ -f "${volumeMetadataFilePath}" ]]; then
         echo "Preparing source path: ${volumeSourcePath}"
 
-        sourcePath=$(volumeMetadataGet "${volumeSourcePath}" "sourcePath")
-        targetPath=$(volumeMetadataGet "${volumeSourcePath}" "targetPath")
-        empty=$(volumeMetadataGet "${volumeSourcePath}" "empty")
+        sourcePath=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "sourcePath")
+        targetPath=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "targetPath")
+        empty=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "empty")
 
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${empty}" == "true" ]]; then
-          userId=$(volumeMetadataGet "${volumeSourcePath}" "userId")
-          groupId=$(volumeMetadataGet "${volumeSourcePath}" "groupId")
-          rights=$(volumeMetadataGet "${volumeSourcePath}" "rights")
+          userId=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "userId")
+          groupId=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "groupId")
+          rights=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "rights")
 
           if [[ -n "${userId}" ]] && [[ -n "${groupId}" ]]; then
             containerCommand "${containerName}" "chown ${userId}:${groupId} ${targetPath}"
@@ -64,8 +64,8 @@ containerVolumePrepare()
           fi
         fi
 
-        targetUser=$(volumeMetadataGet "${volumeSourcePath}" "targetUser")
-        mode=$(volumeMetadataGet "${volumeSourcePath}" "mode")
+        targetUser=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "targetUser")
+        mode=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "mode")
 
         if [[ "${mode}" == "r" ]] || [[ "${mode}" == "w" ]]; then
           if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ -n "${targetUser}" ]]; then

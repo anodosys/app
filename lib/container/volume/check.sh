@@ -27,22 +27,22 @@ containerVolumeCheck()
 
     for volumeSourcePath in "${volumeSourcePaths[@]}"; do
       volumeSourcePath=$(trim "${volumeSourcePath}")
-      volumeMetadataFilePath=$(volumeMetadataFilePath "${volumeSourcePath}")
+      volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${volumeSourcePath}")
 
       if [[ -f "${volumeMetadataFilePath}" ]]; then
         #echo "Checking source path: ${volumeSourcePath}"
 
-        sourcePath=$(volumeMetadataGet "${volumeSourcePath}" "sourcePath")
-        targetPath=$(volumeMetadataGet "${volumeSourcePath}" "targetPath")
-        targetUser=$(volumeMetadataGet "${volumeSourcePath}" "targetUser")
-        mode=$(volumeMetadataGet "${volumeSourcePath}" "mode")
+        sourcePath=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "sourcePath")
+        targetPath=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "targetPath")
+        targetUser=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "targetUser")
+        mode=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "mode")
 
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "local" ]]; then
-          empty=$(volumeMetadataGet "${volumeSourcePath}" "empty")
+          empty=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "empty")
 
           if [[ -n "${sourcePath}" ]] && [[ "${empty}" == "true" ]]; then
-            user=$(volumeMetadataGet "${volumeSourcePath}" "user")
-            accessRights=$(volumeMetadataGet "${volumeSourcePath}" "rights")
+            user=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "user")
+            accessRights=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "rights")
           else
             user=$(stat -L -c "%U" "${sourcePath}")
             accessRights=$(stat -L -c "%a" "${sourcePath}")

@@ -7,14 +7,22 @@ fi
 
 volumeMetadataFilePath()
 {
-  local sourcePath="${1}"
+  local containerName="${1}"
+  local sourcePath="${2}"
+  local checkFileExists="${3:-yes}"
   local sourcePathHash
   local volumeMetadataFilePath
 
-  sourcePathHash=$(echo "${sourcePath}" | md5sum | awk '{print $1}')
+  sourcePathHash=$(echo "${containerName}:${sourcePath}" | md5sum | awk '{print $1}')
   volumeMetadataFilePath="${anodosysUserVarVolumePath}/${sourcePathHash}.json"
 
-  echo -n "${volumeMetadataFilePath}"
+  if [[ -f "${volumeMetadataFilePath}" ]] || [[ "${checkFileExists}" == "no" ]]; then
+    echo -n "${volumeMetadataFilePath}"
+  else
+    sourcePathHash=$(echo "${sourcePath}" | md5sum | awk '{print $1}')
+    volumeMetadataFilePath="${anodosysUserVarVolumePath}/${sourcePathHash}.json"
+    echo -n "${volumeMetadataFilePath}"
+  fi
 }
 
 # shellcheck disable=SC2034
@@ -22,16 +30,17 @@ typeset -fx volumeMetadataFilePath
 
 volumeMetadataCreate()
 {
-  local sourcePath="${1}"
-  local targetPath="${2}"
-  local targetUser="${3:-local}"
-  local mode="${4:-r}"
-  local userId="${5}"
-  local user="${6}"
-  local groupId="${7}"
-  local group="${8}"
-  local rights="${9}"
-  local empty="${10}"
+  local containerName="${1}"
+  local sourcePath="${2}"
+  local targetPath="${3}"
+  local targetUser="${4:-local}"
+  local mode="${5:-r}"
+  local userId="${6}"
+  local user="${7}"
+  local groupId="${8}"
+  local group="${9}"
+  local rights="${10}"
+  local empty="${11}"
   local volumeMetadataFilePath
 
   if [[ -z "${userId}" ]] || [[ "${userId}" == "-" ]]; then
@@ -53,7 +62,7 @@ volumeMetadataCreate()
     empty=$(find "${sourcePath}" -maxdepth 0 -empty | read -r && echo "true" || echo "false")
   fi
 
-  volumeMetadataFilePath=$(volumeMetadataFilePath "${sourcePath}")
+  volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${sourcePath}" "no")
 
   updateJson "${volumeMetadataFilePath}" "sourcePath" "${sourcePath}"
   updateJson "${volumeMetadataFilePath}" "targetPath" "${targetPath}"
@@ -72,11 +81,12 @@ typeset -fx volumeMetadataCreate
 
 volumeMetadataGet()
 {
-  local sourcePath="${1}"
-  local key="${2}"
+  local containerName="${1}"
+  local sourcePath="${2}"
+  local key="${3}"
   local volumeMetadataFilePath
 
-  volumeMetadataFilePath=$(volumeMetadataFilePath "${sourcePath}")
+  volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${sourcePath}")
 
   jq -r ".${key} // empty" "${volumeMetadataFilePath}"
 }
@@ -86,10 +96,11 @@ typeset -fx volumeMetadataGet
 
 volumeMetadataRemove()
 {
-  local sourcePath="${1}"
+  local containerName="${1}"
+  local sourcePath="${2}"
   local volumeMetadataFilePath
 
-  volumeMetadataFilePath=$(volumeMetadataFilePath "${sourcePath}")
+  volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${sourcePath}")
 
   rm -rf "${volumeMetadataFilePath}"
 }

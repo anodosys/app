@@ -43,7 +43,7 @@ containerRemove()
 
     for volumeSourcePath in "${volumeSourcePaths[@]}"; do
       volumeSourcePath=$(trim "${volumeSourcePath}")
-      volumeMetadataFilePath=$(volumeMetadataFilePath "${volumeSourcePath}")
+      volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${volumeSourcePath}")
 
       rm -rf "${volumeMetadataFilePath}"
     done
