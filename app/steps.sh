@@ -43,6 +43,7 @@ getActionSteps()
 }
 
 declare -A steps
+steps["host"]="containerHost"
 steps["init"]="imageExistsSourceRemote,imagePullSource"
 steps["build"]="imageNotExistsTarget,action:rebuild"
 steps["rebuild"]="action:rise,action:image,action:push,action:remove"

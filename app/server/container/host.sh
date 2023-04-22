@@ -74,14 +74,29 @@ if [[ -z "${containerVolumes}" ]]; then
   containerVolumes=()
 fi
 
-for containerVolume in "${containerVolumes[@]}"; do
-  readarray -d : -t parameterParts < <(printf '%s' "${containerVolume}")
-  sourcePath="${parameterParts[0]}"
-  targetUser=$(getArrayValue 2 "local" "${parameterParts[@]}")
-  mode=$(getArrayValue 3 "r" "${parameterParts[@]}")
+if [[ "${#containerVolumes[@]}" -gt 0 ]]; then
+  echo "Checking volumes for container: ${containerName}"
 
-  containerVolumeCheckSourcePath "${sourcePath}" "${targetUser}" "${mode}"
-done
+  success=1
+
+  for containerVolume in "${containerVolumes[@]}"; do
+    readarray -d : -t parameterParts < <(printf '%s' "${containerVolume}")
+    sourcePath="${parameterParts[0]}"
+    targetUser=$(getArrayValue 2 "local" "${parameterParts[@]}")
+    mode=$(getArrayValue 3 "r" "${parameterParts[@]}")
+
+    checkResult=$(containerVolumeCheckSourcePath "${sourcePath}" "${targetUser}" "${mode}")
+    if [[ "${checkResult}" != "success" ]]; then
+      success=0
+    fi
+  done
+
+  if [[ "${success}" == 0 ]]; then
+    exit 1
+  fi
+else
+  echo "No volumes to check for container: ${containerName}"
+fi
 
 if [[ -n "${afterContainerHostScript}" ]]; then
   echo "After container host script: ${afterContainerHostScript}"
