@@ -72,7 +72,7 @@ fi
 echo "Checking if target image exists: ${imageName}:${imageTag}"
 if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
   echo "Local target image exists"
-elif [[ -n "${local}" ]] || [[ "${local}" == 1 ]]; then
+elif [[ -n "${local}" ]] && [[ "${local}" == 1 ]]; then
   >&2 echo "Target image does not exist: ${imageName}:${imageTag}"
   exit 1
 elif [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then

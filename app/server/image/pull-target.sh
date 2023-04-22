@@ -47,7 +47,7 @@ logName "${systemName}" "${serverName}"
 setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -z "${skipImageCheck}" ]]; then
-  if [[ -n "${local}" ]] || [[ "${local}" == 1 ]]; then
+  if [[ -n "${local}" ]] && [[ "${local}" == 1 ]]; then
     skipImageCheck="true"
   else
     skipImageCheck="false"
