@@ -6,7 +6,9 @@ containerCreate()
   shift
   local containerName="${1}"
   shift
-  local networkName="${1}"
+  local systemName="${1}"
+  shift
+  local serverName="${1}"
   shift
   local useNamedVolumes="${1}"
   shift
@@ -29,7 +31,7 @@ containerCreate()
   local result
 
   if [[ $(containerRunning "${containerName}") == 0 ]] && [[ $(containerExists "${containerName}") == 0 ]]; then
-    command="docker create --tty --network \"${networkName}\""
+    command="docker create --tty --label \"com.docker.compose.project=${systemName}\" --label \"com.docker.compose.service=${serverName}\" --network \"${systemName}\""
     for parameter in "${parameters[@]}"; do
       if [[ "${parameter:0:11}" == "entryPoint:" ]]; then
         command+=" --entrypoint \"${parameter:11}\""

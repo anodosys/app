@@ -136,7 +136,7 @@ for containerVariable in "${containerVariables[@]}"; do
   optionalParameters+=( "environment:${containerVariable}" )
 done
 
-containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${useNamedVolumes}" "${optionalParameters[@]}"
+containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateSourceScript}" ]]; then
   echo "After container create source script: ${afterContainerCreateSourceScript}"

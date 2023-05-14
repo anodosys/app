@@ -52,7 +52,8 @@ containerRestart()
       exit 1
     fi
   else
-    echo "No need to restart container: ${containerName}"
+    echo "No need to restart container: ${containerName}, starting container"
+    containerStart "${containerName}" "${retry}" "${skipPortsAvailable}" "${follow}"
   fi
 }
 

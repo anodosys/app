@@ -165,7 +165,7 @@ if [[ $(containerExists "${containerName}") == 1 ]] && [[ "${force}" == 1 ]]; th
   rm -rf "${anodosysUserVarPath}/finishing/${containerName}"
 fi
 
-containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${useNamedVolumes}" "${optionalParameters[@]}"
+containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateTargetScript}" ]]; then
   echo "After container create target script: ${afterContainerCreateTargetScript}"
