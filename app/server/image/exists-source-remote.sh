@@ -73,7 +73,7 @@ elif [[ -z "${repositoryPassword}" ]]; then
 elif [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
   echo "Remote source image exists"
 else
-  >&2 echo "Remot source image does not exist: ${imageName}:${imageTag}"
+  >&2 echo "Remote source image does not exist: ${imageName}:${imageTag}"
   exit 1
 fi
 
