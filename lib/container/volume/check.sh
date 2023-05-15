@@ -94,7 +94,7 @@ containerVolumeCheckSourcePath()
   local targetUser="${2}"
   local mode="${3}"
 
-  if [[ -n "${sourcePath}" ]] && [[ -d "${sourcePath}" ]] && [[ "${targetUser}" != "local" ]]; then
+  if [[ -n "${sourcePath}" ]] && [[ -e "${sourcePath}" ]] && [[ "${targetUser}" != "local" ]]; then
     user=$(stat -L -c "%U" "${sourcePath}")
     accessRights=$(stat -L -c "%a" "${sourcePath}")
 
