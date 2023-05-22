@@ -131,7 +131,9 @@ export anodosysPath
 anodosysAppPath="${anodosysPath}/app"
 export anodosysAppPath
 
+anodosysScriptPath=
 anodosysUserPath=
+anodosysUserScriptPath=
 source "${anodosysAppPath}/path.sh"
 source "${anodosysAppPath}/log.sh"
 
@@ -216,10 +218,14 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-source "${anodosysAppPath}/reset.sh"
-source "${anodosysAppPath}/cmd.sh"
-source "${anodosysAppPath}/config.sh"
-source "${anodosysAppPath}/names.sh"
-source "${anodosysAppPath}/volumes.sh"
-source "${anodosysAppPath}/status.sh"
+if [[ -f "${anodosysScriptPath}/${action}.sh" ]]; then
+  source "${anodosysScriptPath}/${action}.sh"
+  exit 0
+fi
+
+if [[ -f "${anodosysUserScriptPath}/${action}.sh" ]]; then
+  source "${anodosysUserScriptPath}/${action}.sh"
+  exit 0
+fi
+
 source "${anodosysAppPath}/steps.sh"
