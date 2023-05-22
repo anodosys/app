@@ -80,7 +80,11 @@ if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
 fi
 
 if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
-  containerRun "${imageName}:${imageTag}" "${containerName}"
+  if [[ -n "${imageInteractiveCommand}" ]]; then
+    containerRun "${imageName}:${imageTag}" "${containerName}" "${imageInteractiveCommand}"
+  else
+    containerRun "${imageName}:${imageTag}" "${containerName}"
+  fi
   exit 0
 fi
 

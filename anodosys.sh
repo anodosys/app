@@ -81,9 +81,9 @@ ACTION:
   run        Create the container from built images and start them
   create     Create the container from built images
   start      Start the containers with created containers from built images
-  stop       Stop the constainers
+  stop       Stop the containers
   restart    Re-start the containers
-  remove     Remove the constainers
+  remove     Remove the containers
   clean      Remove the the built images
   purge      Stop and remove the containers
   erase      Stop and remove the containers and remove the build images
