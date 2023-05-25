@@ -147,6 +147,7 @@ for processId in ${processIds[*]}; do
   wait "${processId}"
 done
 
+completeConfigurationVariables "${configurationHash}" "system"
 for serverName in "${serverNames[@]}"; do
   completeConfigurationVariables "${configurationHash}" "${serverName}"
 done
