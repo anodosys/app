@@ -74,6 +74,7 @@ fi
 collectConfigurationFiles()
 {
   local anodosysFileName="${1}"
+  local ignoreIfMissing="${2:-no}"
 
   if [[ -z "${anodosysFileName}" ]] && [[ -f "anodosys.json" ]]; then
     anodosysFileName="anodosys.json"
@@ -82,8 +83,12 @@ collectConfigurationFiles()
   fi
 
   if [[ ! -f "${anodosysFileName}" ]]; then
-    >&2 echo "Could not find configuration at: ${anodosysFileName}"
-    exit 1
+    if [[ "${ignoreIfMissing}" == "yes" ]]; then
+      exit 0
+    else
+      >&2 echo "Could not find configuration at: ${anodosysFileName}"
+      exit 1
+    fi
   fi
 
   anodosysFileName=$(realpath "${anodosysFileName}")
@@ -98,8 +103,14 @@ collectConfigurationFiles()
   #>&2 echo "requireFileNames: ${requireFileNames[*]}"
   if [[ "${#requireFileNames[@]}" -gt 0 ]]; then
     for requireFileName in "${requireFileNames[@]}"; do
+      if [[ "${requireFileName: -2}" == ":i" ]]; then
+        ignoreIfMissing="yes"
+        requireFileName="${requireFileName::-2}"
+      else
+        ignoreIfMissing="no"
+      fi
       requireFileName=$(completePath "${anodosysFileName}" "require" "${requireFileName}")
-      requiredConfigurationFiles=( $(collectConfigurationFiles "${requireFileName}") )
+      requiredConfigurationFiles=( $(collectConfigurationFiles "${requireFileName}" "${ignoreIfMissing}") )
       requiredConfigurationFiles=( $(printf '%s\n' "${requiredConfigurationFiles[@]}" | tac | tr '\n' ' '; echo) )
       for requiredConfigurationFile in "${requiredConfigurationFiles[@]}"; do
         configurationFiles=("${requiredConfigurationFile}" "${configurationFiles[@]}")
@@ -114,8 +125,14 @@ collectConfigurationFiles()
   #>&2 echo "includeFileNames: ${includeFileNames[*]}"
   if [[ "${#includeFileNames[@]}" -gt 0 ]]; then
     for includeFileName in "${includeFileNames[@]}"; do
+      if [[ "${includeFileName: -2}" == ":i" ]]; then
+        ignoreIfMissing="yes"
+        includeFileName="${includeFileName::-2}"
+      else
+        ignoreIfMissing="no"
+      fi
       includeFileName=$(completePath "${anodosysFileName}" "include" "${includeFileName}")
-      includedConfigurationFiles=( $(collectConfigurationFiles "${includeFileName}") )
+      includedConfigurationFiles=( $(collectConfigurationFiles "${includeFileName}" "${ignoreIfMissing}") )
       for includedConfigurationFile in "${includedConfigurationFiles[@]}"; do
         configurationFiles+=("${includedConfigurationFile}")
       done
