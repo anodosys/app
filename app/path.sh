@@ -10,8 +10,11 @@ if [[ -n "${anodosysPath}" ]]; then
   anodosysConstructPath="${anodosysPath}/construct"
   export anodosysConstructPath
 
-  anodosysScriptPath="${anodosysPath}/script"
-  export anodosysScriptPath
+  anodosysActionPath="${anodosysPath}/action"
+  anodosysActionSystemPath="${anodosysActionPath}/system"
+  export anodosysActionSystemPath
+  anodosysActionServerPath="${anodosysActionPath}/server"
+  export anodosysActionServerPath
 
   anodosysExtensionPath="${anodosysPath}/extension"
   export anodosysExtensionPath
@@ -43,9 +46,11 @@ if [[ -n "${anodosysPath}" ]]; then
   mkdir -p "${anodosysUserHostPath}"
   export anodosysUserHostPath
 
-  anodosysUserScriptPath="${anodosysUserPath}/script"
-  mkdir -p "${anodosysUserScriptPath}"
-  export anodosysUserScriptPath
+  anodosysUserActionPath="${anodosysPath}/action"
+  anodosysUserActionSystemPath="${anodosysUserActionPath}/system"
+  export anodosysUserActionSystemPath
+  anodosysUserActionServerPath="${anodosysUserActionPath}/server"
+  export anodosysUserActionServerPath
 
   anodosysUserVarPath="${anodosysUserPath}/var"
   mkdir -p "${anodosysUserVarPath}"
@@ -60,11 +65,11 @@ if [[ -n "${anodosysPath}" ]]; then
   export anodosysUserVarVolumePath
 
   if [[ -d "${anodosysExtensionPath}" ]]; then
-    anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+    anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
   else
-    anodosysSharedExtensions=()
+    anodosysExtensions=()
   fi
-  export anodosysSharedExtensions
+  export anodosysExtensions
 
   if [[ -d "${anodosysUserExtensionPath}" ]]; then
     anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )

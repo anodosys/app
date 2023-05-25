@@ -21,9 +21,9 @@ anodosysUserExtensionPath="${anodosysUserPath}/extension"
 mkdir -p "${anodosysUserExtensionPath}"
 
 if [[ -d "${anodosysExtensionPath}" ]]; then
-  anodosysSharedExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+  anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
 else
-  anodosysSharedExtensions=()
+  anodosysExtensions=()
 fi
 
 if [[ -d "${anodosysUserExtensionPath}" ]]; then
@@ -44,7 +44,7 @@ if [[ "${sourced}" == 1 ]]; then
     export PATH="${PATH}:${anodosysHostPath}"
   fi
 
-  for anodosysExtension in "${anodosysSharedExtensions[@]}"; do
+  for anodosysExtension in "${anodosysExtensions[@]}"; do
     if [[ -d "${anodosysExtensionPath}/${anodosysExtension}/host" ]]; then
       echo "Adding to path: ${anodosysExtensionPath}/${anodosysExtension}/host"
       export PATH="${PATH}:${anodosysExtensionPath}/${anodosysExtension}/host"

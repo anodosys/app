@@ -30,13 +30,23 @@ if [[ -z "${anodosysUserVarConfigurationPath}" ]]; then
   exit 1
 fi
 
-if [[ -z "${anodosysScriptPath}" ]]; then
-  >&2 echo "No script path specified!"
+if [[ -z "${anodosysActionSystemPath}" ]]; then
+  >&2 echo "No action system path specified!"
   exit 1
 fi
 
-if [[ -z "${anodosysUserScriptPath}" ]]; then
-  >&2 echo "No user script path specified!"
+if [[ -z "${anodosysActionServerPath}" ]]; then
+  >&2 echo "No action server path specified!"
+  exit 1
+fi
+
+if [[ -z "${anodosysUserActionSystemPath}" ]]; then
+  >&2 echo "No user action system path specified!"
+  exit 1
+fi
+
+if [[ -z "${anodosysUserActionServerPath}" ]]; then
+  >&2 echo "No user action server path specified!"
   exit 1
 fi
 
@@ -287,8 +297,8 @@ completePath()
             realpath "${anodosysUserConfigurationPath}/${value}"
             exit 0
           fi
-          if [[ -n "${anodosysSharedExtensions}" ]]; then
-            for anodosysExtension in "${anodosysSharedExtensions[@]}"; do
+          if [[ -n "${anodosysExtensions}" ]]; then
+            for anodosysExtension in "${anodosysExtensions[@]}"; do
               if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/configuration/${value}" ]]; then
                 realpath "${anodosysExtensionPath}/${anodosysExtension}/configuration/${value}"
                 exit 0
@@ -304,18 +314,30 @@ completePath()
             done
           fi
         else
-          if [[ -f "${anodosysUserScriptPath}/${value}" ]]; then
-            realpath "${anodosysUserScriptPath}/${value}"
+          if [[ -f "${anodosysUserActionSystemPath}/${value}" ]]; then
+            realpath "${anodosysUserActionSystemPath}/${value}"
             exit 0
           fi
-          for anodosysExtension in "${anodosysSharedExtensions[@]}"; do
-            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/script/${value}" ]]; then
-              realpath "${anodosysExtensionPath}/${anodosysExtension}/script/${value}"
+          if [[ -f "${anodosysUserActionServerPath}/${value}" ]]; then
+            realpath "${anodosysUserActionServerPath}/${value}"
+            exit 0
+          fi
+          for anodosysExtension in "${anodosysExtensions[@]}"; do
+            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/system/${value}" ]]; then
+              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/system/${value}"
+              exit 0
+            fi
+            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${value}" ]]; then
+              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/server/${value}"
               exit 0
             fi
           done
-          if [[ -f "${anodosysScriptPath}/${value}" ]]; then
-            realpath "${anodosysScriptPath}/${value}"
+          if [[ -f "${anodosysActionSystemPath}/${value}" ]]; then
+            realpath "${anodosysActionSystemPath}/${value}"
+            exit 0
+          fi
+          if [[ -f "${anodosysActionServerPath}/${value}" ]]; then
+            realpath "${anodosysActionServerPath}/${value}"
             exit 0
           fi
           for anodosysExtension in "${anodosysUserExtensions[@]}"; do

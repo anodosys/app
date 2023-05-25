@@ -131,9 +131,15 @@ export anodosysPath
 anodosysAppPath="${anodosysPath}/app"
 export anodosysAppPath
 
-anodosysScriptPath=
+anodosysExtensionPath=
+anodosysExtensions=
+anodosysActionSystemPath=
+anodosysActionServerPath=
 anodosysUserPath=
-anodosysUserScriptPath=
+anodosysUserExtensionPath=
+anodosysUserExtensions=
+anodosysUserActionSystemPath=
+anodosysUserActionServerPath=
 source "${anodosysAppPath}/path.sh"
 source "${anodosysAppPath}/log.sh"
 
@@ -146,9 +152,29 @@ export local
 
 source "${anodosysAppPath}/lib.sh"
 
-source "${anodosysAppPath}/construct.sh"
+for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+  if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/system/${action}.sh" ]]; then
+    source "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/system/${action}.sh"
+    exit 0
+  fi
+done
 
-source "${anodosysAppPath}/systems.sh"
+for anodosysExtension in "${anodosysExtensions[@]}"; do
+  if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/system/${action}.sh" ]]; then
+    source "${anodosysExtensionPath}/${anodosysExtension}/action/system/${action}.sh"
+    exit 0
+  fi
+done
+
+if [[ -f "${anodosysUserActionSystemPath}/${action}.sh" ]]; then
+  source "${anodosysUserActionSystemPath}/${action}.sh"
+  exit 0
+fi
+
+if [[ -f "${anodosysActionSystemPath}/${action}.sh" ]]; then
+  source "${anodosysActionSystemPath}/${action}.sh"
+  exit 0
+fi
 
 source "${anodosysAppPath}/step-scripts.sh"
 
@@ -189,6 +215,8 @@ else
   export systemPath
 fi
 
+systemActionPath="${systemPath}/action"
+
 if [[ ! -f "${fileName}" ]]; then
   >&2 echo "Could not find configuration at: ${fileName}"
   exit 1
@@ -218,13 +246,32 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
-if [[ -f "${anodosysScriptPath}/${action}.sh" ]]; then
-  source "${anodosysScriptPath}/${action}.sh"
+if [[ -f "${systemActionPath}/${action}.sh" ]]; then
+  source "${systemActionPath}/${action}.sh"
   exit 0
 fi
 
-if [[ -f "${anodosysUserScriptPath}/${action}.sh" ]]; then
-  source "${anodosysUserScriptPath}/${action}.sh"
+for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+  if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${action}.sh" ]]; then
+    source "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${action}.sh"
+    exit 0
+  fi
+done
+
+for anodosysExtension in "${anodosysExtensions[@]}"; do
+  if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${action}.sh" ]]; then
+    source "${anodosysExtensionPath}/${anodosysExtension}/action/server/${action}.sh"
+    exit 0
+  fi
+done
+
+if [[ -f "${anodosysUserActionServerPath}/${action}.sh" ]]; then
+  source "${anodosysUserActionServerPath}/${action}.sh"
+  exit 0
+fi
+
+if [[ -f "${anodosysActionServerPath}/${action}.sh" ]]; then
+  source "${anodosysActionServerPath}/${action}.sh"
   exit 0
 fi
 
