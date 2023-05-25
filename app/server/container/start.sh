@@ -48,6 +48,10 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
+if [[ -z "${useNamedVolumes}" ]]; then
+  useNamedVolumes="false"
+fi
+
 if [[ -n "${beforeContainerStartScript}" ]]; then
   echo "Before container start script: ${beforeContainerStartScript}"
   if [[ -n "${beforeContainerStartParameters}" ]]; then
@@ -77,7 +81,7 @@ if [[ -z "${follow}" ]]; then
   follow="false"
 fi
 
-containerStart "${containerName}" no "${skipPortsAvailable}" "${follow}"
+containerStart "${containerName}" "${useNamedVolumes}" no "${skipPortsAvailable}" "${follow}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"

@@ -3,9 +3,10 @@
 containerStart()
 {
   local containerName="${1}"
-  local retry="${2:-no}"
-  local skipPortsAvailable="${3:-false}"
-  local follow="${4:-false}"
+  local useNamedVolumes="${2}"
+  local retry="${3:-no}"
+  local skipPortsAvailable="${4:-false}"
+  local follow="${5:-false}"
   local result
   local mountingIssue
   local ports
@@ -38,7 +39,7 @@ containerStart()
         >&2 echo "${result}"
         exit 1
       fi
-      containerVolumePrepare "${containerName}"
+      containerVolumePrepare "${containerName}" "${useNamedVolumes}"
       containerHostNameAdd "${containerName}"
       if [[ "${skipPortsAvailable}" == "false" ]]; then
         ports=( $(containerPortList "${containerName}") )
@@ -58,7 +59,7 @@ containerStart()
           else
             if [[ "${retry}" == "no" ]]; then
               echo "Container not running: ${containerName}, try again"
-              containerStart "${containerName}" "yes" "${skipPortsAvailable}" "${follow}"
+              containerStart "${containerName}" "${useNamedVolumes}" "yes" "${skipPortsAvailable}" "${follow}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1

@@ -3,6 +3,7 @@
 containerVolumePrepare()
 {
   local containerName="${1}"
+  local useNamedVolumes="${2}"
   local volumeSourcePaths
   local volumeSourcePath
   local volumeMetadataFilePath
@@ -41,25 +42,28 @@ containerVolumePrepare()
         if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${empty}" == "true" ]]; then
           userId=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "userId")
           groupId=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "groupId")
-          rights=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "rights")
 
-          if [[ -n "${userId}" ]] && [[ -n "${groupId}" ]]; then
-            containerCommand "${containerName}" "chown ${userId}:${groupId} ${targetPath}"
-            if [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%u\" \$(readlink ${targetPath}) || stat -c \"%u\" ${targetPath}") == "${userId}" ]] && [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%g\" \$(readlink ${targetPath}) || stat -c \"%g\" ${targetPath}") == "${groupId}" ]]; then
-              echo "Successfully changed owner of target path: ${targetPath} to: ${userId}:${groupId}" | sed $'s,.*,\e[1;36m&\e[m,'
-            else
-              >&2 echo "Could not change owner of target path: ${targetPath} to: ${userId}:${groupId}"
-              exit 1
+          if [[ "${useNamedVolumes}" == "true" ]]; then
+            rights=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "rights")
+
+            if [[ -n "${userId}" ]] && [[ -n "${groupId}" ]]; then
+              containerCommand "${containerName}" "chown ${userId}:${groupId} ${targetPath}"
+              if [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%u\" \$(readlink ${targetPath}) || stat -c \"%u\" ${targetPath}") == "${userId}" ]] && [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%g\" \$(readlink ${targetPath}) || stat -c \"%g\" ${targetPath}") == "${groupId}" ]]; then
+                echo "Successfully changed owner of target path: ${targetPath} to: ${userId}:${groupId}" | sed $'s,.*,\e[1;36m&\e[m,'
+              else
+                >&2 echo "Could not change owner of target path: ${targetPath} to: ${userId}:${groupId}"
+                exit 1
+              fi
             fi
-          fi
 
-          if [[ -n "${rights}" ]]; then
-            containerCommand "${containerName}" "chmod ${rights} ${targetPath}"
-            if [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%a\" \$(readlink ${targetPath}) || stat -c \"%a\" ${targetPath}") == "${rights}" ]]; then
-              echo "Successfully changed rights of target path: ${targetPath} to: ${rights}" | sed $'s,.*,\e[1;36m&\e[m,'
-            else
-              >&2 echo "Could not change rights of target path: ${targetPath} to: ${rights}"
-              exit 1
+            if [[ -n "${rights}" ]]; then
+              containerCommand "${containerName}" "chmod ${rights} ${targetPath}"
+              if [[ $(containerCommandQuiet "${containerName}" "test -L ${targetPath} && stat -c \"%a\" \$(readlink ${targetPath}) || stat -c \"%a\" ${targetPath}") == "${rights}" ]]; then
+                echo "Successfully changed rights of target path: ${targetPath} to: ${rights}" | sed $'s,.*,\e[1;36m&\e[m,'
+              else
+                >&2 echo "Could not change rights of target path: ${targetPath} to: ${rights}"
+                exit 1
+              fi
             fi
           fi
         fi
