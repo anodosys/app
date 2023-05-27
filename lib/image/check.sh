@@ -80,7 +80,12 @@ imageCheckRemote()
     if [[ "${localId}" != "${remoteId}" ]]; then
       localTimestamp=$(date -d "$(echo "${localData}" | jq -r '.Created')" +%s)
       lastPushedTimestamps=( $(echo "${remoteData}" | jq -r '.images[] .last_pushed' | sort -r) )
-      remoteTimestamp=$(date -d "${lastPushedTimestamps[0]}" +%s)
+      if [[ "${lastPushedTimestamps[0]}" != "null" ]]; then
+        remoteTimestamp=$(date -d "${lastPushedTimestamps[0]}" +%s)
+      else
+        lastUpdated=$(echo "${remoteData}" | jq -r '.last_updated')
+        remoteTimestamp=$(date -d "${lastUpdated}" +%s)
+      fi
       if [[ "${remoteTimestamp}" -gt "${localTimestamp}" ]]; then
         echo 2
       fi
