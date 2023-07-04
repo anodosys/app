@@ -87,3 +87,34 @@ containerExecuteQuiet()
 
 # shellcheck disable=SC2034
 typeset -fx containerExecuteQuiet
+
+containerExecuteUserQuiet()
+{
+  local containerName="${1}"
+  shift
+  local userName="${1}"
+  shift
+  local localFileName="${1}"
+  shift
+  local parameters=("$@")
+  local remoteFileName
+
+  if [[ -z "${userName}" ]]; then
+    exit 1
+  fi
+
+  if [[ -f "${localFileName}" ]]; then
+    if [[ $(containerRunning "${containerName}") == 1 ]]; then
+      containerCopy "${containerName}" "${localFileName}"
+      remoteFileName=$(basename "${localFileName}")
+      docker exec --user "${userName}" "${containerName}" "/${remoteFileName}" "${parameters[@]}"
+    else
+      exit 1
+    fi
+  else
+    exit 1
+  fi
+}
+
+# shellcheck disable=SC2034
+typeset -fx containerExecuteUserQuiet

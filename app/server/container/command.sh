@@ -21,7 +21,7 @@ OPTIONS:
   -q  Flag if the command is hidden
   -u  User name (optional)
 
-Example: ${scriptName} -s web -u www-data -c "/test.sh"
+Example: ${scriptName} -s web -c "echo \"test\"" -u www-data
 EOF
 }
 
@@ -61,6 +61,8 @@ if [[ -z "${command}" ]]; then
 fi
 
 setServerConfiguration "${systemName}" "${serverName}"
+
+logDisable
 
 containerName="${systemName}_${serverName}"
 

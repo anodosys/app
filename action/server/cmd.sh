@@ -6,6 +6,12 @@ if [[ -z "${anodosysAppPath}" ]]; then
 fi
 
 shift
+
+if [[ -z "${1}" ]]; then
+  >&2 echo "No server name specified"
+  exit 1
+fi
+
 serverName="${1}"
 shift
 
@@ -17,6 +23,11 @@ if [[ -n "${1}" ]]; then
   shift
 else
   userName="none"
+fi
+
+if [[ "${#@}" == 0 ]]; then
+  >&2 echo "No command specified"
+  exit 1
 fi
 
 if [[ -z "${command}" ]]; then

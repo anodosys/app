@@ -25,7 +25,7 @@ finish()
   local runningProcessIds
   local runningProcessId
 
-  if [[ "${action}" != "" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "volumes" ]]; then
+  if [[ "${action}" != "" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "volumes" ]]; then
     lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
@@ -68,7 +68,11 @@ cat >&2 << EOF
 usage: ${scriptName} <ACTION>
 
 ACTION:
+  list       List all known systems
+
   construct  Create or update system components
+  reset      Remove all generated data of the system
+
   init       Pull the images required for building
   build      Build the target images and push if required
   rebuild    Re-build the target images and push if required
@@ -89,14 +93,18 @@ ACTION:
   erase      Stop and remove the containers and remove the build images
   destroy    Remove the built images locally and remotely
 
-  cmd        Execute a command in a container
-  bash       Open a bash shell in a container
-  config     Show the complete configuration
-  names      Show the names of images and containers
+  config     Show the complete configuration of the system
+  names      Show the names of images and containers of the system
+  status     Show a current status of images and containers of the system
   volumes    Show the details of all volumes
-  status     Show a current status of images and containers
-  list       List all known systems
-  reset      Remove all generated data
+
+  bash       Open a bash shell in a container
+  cmd        Execute a command in a container
+  cmdi       Execute a command in a container in interactive mode
+  cmdiq      Execute a command in a container in interactive mode and without any messages
+  cmdq       Execute a command in a container without any messages
+  copy       Copy a local file into a container
+  exec       Copy and execute a local script in a container
 
 Example: ${scriptName} build
 EOF
@@ -182,7 +190,7 @@ if [[ -n "${server}" ]]; then
   export server
 fi
 
-if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "config" ]] && [[ -n "${2}" ]]; then
+if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ -n "${2}" ]]; then
   systemName="${2}"
 fi
 
@@ -240,7 +248,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "volumes" ]]; then
+if [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "volumes" ]]; then
   logName "${systemName}"
 fi
 
@@ -253,6 +261,7 @@ fi
 
 for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
   if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${action}.sh" ]]; then
+    trap - EXIT
     source "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${action}.sh"
     exit 0
   fi
@@ -260,12 +269,14 @@ done
 
 for anodosysExtension in "${anodosysExtensions[@]}"; do
   if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${action}.sh" ]]; then
+    trap - EXIT
     source "${anodosysExtensionPath}/${anodosysExtension}/action/server/${action}.sh"
     exit 0
   fi
 done
 
 if [[ -f "${anodosysUserActionServerPath}/${action}.sh" ]]; then
+  trap - EXIT
   source "${anodosysUserActionServerPath}/${action}.sh"
   exit 0
 fi

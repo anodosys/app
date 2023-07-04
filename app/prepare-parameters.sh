@@ -1,6 +1,8 @@
 #!/bin/bash -e
 
 declare -Ag prepareParameters
+prepareParametersList=()
+prepareParametersListParts=()
 unparsedParameters=( )
 while [[ "$#" -gt 0 ]]; do
   parameter="${1}"
@@ -14,6 +16,9 @@ while [[ "$#" -gt 0 ]]; do
       prepareParameters["${prepareParametersKey}"]="${prepareParametersValue}"
       eval "${prepareParametersKey}=\"${prepareParametersValue}\""
       #echo eval "${prepareParametersKey}=\"${prepareParametersValue}\""
+      prepareParametersList+=( "--${prepareParametersKey} ${prepareParametersValue}" )
+      prepareParametersListParts+=( "--${prepareParametersKey}" )
+      prepareParametersListParts+=( "${prepareParametersValue}" )
       continue
     fi
     if [[ "${parameter:0:2}" == "--" ]]; then
@@ -27,12 +32,18 @@ while [[ "$#" -gt 0 ]]; do
       prepareParameters["${prepareParametersKey}"]=1
       eval "${prepareParametersKey}=1"
       #echo eval "${prepareParametersKey}=1"
+      prepareParametersList+=( "--${prepareParametersKey}" )
+      prepareParametersListParts+=( "--${prepareParametersKey}" )
+      prepareParametersListParts+=( "1" )
     else
       prepareParametersValue="${1}"
       if [[ "${prepareParametersValue:0:2}" == "--" ]]; then
         prepareParameters["${prepareParametersKey}"]=1
         eval "${prepareParametersKey}=1"
         #echo eval "${prepareParametersKey}=1"
+        prepareParametersList+=( "--${prepareParametersKey}" )
+        prepareParametersListParts+=( "--${prepareParametersKey}" )
+        prepareParametersListParts+=( "1" )
         continue
       fi
       shift
@@ -40,6 +51,9 @@ while [[ "$#" -gt 0 ]]; do
       prepareParameters["${prepareParametersKey}"]="${prepareParametersValue}"
       eval "${prepareParametersKey}=\"${prepareParametersValue}\""
       #echo eval "${prepareParametersKey}=\"${prepareParametersValue}\""
+      prepareParametersList+=( "--${prepareParametersKey} ${prepareParametersValue}" )
+      prepareParametersListParts+=( "--${prepareParametersKey}" )
+      prepareParametersListParts+=( "${prepareParametersValue}" )
     fi
   else
     unparsedParameters+=("${parameter}")
