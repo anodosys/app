@@ -70,9 +70,14 @@ fi
 containerName="${systemName}_${serverName}"
 
 if [[ $(containerExists "${containerName}") == 0 ]]; then
-  >&2 echo "Container does not exist: ${containerName}"
-  if [[ "${force}" == 0 ]]; then
-    exit 1
+  if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
+    echo "Image requires interactive run"
+    exit 0
+  else
+    >&2 echo "Container does not exist: ${containerName}"
+    if [[ "${force}" == 0 ]]; then
+      exit 1
+    fi
   fi
 else
   echo "Container exists: ${containerName}"

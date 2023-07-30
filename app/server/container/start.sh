@@ -69,8 +69,26 @@ if [[ -n "${beforeContainerStartScript}" ]]; then
 fi
 
 if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
-  echo "Image requires interactive run"
-  exit 0
+  if [[ $(containerExists "${containerName}") == 0 ]]; then
+    echo "Image requires interactive run"
+
+    if [[ -z "${imageName}" ]]; then
+      >&2 echo "No source image name for server: ${serverName}"
+      exit 1
+    fi
+    if [[ -z "${imageTag}" ]]; then
+      >&2 echo "No source image tag for server: ${serverName}"
+      exit 1
+    fi
+
+    if [[ -n "${imageInteractiveCommand}" ]]; then
+      containerRun "${imageName}:${imageTag}" "${containerName}" "${imageInteractiveCommand}"
+    else
+      containerRun "${imageName}:${imageTag}" "${containerName}"
+    fi
+
+    exit 0
+  fi
 fi
 
 if [[ -z "${skipPortsAvailable}" ]]; then
