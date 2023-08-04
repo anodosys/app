@@ -44,6 +44,12 @@ containerStart()
       if [[ "${skipPortsAvailable}" == "false" ]]; then
         ports=( $(containerPortList "${containerName}") )
         if [[ "${#ports[@]}" -gt 0 ]]; then
+          for port in "${ports[@]}"; do
+            readarray -d / -t portParts < <(printf '%s' "${port}")
+            port="${portParts[0]}"
+            protocol="${portParts[1]}"
+            echo "Waiting until port: ${port} with protocol: ${protocol} is available"
+          done
           echo "Checking if all ports are available for container: ${containerName}"
           counter=0
           while [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerPortAvailable "${containerName}") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
