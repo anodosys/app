@@ -47,7 +47,11 @@ logName "${systemName}" "${serverName}"
 setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -z "${skipImageCheck}" ]]; then
-  skipImageCheck="false"
+  if [[ -n "${local}" ]] && [[ "${local}" == 1 ]]; then
+    skipImageCheck="true"
+  else
+    skipImageCheck="false"
+  fi
 fi
 
 if [[ -n "${beforeImagePullSourceScript}" ]]; then
