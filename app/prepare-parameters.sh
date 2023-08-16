@@ -7,9 +7,13 @@ unparsedParameters=( )
 while [[ "$#" -gt 0 ]]; do
   parameter="${1}"
   shift
-  if [[ "${parameter}" =~ ^-[[:alpha:]]+ ]] || [[ "${parameter}" =~ ^--[[:alpha:]]+ ]] || [[ "${parameter}" =~ ^-[[:alpha:]][[:space:]]+ ]] || [[ "${parameter}" =~ ^-\?$ ]]; then
-    if [[ "${parameter}" =~ ^--[[:alpha:]]+[[:space:]]+ ]]; then
-      parameter="${parameter:2}"
+  if [[ "${parameter}" =~ ^-[[:alpha:]]+ ]] || [[ "${parameter}" =~ ^--[[:alpha:]]+ ]] || [[ "${parameter}" =~ ^-[[:alpha:]][[:space:]]+ ]] || [[ "${parameter}" =~ ^--[[:alpha:]][[:space:]]+ ]] || [[ "${parameter}" =~ ^-\?$ ]]; then
+    if [[ "${parameter}" =~ ^-[[:alpha:]]+[[:space:]]+ ]] || [[ "${parameter}" =~ ^--[[:alpha:]]+[[:space:]]+ ]]; then
+      if [[ "${parameter}" =~ ^--[[:alpha:]]+[[:space:]]+ ]]; then
+        parameter="${parameter:2}"
+      elif [[ "${parameter}" =~ ^-[[:alpha:]]+[[:space:]]+ ]]; then
+        parameter="${parameter:1}"
+      fi
       prepareParametersKey=$(echo "${parameter}" | grep -oP '[[:alpha:]]+(?=\s)' | tr -d "\n")
       prepareParametersValue=$(echo "${parameter:${#prepareParametersKey}}" | xargs)
       # shellcheck disable=SC2034
