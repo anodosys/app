@@ -72,6 +72,7 @@ imageRemoveRemote()
   local imageTag="${2}"
   local userName="${3}"
   local password="${4}"
+  local retry="${5:-no}"
   local useTokenFile
   local tokenFile
   local tokenTime
@@ -80,34 +81,55 @@ imageRemoveRemote()
 
   if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
     useTokenFile=0
+
     mkdir -p "${anodosysUserVarPath}/auth"
     tokenFile="${anodosysUserVarPath}/auth/hub_docker_com"
-    if [[ -f "${tokenFile}" ]]; then
-      tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
-      if [[ "${tokenTime}" -lt 55 ]]; then
-        useTokenFile=1
+
+    if [[ "${retry}" == "no" ]]; then
+      if [[ -f "${tokenFile}" ]]; then
+        tokenTime=$(expr "$(date +%s)" - "$(stat -c %Y "${tokenFile}")")
+        if [[ "${tokenTime}" -lt 55 ]]; then
+          useTokenFile=1
+        fi
       fi
     fi
 
     if [[ "${useTokenFile}" == 1 ]]; then
       token=$(cat "${tokenFile}")
-    else
+    elif [[ -n "${userName}" ]] && [[ -n "${password}" ]]; then
       token=$(curl -s -H "Content-Type: application/json" -X POST -d "{\"username\":\"${userName}\",\"password\":\"${password}\"}" "https://hub.docker.com/v2/users/login/" | jq -r .token)
       echo -n "${token}" > "${tokenFile}"
+    else
+      token=
     fi
 
     echo "Removing remote image: ${imageName}:${imageTag}"
 
     logDisable
-    remoteData=$(curl -s -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
+    if [[ -n "${token}" ]]; then
+      remoteData=$(curl -s -X DELETE -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
+    else
+      remoteData=$(curl -s -X DELETE "https://hub.docker.com/v2/repositories/${imageName}/tags/${imageTag}/" 2>&1 | cat)
+    fi
     logEnable
 
     if [[ -z "${remoteData}" ]]; then
-      touch "${tokenFile}"
+      if [[ -n "${token}" ]]; then
+        touch "${tokenFile}"
+      fi
       echo "Successfully removed remote image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
     else
-      >&2 echo "Could not remove remote image ${imageName}:${imageTag} because: $(echo "${remoteData}" | jq -r '.detail //empty')"
-      exit 1
+      reason=$(echo "${remoteData}" | jq -r '.detail //empty')
+      if [[ "${retry}" == "no" ]] && [[ "${reason}" == "unauthorized" ]]; then
+        echo "Please specify the user name to the repository, followed by [ENTER]:"
+        read -r userName < /dev/tty
+        echo "Please specify the password to the repository, followed by [ENTER]:"
+        read -r password < /dev/tty
+        imageRemoveRemote "${imageName}" "${imageTag}" "${userName}" "${password}" "yes"
+      else
+        >&2 echo "Could not remove remote image ${imageName}:${imageTag} because: ${reason}"
+        exit 1
+      fi
     fi
   else
     echo "No need to remove remote image: ${imageName}:${imageTag}"

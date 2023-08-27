@@ -9,6 +9,8 @@ imagePush()
 {
   local imageName="${1}"
   local imageTag="${2}"
+  local repositoryUserName
+  local repositoryPassword
 
   if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
     pushErrorFileName="${anodosysUserVarPath}/push/${imageName}_${imageTag}.err"
