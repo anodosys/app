@@ -120,6 +120,9 @@ imageRemoveRemote()
       echo "Successfully removed remote image: ${imageName}:${imageTag}" | sed $'s,.*,\e[0;32m&\e[m,'
     else
       reason=$(echo "${remoteData}" | jq -r '.detail //empty')
+      if [[ -z "${reason}" ]]; then
+        reason=$(echo "${remoteData}" | jq -r '.message //empty')
+      fi
       if [[ "${retry}" == "no" ]] && [[ "${reason}" == "unauthorized" ]]; then
         echo "Please specify the user name to the repository, followed by [ENTER]:"
         read -r userName < /dev/tty
