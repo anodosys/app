@@ -71,6 +71,22 @@ if [[ -n "${userName}" ]]; then
     userId=$(getent passwd "${userName}" | tr ':' ' ' | awk '{print $3}')
     if [[ -n "${userId}" ]]; then
       userName=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} | cat" | tr ':' ' ' | awk '{print $1}')
+      if [[ -z "${userName}" ]]; then
+        userName="${USER}"
+        userHome=$(getent passwd "${userName}" | tr ':' ' ' | awk '{print $6}')
+        groupId=$(stat -c '%g' "${userHome}")
+        groupName=$(containerCommandQuiet "${containerName}" "getent group ${groupId} | tr ':' ' ' | awk '{print \$1}'")
+        if [[ -z "${groupName}" ]]; then
+          groupName="docker_volume_${groupId}"
+          echo "Creating new group: ${groupName}"
+          containerCommand "${containerName}" "groupadd -g ${groupId} ${groupName}"
+        else
+          echo "No need to create group: ${groupName}"
+        fi
+        targetUser="docker_volume_${userId}"
+        echo "Creating new user: ${targetUser}"
+        containerCommand "${containerName}" "useradd -m -u ${userId} -g ${groupId} ${targetUser}"
+      fi
     fi
   fi
   if [[ "${quiet}" == 0 ]]; then
