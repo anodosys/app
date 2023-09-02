@@ -153,8 +153,14 @@ fi
 
 if [[ "${outputVars}" == 1 ]]; then
   prepareConfigurationVariables "global" "yes"
+  if [[ "${serverName}" != "system" ]]; then
+    prepareConfigurationVariables "any" "yes"
+  fi
   prepareConfigurationVariables "${serverName}" "yes"
 else
   prepareConfigurationVariables "global"
+  if [[ "${serverName}" != "system" ]]; then
+    prepareConfigurationVariables "any"
+  fi
   prepareConfigurationVariables "${serverName}"
 fi
