@@ -62,6 +62,8 @@ volumeMetadataCreate()
     empty=$(find "${sourcePath}" -maxdepth 0 -empty | read -r && echo "true" || echo "false")
   fi
 
+  echo "Creating volume meta data with source path: ${sourcePath}, target path: ${targetPath}, target user: ${targetUser} and mode: ${mode}"
+
   volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${sourcePath}" "no")
 
   updateJson "${volumeMetadataFilePath}" "sourcePath" "${sourcePath}"

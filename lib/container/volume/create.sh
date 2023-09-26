@@ -63,7 +63,7 @@ containerVolumeCreate()
 
   volumeMetadataCreate "${containerName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}" "${userId}" "${user}" "${groupId}" "${group}" "${rights}" "${empty}"
   if [[ "${namedVolume}" == "true" ]]; then
-    volumeCreate "${volumeName}" "${sourcePath}" "${targetPath}" "${targetUser}" "${mode}"
+    volumeCreate "${volumeName}" "${sourcePath}"
   fi
 }
 

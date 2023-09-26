@@ -49,7 +49,7 @@ containerVolumeCheck()
           fi
 
           if [[ "${user}" != "${targetUser}" ]]; then
-            if [[ "${mode}" == "r" ]]; then
+            if [[ "${mode}" == "r" ]] || [[ "${mode}" == "l" ]]; then
               if [[ "${accessRights:1:1}" != 4 ]] && [[ "${accessRights:1:1}" != 5 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
                 >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not readable for group"
                 exit 1
@@ -99,7 +99,7 @@ containerVolumeCheckSourcePath()
     accessRights=$(stat -L -c "%a" "${sourcePath}")
 
     if [[ "${user}" != "${targetUser}" ]]; then
-      if [[ "${mode}" == "r" ]]; then
+      if [[ "${mode}" == "r" ]] || [[ "${mode}" == "l" ]]; then
         if [[ "${accessRights:1:1}" != 4 ]] && [[ "${accessRights:1:1}" != 5 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
           >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not readable for group"
         else

@@ -4,13 +4,10 @@ volumeCreate()
 {
   local volumeName="${1}"
   local sourcePath="${2}"
-  local targetPath="${3}"
-  local targetUser="${4:-local}"
-  local mode="${5:-r}"
   local result
 
   if [[ $(volumeExists "${volumeName}") == 0 ]]; then
-    echo "Creating volume: ${volumeName} with source path: ${sourcePath} and target path: ${targetPath} accessible by user: ${targetUser} and mode: ${mode}"
+    echo "Creating volume: ${volumeName} with source path: ${sourcePath}"
     result=$(docker volume create \
       --driver local \
       --opt type=none \

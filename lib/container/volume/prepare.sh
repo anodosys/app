@@ -8,6 +8,7 @@ containerVolumePrepare()
   local volumeSourcePath
   local volumeMetadataFilePath
   local groupUserList
+  local targetPathUserList
   local sourcePath
   local targetPath
   local empty
@@ -17,9 +18,14 @@ containerVolumePrepare()
   local mode
   local targetUser
   local groupName
+  local userName
   local userNames
   local userNameList
   local result
+  local targetPathGroupId
+  local targetPathGroupName
+  local targetPathUserId
+  local targetPathUserName
 
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     oldIFS="${IFS}"
@@ -28,6 +34,8 @@ containerVolumePrepare()
     IFS="${oldIFS}"
 
     declare -A groupUserList
+    targetPathUserList=()
+
     for volumeSourcePath in "${volumeSourcePaths[@]}"; do
       volumeSourcePath=$(trim "${volumeSourcePath}")
       volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${volumeSourcePath}")
@@ -71,13 +79,16 @@ containerVolumePrepare()
         targetUser=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "targetUser")
         mode=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "mode")
 
-        if [[ "${mode}" == "r" ]] || [[ "${mode}" == "w" ]]; then
+        if [[ "${mode}" == "r" ]] || [[ "${mode}" == "w" ]] || [[ "${mode}" == "l" ]]; then
           if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ -n "${targetUser}" ]]; then
             groupId=$(stat -c '%g' "${sourcePath}")
             if test "${groupUserList[${groupId}]+isset}"; then
               groupUserList[${groupId}]+=",${targetUser}"
             else
               groupUserList[${groupId}]="${targetUser}"
+            fi
+            if [[ "${mode}" == "l" ]]; then
+              targetPathUserList+=("${targetPath}")
             fi
           else
             echo "No need to prepare source path: ${volumeSourcePath}"
@@ -135,6 +146,32 @@ containerVolumePrepare()
           echo "No need to add user: ${targetUser} to group: ${groupName}"
         fi
       done
+    done
+
+    for targetPath in "${targetPathUserList[@]}"; do
+      targetPathGroupId=$(containerCommandQuiet "${containerName}" "stat -L -c \"%g\" ${targetPath}")
+      targetPathGroupName=$(containerCommandQuiet "${containerName}" "getent group ${targetPathGroupId} | tr ':' ' ' | awk '{print \$1}'")
+      targetPathGroupName=$(prepareValue "${targetPathGroupName}")
+
+      if [[ -z "${targetPathGroupName}" ]]; then
+        groupName="docker_volume_${targetPathGroupId}"
+        echo "Creating new group: ${groupName}"
+        containerCommand "${containerName}" "groupadd -g ${targetPathGroupId} ${groupName}"
+      else
+        echo "No need to create group: ${groupName}"
+      fi
+
+      targetPathUserId=$(containerCommandQuiet "${containerName}" "stat -L -c \"%u\" ${targetPath}")
+      targetPathUserName=$(containerCommandQuiet "${containerName}" "getent passwd ${targetPathUserId} | cat" | tr ':' ' ' | awk '{print $1}')
+      targetPathUserName=$(prepareValue "${targetPathUserName}")
+
+      if [[ -z "${targetPathUserName}" ]]; then
+        userName="docker_volume_${targetPathUserId}"
+        echo "Creating new user: ${userName}"
+        containerCommand "${containerName}" "useradd -m -u ${targetPathUserId} -g ${targetPathGroupId} ${userName}"
+      else
+        echo "No need to create user: ${targetUser}"
+      fi
     done
   else
     echo "Not possible to prepare volumes of container: ${containerName}"
