@@ -25,7 +25,7 @@ finish()
   local runningProcessIds
   local runningProcessId
 
-  if [[ "${action}" != "" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "volumes" ]]; then
+  if [[ "${action}" != "" ]] && [[ "${action}" != "steps" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "volumes" ]]; then
     lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
@@ -53,6 +53,10 @@ finish()
       >&2 echo "Finished unexpectedly"
     else
       echo "Finished"
+    fi
+  else
+    if [[ "${action}" == "steps" ]]; then
+      sleep 1
     fi
   fi
 }
@@ -97,6 +101,7 @@ ACTION:
   names      Show the names of images and containers of the system
   status     Show a current status of images and containers of the system
   volumes    Show the details of all volumes
+  ports      Show the details of all ports
 
   bash       Open a bash shell in a container
   cmd        Execute a command in a container

@@ -80,15 +80,18 @@ if [[ "${#actionSteps[@]}" -gt 0 ]]; then
         "${stepScript}"
       else
         >&2 echo "Step script not found at: ${stepScript}"
+        action="steps"
         exit 1
       fi
     else
       >&2 echo "No script found to execute step: ${actionStep}"
+      action="steps"
       exit 1
     fi
   done
 else
   >&2 echo "No steps found for action: ${action}"
+  action="steps"
   usage
   exit 1
 fi
