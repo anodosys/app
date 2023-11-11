@@ -80,6 +80,7 @@ ACTION:
   init       Pull the images required for building
   build      Build the target images and push if required
   rebuild    Re-build the target images and push if required
+  shell      Re-build the target images
   rise       Create the containers from source images and run installation process
   source     Create the containers from source images
   install    Run installation process with created containers from source images
