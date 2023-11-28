@@ -69,7 +69,7 @@ usage()
 {
 cat >&2 << EOF
 
-usage: ${scriptName} <ACTION>
+usage: ads <ACTION>
 
 ACTION:
   list       List all known systems
@@ -111,18 +111,42 @@ ACTION:
   cmdq       Execute a command in a container without any messages
   copy       Copy a local file into a container
   exec       Copy and execute a local script in a container
+EOF
 
-Example: ${scriptName} build
+for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+  userExtensionActions=( $(find "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+  if [[ -n "${userExtensionActions[*]}" ]]; then
+    >&2 echo ""
+    for userExtensionAction in "${userExtensionActions[@]}"; do
+      userExtensionActionDescription=
+      if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt" ]]; then
+        userExtensionActionDescription=$(cat "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt")
+      fi
+      >&2 echo "  $(printf '%-11s' "${userExtensionAction}")${userExtensionActionDescription}"
+    done
+  fi
+done
+
+for anodosysExtension in "${anodosysExtensions[@]}"; do
+  extensionActions=( $(find "${anodosysExtensionPath}/${anodosysExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+  if [[ -n "${extensionActions[*]}" ]]; then
+    >&2 echo ""
+    for extensionAction in "${extensionActions[@]}"; do
+      extensionActionDescription=
+      if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt" ]]; then
+        extensionActionDescription=$(cat "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt")
+      fi
+      >&2 echo "  $(printf '%-11s' "${extensionAction}")${extensionActionDescription}"
+    done
+  fi
+done
+
+cat >&2 << EOF
+
+Example: ads build
+
 EOF
 }
-
-action="${1}"
-if [[ -z "${action}" ]]; then
-  >&2 echo "No action defined!"
-  usage
-  exit 1
-fi
-export action
 
 if [[ $(which jq | wc -l) == 0 ]]; then
   >&2 echo "Please install required package: jq"
@@ -156,6 +180,14 @@ anodosysUserActionSystemPath=
 anodosysUserActionServerPath=
 source "${anodosysAppPath}/path.sh"
 source "${anodosysAppPath}/log.sh"
+
+action="${1}"
+if [[ -z "${action}" ]]; then
+  >&2 echo "No action defined!"
+  usage
+  exit 1
+fi
+export action
 
 fileName=
 force=0
