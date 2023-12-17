@@ -86,6 +86,7 @@ if [[ -n "${userName}" ]]; then
         targetUser="docker_volume_${userId}"
         echo "Creating new user: ${targetUser}"
         containerCommand "${containerName}" "useradd -m -u ${userId} -g ${groupId} ${targetUser}"
+        userName="${targetUser}"
       fi
     fi
   fi
