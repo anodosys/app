@@ -113,6 +113,20 @@ ACTION:
   exec       Copy and execute a local script in a container
 EOF
 
+if [[ -n "${systemActionPath}" ]] && [[ -d "${systemActionPath}" ]]; then
+  systemActions=( $(find "${systemActionPath}/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+  if [[ -n "${systemActions[*]}" ]]; then
+    >&2 echo ""
+    for systemAction in "${systemActions[@]}"; do
+      systemActionDescription=
+      if [[ -f "${systemActionPath}/${systemAction}.txt" ]]; then
+        systemActionDescription=$(cat "${systemActionPath}/${systemAction}.txt")
+      fi
+      >&2 echo "  $(printf '%-11s' "${systemAction}")${systemActionDescription}"
+    done
+  fi
+fi
+
 for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
   userExtensionActions=( $(find "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
   if [[ -n "${userExtensionActions[*]}" ]]; then
@@ -181,14 +195,6 @@ anodosysUserActionServerPath=
 source "${anodosysAppPath}/path.sh"
 source "${anodosysAppPath}/log.sh"
 
-action="${1}"
-if [[ -z "${action}" ]]; then
-  >&2 echo "No action defined!"
-  usage
-  exit 1
-fi
-export action
-
 fileName=
 force=0
 local=0
@@ -197,32 +203,6 @@ export force
 export local
 
 source "${anodosysAppPath}/lib.sh"
-
-for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
-  if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/system/${action}.sh" ]]; then
-    source "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/system/${action}.sh"
-    exit 0
-  fi
-done
-
-for anodosysExtension in "${anodosysExtensions[@]}"; do
-  if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/system/${action}.sh" ]]; then
-    source "${anodosysExtensionPath}/${anodosysExtension}/action/system/${action}.sh"
-    exit 0
-  fi
-done
-
-if [[ -f "${anodosysUserActionSystemPath}/${action}.sh" ]]; then
-  source "${anodosysUserActionSystemPath}/${action}.sh"
-  exit 0
-fi
-
-if [[ -f "${anodosysActionSystemPath}/${action}.sh" ]]; then
-  source "${anodosysActionSystemPath}/${action}.sh"
-  exit 0
-fi
-
-source "${anodosysAppPath}/step-scripts.sh"
 
 if [[ -n "${server}" ]]; then
   export server
@@ -267,6 +247,40 @@ if [[ ! -f "${fileName}" ]]; then
   >&2 echo "Could not find configuration at: ${fileName}"
   exit 1
 fi
+
+action="${1}"
+if [[ -z "${action}" ]]; then
+  >&2 echo "No action defined!"
+  usage
+  exit 1
+fi
+export action
+
+for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+  if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/system/${action}.sh" ]]; then
+    source "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/system/${action}.sh"
+    exit 0
+  fi
+done
+
+for anodosysExtension in "${anodosysExtensions[@]}"; do
+  if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/system/${action}.sh" ]]; then
+    source "${anodosysExtensionPath}/${anodosysExtension}/action/system/${action}.sh"
+    exit 0
+  fi
+done
+
+if [[ -f "${anodosysUserActionSystemPath}/${action}.sh" ]]; then
+  source "${anodosysUserActionSystemPath}/${action}.sh"
+  exit 0
+fi
+
+if [[ -f "${anodosysActionSystemPath}/${action}.sh" ]]; then
+  source "${anodosysActionSystemPath}/${action}.sh"
+  exit 0
+fi
+
+source "${anodosysAppPath}/step-scripts.sh"
 
 if [[ "${action}" == "reset" ]]; then
   reset=1
