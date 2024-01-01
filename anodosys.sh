@@ -102,6 +102,7 @@ ACTION:
   names      Show the names of images and containers of the system
   status     Show a current status of images and containers of the system
   volumes    Show the details of all volumes
+  paths      Show the details of all paths
   ports      Show the details of all ports
 
   bash       Open a bash shell in a container
