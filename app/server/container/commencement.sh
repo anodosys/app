@@ -74,6 +74,16 @@ if [[ -n "${beforeContainerCommencementScript}" ]]; then
   fi
 fi
 
+if [[ -n "${containerPaths}" ]]; then
+  for containerPath in "${containerPaths[@]}"; do
+    readarray -d : -t containerPathParts < <(printf '%s' "${containerPath}")
+    containerPath="${containerPathParts[0]}"
+    accessUser="${containerPathParts[1]}"
+    mode="${containerPathParts[2]}"
+    containerPath "${containerName}" "${containerPath}" "${accessUser}" "${mode}"
+  done
+fi
+
 if [[ -n "${containerCommencementScript}" ]]; then
   echo "Container commencement script: ${beforeContainerCommencementScript}"
   if [[ -n "${containerCommencementParameters}" ]]; then

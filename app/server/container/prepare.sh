@@ -69,6 +69,16 @@ if [[ -n "${beforeContainerPrepareScript}" ]]; then
   fi
 fi
 
+if [[ -n "${containerPaths}" ]]; then
+  for containerPath in "${containerPaths[@]}"; do
+    readarray -d : -t containerPathParts < <(printf '%s' "${containerPath}")
+    containerPath="${containerPathParts[0]}"
+    accessUser="${containerPathParts[1]}"
+    mode="${containerPathParts[2]}"
+    containerPath "${containerName}" "${containerPath}" "${accessUser}" "${mode}"
+  done
+fi
+
 configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_${serverName}.ini"
 containerCopy "${containerName}" "${configurationFile}" "/container.sh"
 
