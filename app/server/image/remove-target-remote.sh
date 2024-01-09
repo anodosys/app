@@ -57,15 +57,15 @@ if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
 fi
 
 if [[ -n "${buildImageName}" ]]; then
-  imageName="${buildImageName}"
+  imageName="${buildImageName,,}"
 fi
 
 if [[ -n "${buildImageTag}" ]]; then
-  imageTag="${buildImageTag}"
+  imageTag="${buildImageTag,,}"
 fi
 
 if [[ -z "${repositoryUserName}" ]] && [[ -z "${repositoryPassword}" ]]; then
-  imageRemoveRemote "${imageName}" "${imageTag}"
+  imageRemoveRemote "${imageName,,}" "${imageTag,,}"
 else
   if [[ -z "${repositoryUserName}" ]]; then
     >&2 echo "No repository user name for server: ${serverName}"
@@ -75,7 +75,7 @@ else
     exit 1
   fi
 
-  imageRemoveRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}"
+  imageRemoveRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}"
 fi
 
 if [[ -n "${afterImageRemoveSourceRemoteScript}" ]]; then

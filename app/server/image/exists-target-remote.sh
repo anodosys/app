@@ -52,11 +52,11 @@ if [[ -n "${beforeImageExistsTargetRemoteScript}" ]]; then
 fi
 
 if [[ -n "${buildImageName}" ]]; then
-  imageName="${buildImageName}"
+  imageName="${buildImageName,,}"
 fi
 
 if [[ -n "${buildImageTag}" ]]; then
-  imageTag="${buildImageTag}"
+  imageTag="${buildImageTag,,}"
 fi
 
 if [[ -z "${imageName}" ]]; then
@@ -69,8 +69,8 @@ if [[ -z "${imageTag}" ]]; then
   exit 1
 fi
 
-echo "Checking if remote target image exists: ${imageName}:${imageTag}"
-if [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+echo "Checking if remote target image exists: ${imageName,,}:${imageTag,,}"
+if [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
   echo "Remote target image exists"
 elif [[ -z "${repositoryUserName}" ]]; then
   >&2 echo "No repository user name for server: ${serverName}"
@@ -78,10 +78,10 @@ elif [[ -z "${repositoryUserName}" ]]; then
 elif [[ -z "${repositoryPassword}" ]]; then
   >&2 echo "No repository password for server: ${serverName}"
   exit 1
-elif [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+elif [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
   echo "Remote target image exists"
 else
-  >&2 echo "Remote target image does not exist: ${imageName}:${imageTag}"
+  >&2 echo "Remote target image does not exist: ${imageName,,}:${imageTag,,}"
   exit 1
 fi
 

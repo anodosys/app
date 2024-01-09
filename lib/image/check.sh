@@ -23,21 +23,21 @@ imageCheckRemote()
   local lastPushedTimestamps
   local remoteTimestamp
 
-  if [[ "${imageName}" =~ '/' ]]; then
-    remoteImageName="${imageName}"
+  if [[ "${imageName,,}" =~ '/' ]]; then
+    remoteImageName="${imageName,,}"
   else
-    remoteImageName="library/${imageName}"
+    remoteImageName="library/${imageName,,}"
   fi
 
   localData=
   remoteData=
   tokenFile=
 
-  localData=$(docker image inspect --format '{{ json . }}' "${imageName}:${imageTag}")
+  localData=$(docker image inspect --format '{{ json . }}' "${imageName,,}:${imageTag,,}")
 
-  if [[ $(imageExistsRemote "${imageName}" "${imageTag}") == 1 ]]; then
-    remoteData=$(curl -s "https://hub.docker.com/v2/repositories/${remoteImageName}/tags/${imageTag}/" | cat)
-  elif [[ -n "${userName}" ]] && [[ -n "${password}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${userName}" "${password}") == 1 ]]; then
+  if [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}") == 1 ]]; then
+    remoteData=$(curl -s "https://hub.docker.com/v2/repositories/${remoteImageName,,}/tags/${imageTag,,}/" | cat)
+  elif [[ -n "${userName}" ]] && [[ -n "${password}" ]] && [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${userName}" "${password}") == 1 ]]; then
     useTokenFile=0
     mkdir -p "${anodosysUserVarPath}/auth"
     tokenFile="${anodosysUserVarPath}/auth/hub_docker_com"
@@ -55,13 +55,13 @@ imageCheckRemote()
       echo -n "${token}" > "${tokenFile}"
     fi
 
-    remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${remoteImageName}/tags/${imageTag}/" | cat)
+    remoteData=$(curl -s -H "Authorization: JWT ${token}" "https://hub.docker.com/v2/repositories/${remoteImageName,,}/tags/${imageTag,,}/" | cat)
   fi
 
   if [[ -n "${remoteData}" ]]; then
     error=$(echo "${remoteData}" | jq -r '.error //empty')
     if [[ "${error}" == "true" ]]; then
-      >&2 echo "Could not check remote image ${imageName}:${imageTag} because: $(echo "${remoteData}" | jq -r '.detail //empty')"
+      >&2 echo "Could not check remote image ${imageName,,}:${imageTag,,} because: $(echo "${remoteData}" | jq -r '.detail //empty')"
       exit 1
     else
       if [[ -n "${tokenFile}" ]]; then

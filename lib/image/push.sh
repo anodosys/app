@@ -12,16 +12,16 @@ imagePush()
   local repositoryUserName
   local repositoryPassword
 
-  if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-    pushErrorFileName="${anodosysUserVarPath}/push/${imageName}_${imageTag}.err"
+  if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
+    pushErrorFileName="${anodosysUserVarPath}/push/${imageName,,}_${imageTag,,}.err"
     mkdir -p "$(dirname "${pushErrorFileName}")"
 
-    echo "Pushing image: ${imageName}:${imageTag}"
+    echo "Pushing image: ${imageName,,}:${imageTag,,}"
     exec >/dev/tty
     exec 2>/dev/tty
     logDisable
     set +e
-    docker push "${imageName}:${imageTag}" 2>"${pushErrorFileName}"
+    docker push "${imageName,,}:${imageTag,,}" 2>"${pushErrorFileName}"
     pushResult=$?
     set -e
     if [[ "${pushResult}" -gt 0 ]]; then
@@ -32,12 +32,12 @@ imagePush()
         echo "Please specify the password to the repository, followed by [ENTER]:"
         read -r repositoryPassword
         echo "${repositoryPassword}" | docker login --username "${repositoryUserName}" --password-stdin
-        docker push "${imageName}:${imageTag}"
+        docker push "${imageName,,}:${imageTag,,}"
       fi
     fi
     logEnable
   else
-    >&2 echo "Image does not exist: ${imageName}:${imageTag}"
+    >&2 echo "Image does not exist: ${imageName,,}:${imageTag,,}"
     exit 1
   fi
 }

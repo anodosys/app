@@ -6,6 +6,7 @@ containerPath()
   local containerPath="${2}"
   local accessUser="${3}"
   local mode="${4}"
+  local accessRights="${5}"
   local containerGroupId
   local containerGroupName
   local containerUserId
@@ -13,11 +14,15 @@ containerPath()
   local result
   local accessPrefix
   local accessName
-  local accessRights
   local accessRight
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ -n "${containerPath}" ]]; then
+      if [[ -n "${accessRights}" ]] && [[ "${accessRights}" != "-" ]]; then
+        echo "Setting access rights ${accessRights} to container path: ${containerPath}"
+        containerCommand "${containerName}" "[[ -e ${containerPath} ]] && chmod ${accessRights} ${containerPath} || mkdir -p ${containerPath} && chmod ${accessRights} ${containerPath}"
+      fi
+
       containerGroupId=$(containerCommandQuiet "${containerName}" "stat -c \"%g\" ${containerPath}")
       containerGroupName=$(containerCommandQuiet "${containerName}" "getent group ${containerGroupId} | tr ':' ' ' | awk '{print \$1}'")
       containerGroupName=$(prepareValue "${containerGroupName}")
@@ -139,7 +144,7 @@ containerPath()
           >&2 echo "Could not change owner of container path: ${containerPath} to: ${accessUser}"
           exit 1
         fi
-      else
+      elif [[ -n "${mode}" ]] && [[ "${mode}" != "-" ]]; then
         >&2 echo "Unknown container path mode: ${mode} to container path: ${containerPath}"
         exit 1
       fi

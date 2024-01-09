@@ -48,22 +48,22 @@ printf '%-10s' "${serverName}"
 echo -n " | "
 
 if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]]; then
-  printf '%-65s' "${imageName}:${imageTag}"
+  printf '%-65s' "${imageName,,}:${imageTag,,}"
 else
   printf '%-65s' ""
 fi
 echo -n " | "
 
 if [[ -n "${buildImageName}" ]]; then
-  imageName="${buildImageName}"
+  imageName="${buildImageName,,}"
 fi
 
 if [[ -n "${buildImageTag}" ]]; then
-  imageTag="${buildImageTag}"
+  imageTag="${buildImageTag,,}"
 fi
 
 if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]]; then
-  printf '%-65s' "${imageName}:${imageTag}"
+  printf '%-65s' "${imageName,,}:${imageTag,,}"
 else
   printf '%-65s' ""
 fi

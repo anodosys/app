@@ -24,7 +24,7 @@ for image in "${images[@]}"; do
   imageTag=$(echo "${image}" | awk '{print $2}')
   imageId=$(echo "${image}" | awk '{print $3}')
 
-  echo -n "Checking ${imageName}:${imageTag}: "
+  echo -n "Checking ${imageName,,}:${imageTag,,}: "
   imageUsedByContainerResult=$(imageUsedByContainer "${imageId}")
   if [[ "${imageUsedByContainerResult}" == 0 ]]; then
     imageUsedByImageResult=$(imageUsedByImage "${imageId}")

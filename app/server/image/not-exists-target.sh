@@ -53,11 +53,11 @@ fi
 
 if [[ -n "${buildImageName}" ]] || [[ -n "${buildImageTag}" ]]; then
   if [[ -n "${buildImageName}" ]]; then
-    imageName="${buildImageName}"
+    imageName="${buildImageName,,}"
   fi
 
   if [[ -n "${buildImageTag}" ]]; then
-    imageTag="${buildImageTag}"
+    imageTag="${buildImageTag,,}"
   fi
 
   if [[ -z "${imageName}" ]]; then
@@ -70,12 +70,12 @@ if [[ -n "${buildImageName}" ]] || [[ -n "${buildImageTag}" ]]; then
     exit 1
   fi
 
-  echo "Checking if target image not exists: ${imageName}:${imageTag}"
-  if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
-    >&2 echo "Local target image exists: ${imageName}:${imageTag}"
+  echo "Checking if target image not exists: ${imageName,,}:${imageTag,,}"
+  if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
+    >&2 echo "Local target image exists: ${imageName,,}:${imageTag,,}"
     exit 1
-  elif [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageExistsRemote "${imageName}" "${imageTag}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
-    >&2 echo "Remote target image exists: ${imageName}:${imageTag}"
+  elif [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+    >&2 echo "Remote target image exists: ${imageName,,}:${imageTag,,}"
     exit 1
   else
     echo "Target image does not exist"

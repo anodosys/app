@@ -56,6 +56,12 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+containerName="${systemName}_${serverName}"
+
+if [[ -z "${useNamedVolumes}" ]]; then
+  useNamedVolumes="false"
+fi
+
 if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
   echo "Before container create target script: ${beforeContainerCreateTargetScript}"
   if [[ -n "${beforeContainerCreateTargetParameters}" ]]; then
@@ -73,11 +79,11 @@ if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
 fi
 
 if [[ -n "${buildImageName}" ]]; then
-  imageName="${buildImageName}"
+  imageName="${buildImageName,,}"
 fi
 
 if [[ -n "${buildImageTag}" ]]; then
-  imageTag="${buildImageTag}"
+  imageTag="${buildImageTag,,}"
 fi
 
 if [[ -z "${imageName}" ]]; then
@@ -90,24 +96,9 @@ if [[ -z "${imageTag}" ]]; then
   exit 1
 fi
 
-containerName="${systemName}_${serverName}"
-
-if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-  >&2 echo "Required target image: ${imageName}:${imageTag} does not exist"
+if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 0 ]]; then
+  >&2 echo "Required target image: ${imageName,,}:${imageTag,,} does not exist"
   exit 1
-fi
-
-if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
-  if [[ -n "${imageInteractiveCommand}" ]]; then
-    containerRun "${imageName}:${imageTag}" "${containerName}" "${imageInteractiveCommand}"
-  else
-    containerRun "${imageName}:${imageTag}" "${containerName}"
-  fi
-  exit 0
-fi
-
-if [[ -z "${useNamedVolumes}" ]]; then
-  useNamedVolumes="false"
 fi
 
 optionalParameters=( )
@@ -158,6 +149,17 @@ for containerVariable in "${containerVariables[@]}"; do
   optionalParameters+=( "environment:${containerVariable}" )
 done
 
+if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
+  echo "Image requires interactive run"
+  if [[ -n "${imageInteractiveCommand}" ]]; then
+    echo "Running image with command: ${imageInteractiveCommand}"
+    containerRun "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${imageInteractiveCommand}" "${optionalParameters[@]}"
+  else
+    containerRun "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "-" "${optionalParameters[@]}"
+  fi
+  exit 0
+fi
+
 if [[ $(containerExists "${containerName}") == 1 ]] && [[ "${force}" == 1 ]]; then
   containerRemove "${containerName}" "${useNamedVolumes}"
 
@@ -169,7 +171,7 @@ if [[ $(containerExists "${containerName}") == 1 ]] && [[ "${force}" == 1 ]]; th
   rm -rf "${anodosysUserVarPath}/finishing/${containerName}"
 fi
 
-containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
+containerCreate "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateTargetScript}" ]]; then
   echo "After container create target script: ${afterContainerCreateTargetScript}"

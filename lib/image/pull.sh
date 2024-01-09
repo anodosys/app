@@ -6,13 +6,13 @@ imagePull()
   local imageTag="${2}"
   local force="${3:-no}"
 
-  if [[ "${force}" == "yes" ]] || [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-    echo "Pulling image: ${imageName}:${imageTag}"
+  if [[ "${force}" == "yes" ]] || [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 0 ]]; then
+    echo "Pulling image: ${imageName,,}:${imageTag,,}"
     logDisable
-    docker pull "${imageName}:${imageTag}"
+    docker pull "${imageName,,}:${imageTag,,}"
     logEnable
   else
-    echo "No need to pull image: ${imageName}:${imageTag}"
+    echo "No need to pull image: ${imageName,,}:${imageTag,,}"
   fi
 }
 

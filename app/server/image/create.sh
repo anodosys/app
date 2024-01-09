@@ -57,19 +57,19 @@ if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
 fi
 
 if [[ -n "${buildImageName}" ]]; then
-  imageName="${buildImageName}"
+  imageName="${buildImageName,,}"
 fi
 
 if [[ -n "${buildImageTag}" ]]; then
-  imageTag="${buildImageTag}"
+  imageTag="${buildImageTag,,}"
 fi
 
 containerName="${systemName}_${serverName}"
 
 if [[ -n "${buildImageEntryPoint}" ]]; then
-  imageCreate "${imageName}" "${imageTag}" "${containerName}" "${buildImageEntryPoint}"
+  imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}" "${buildImageEntryPoint}"
 else
-  imageCreate "${imageName}" "${imageTag}" "${containerName}"
+  imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}"
 fi
 
 if [[ -n "${afterImageCreateScript}" ]]; then

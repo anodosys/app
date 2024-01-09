@@ -68,6 +68,54 @@ if [[ -n "${beforeContainerStartScript}" ]]; then
   fi
 fi
 
+optionalParameters=( )
+
+if [[ -n "${imageEntryPoint}" ]]; then
+  optionalParameters+=( "entryPoint:${imageEntryPoint}" )
+fi
+
+optionalParameters+=( "alias:${serverName}" )
+
+if [[ -z "${containerAliases}" ]]; then
+  containerAliases=()
+fi
+
+for containerAlias in "${containerAliases[@]}"; do
+  optionalParameters+=( "alias:${containerAlias}" )
+done
+
+if [[ -z "${containerPorts}" ]]; then
+  containerPorts=()
+fi
+
+for containerPort in "${containerPorts[@]}"; do
+  optionalParameters+=( "port:${containerPort}" )
+done
+
+if [[ -z "${containerExpose}" ]]; then
+  containerExpose=()
+fi
+
+for nextContainerExpose in "${containerExpose[@]}"; do
+  optionalParameters+=( "expose:${nextContainerExpose}" )
+done
+
+if [[ -z "${containerVolumes}" ]]; then
+  containerVolumes=()
+fi
+
+for containerVolume in "${containerVolumes[@]}"; do
+  optionalParameters+=( "volume:${containerVolume}" )
+done
+
+if [[ -z "${containerVariables}" ]]; then
+  containerVariables=()
+fi
+
+for containerVariable in "${containerVariables[@]}"; do
+  optionalParameters+=( "environment:${containerVariable}" )
+done
+
 if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
   if [[ $(containerExists "${containerName}") == 0 ]]; then
     echo "Image requires interactive run"
@@ -82,9 +130,10 @@ if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]
     fi
 
     if [[ -n "${imageInteractiveCommand}" ]]; then
-      containerRun "${imageName}:${imageTag}" "${containerName}" "${imageInteractiveCommand}"
+    echo "Running image with command: ${imageInteractiveCommand}"
+      containerRun "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${imageInteractiveCommand}" "${optionalParameters[@]}"
     else
-      containerRun "${imageName}:${imageTag}" "${containerName}"
+      containerRun "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "-" "${optionalParameters[@]}"
     fi
 
     exit 0

@@ -57,14 +57,14 @@ if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
 fi
 
 if [[ -n "${buildImageName}" ]]; then
-  imageName="${buildImageName}"
+  imageName="${buildImageName,,}"
 fi
 
 if [[ -n "${buildImageTag}" ]]; then
-  imageTag="${buildImageTag}"
+  imageTag="${buildImageTag,,}"
 fi
 
-imageRemove "${imageName}" "${imageTag}" "warn"
+imageRemove "${imageName,,}" "${imageTag,,}" "warn"
 
 if [[ -n "${afterImageRemoveTargetLocalScript}" ]]; then
   echo "After image remove target local script: ${afterImageRemoveTargetLocalScript}"

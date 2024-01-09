@@ -56,7 +56,7 @@ if [[ -z "${imageName}" ]] || [[ -z "${imageTag}" ]]; then
   exit 0
 fi
 
-imageRemove "${imageName}" "${imageTag}" "warn"
+imageRemove "${imageName,,}" "${imageTag,,}" "warn"
 
 if [[ -n "${afterImageRemoveSourceLocalScript}" ]]; then
   echo "After image remove soource local script: ${afterImageRemoveSourceLocalScript}"

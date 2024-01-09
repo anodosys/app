@@ -74,8 +74,8 @@ fi
 
 containerName="${systemName}_${serverName}"
 
-if [[ $(imageExists "${imageName}" "${imageTag}") == 0 ]]; then
-  >&2 echo "Required source image: ${imageName}:${imageTag} does not exist"
+if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 0 ]]; then
+  >&2 echo "Required source image: ${imageName,,}:${imageTag,,} does not exist"
   exit 1
 fi
 
@@ -135,7 +135,7 @@ for containerVariable in "${containerVariables[@]}"; do
   optionalParameters+=( "environment:${containerVariable}" )
 done
 
-containerCreate "${imageName}:${imageTag}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
+containerCreate "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateSourceScript}" ]]; then
   echo "After container create source script: ${afterContainerCreateSourceScript}"

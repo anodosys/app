@@ -5,7 +5,7 @@ imageUsed()
   local imageName="${1}"
   local imageTag="${2}"
 
-  if [[ $(imageUsedByContainer "${imageName}" "${imageTag}") == 0 ]] && [[ $(imageUsedByImage "${imageName}" "${imageTag}") == 0 ]]; then
+  if [[ $(imageUsedByContainer "${imageName,,}" "${imageTag,,}") == 0 ]] && [[ $(imageUsedByImage "${imageName,,}" "${imageTag,,}") == 0 ]]; then
     echo "0"
   else
     echo "1"
@@ -23,12 +23,12 @@ imageUsedByContainer()
   local imageFullId
   local containerIds
 
-  if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
+  if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
     if [[ -n "${imageTag}" ]]; then
-      imageId=$(imageId "${imageName}" "${imageTag}")
-      imageFullId=$(docker image inspect --format '{{.Id}}' "${imageName}:${imageTag}")
+      imageId=$(imageId "${imageName,,}" "${imageTag,,}")
+      imageFullId=$(docker image inspect --format '{{.Id}}' "${imageName,,}:${imageTag,,}")
     else
-      imageFullId=$(docker image inspect --format '{{.Id}}' "${imageName}")
+      imageFullId=$(docker image inspect --format '{{.Id}}' "${imageName,,}")
     fi
 
     containerIds=( $(docker container ls -aq) )
@@ -57,11 +57,11 @@ imageUsedByImage()
   local nextImageId
   local historyImageId
 
-  if [[ $(imageExists "${imageName}" "${imageTag}") == 1 ]]; then
+  if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
     if [[ -n "${imageTag}" ]]; then
-      imageId=$(imageId "${imageName}" "${imageTag}")
+      imageId=$(imageId "${imageName,,}" "${imageTag,,}")
     else
-      imageId="${imageName}"
+      imageId="${imageName,,}"
     fi
 
     imageIds=( $(docker image ls -a | tail -n +2 | awk '{print $3}') )
