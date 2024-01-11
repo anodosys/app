@@ -17,9 +17,12 @@ fi
 if [[ -n "${beforeContainerHostScript}" ]]; then
   echo "Before container host script: ${beforeContainerHostScript}"
   if [[ -n "${beforeContainerHostParameters}" ]]; then
-    "${beforeContainerHostScript}" "${beforeContainerHostParameters[@]}"
+    "${beforeContainerHostScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerHostParameters[@]}"
   else
-    "${beforeContainerHostScript}"
+    "${beforeContainerHostScript}" \
+      --systemName "${systemName}"
   fi
 fi
 
@@ -80,8 +83,11 @@ done
 if [[ -n "${afterContainerHostScript}" ]]; then
   echo "After container host script: ${afterContainerHostScript}"
   if [[ -n "${afterContainerHostParameters}" ]]; then
-    "${afterContainerHostScript}" "${afterContainerHostParameters[@]}"
+    "${afterContainerHostScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerHostParameters[@]}"
   else
-    "${afterContainerHostScript}"
+    "${afterContainerHostScript}" \
+      --systemName "${systemName}"
   fi
 fi

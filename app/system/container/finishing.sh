@@ -27,9 +27,12 @@ fi
 if [[ -n "${beforeContainerFinishingScript}" ]]; then
   echo "Before container finishing script: ${beforeContainerFinishingScript}"
   if [[ -n "${beforeContainerFinishingParameters}" ]]; then
-    "${beforeContainerFinishingScript}" "${beforeContainerFinishingParameters[@]}"
+    "${beforeContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerFinishingParameters[@]}"
   else
-    "${beforeContainerFinishingScript}"
+    "${beforeContainerFinishingScript}" \
+      --systemName "${systemName}"
   fi
 fi
 
@@ -90,9 +93,12 @@ done
 if [[ -n "${afterContainerFinishingScript}" ]]; then
   echo "After container finishing script: ${afterContainerFinishingScript}"
   if [[ -n "${afterContainerFinishingParameters}" ]]; then
-    "${afterContainerFinishingScript}" "${afterContainerFinishingParameters[@]}"
+    "${afterContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerFinishingParameters[@]}"
   else
-    "${afterContainerFinishingScript}"
+    "${afterContainerFinishingScript}" \
+      --systemName "${systemName}"
   fi
 fi
 

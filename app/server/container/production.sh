@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${anodosysUserVarPath}" ]]; then
   >&2 echo "No anodosys user var path specified!"
   exit 1
@@ -74,7 +79,26 @@ if [[ -n "${beforeContainerProductionScript}" ]]; then
   fi
 fi
 
+if [[ -n "${beforeContainerProductionDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container production docker script: ${beforeContainerProductionDockerScript}"
+  if [[ -n "${beforeContainerProductionDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerProductionDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerProductionDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerProductionDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
 if [[ -n "${containerProductionScript}" ]]; then
+  echo "Container production script: ${containerProductionScript}"
   if [[ -n "${containerProductionParameters}" ]]; then
     "${containerProductionScript}" \
       --systemName "${systemName}" \
@@ -87,10 +111,28 @@ if [[ -n "${containerProductionScript}" ]]; then
       --serverName "${serverName}" \
       --containerName "${containerName}"
   fi
-elif [[ -n "${containerProduction}" ]]; then
+fi
+
+if [[ -n "${containerProductionDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Container production docker script: ${containerProductionDockerScript}"
+  if [[ -n "${containerProductionDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${containerProductionDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerProductionDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${containerProductionDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${containerProduction}" ]]; then
   containerCommand "${containerName}" "${containerProduction}"
-else
-  echo "Nothing to produce"
 fi
 
 if [[ -n "${afterContainerProductionScript}" ]]; then
@@ -103,6 +145,24 @@ if [[ -n "${afterContainerProductionScript}" ]]; then
       "${afterContainerProductionParameters[@]}"
   else
     "${afterContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerProductionDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container production docker script: ${afterContainerProductionDockerScript}"
+  if [[ -n "${afterContainerProductionDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerProductionDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerProductionDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerProductionDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

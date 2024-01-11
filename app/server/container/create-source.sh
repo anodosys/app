@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -56,6 +61,24 @@ if [[ -n "${beforeContainerCreateSourceScript}" ]]; then
       "${beforeContainerCreateSourceParameters[@]}"
   else
     "${beforeContainerCreateSourceScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${beforeContainerCreateSourceDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container create source docker script: ${beforeContainerCreateSourceDockerScript}"
+  if [[ -n "${beforeContainerCreateSourceDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerCreateSourceDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"
@@ -147,6 +170,24 @@ if [[ -n "${afterContainerCreateSourceScript}" ]]; then
       "${afterContainerCreateSourceParameters[@]}"
   else
     "${afterContainerCreateSourceScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerCreateSourceDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container create source docker script: ${afterContainerCreateSourceDockerScript}"
+  if [[ -n "${afterContainerCreateSourceDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerCreateSourceDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

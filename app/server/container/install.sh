@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -64,6 +69,24 @@ if [[ -n "${beforeContainerInstallScript}" ]]; then
   fi
 fi
 
+if [[ -n "${beforeContainerInstallDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container install docker script: ${beforeContainerInstallDockerScript}"
+  if [[ -n "${beforeContainerInstallDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerInstallDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerInstallDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerInstallDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
 if [[ -n "${containerInstallScript}" ]]; then
   echo "Container install script: ${containerInstallScript}"
   if [[ -n "${containerInstallParameters}" ]]; then
@@ -78,10 +101,28 @@ if [[ -n "${containerInstallScript}" ]]; then
       --serverName "${serverName}" \
       --containerName "${containerName}"
   fi
-elif [[ -n "${containerInstall}" ]]; then
+fi
+
+if [[ -n "${containerInstallDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Container install docker script: ${containerInstallDockerScript}"
+  if [[ -n "${containerInstallDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${containerInstallDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerInstallDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${containerInstallDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${containerInstall}" ]]; then
   containerCommand "${containerName}" "${containerInstall}"
-else
-  echo "Nothing to install"
 fi
 
 if [[ -n "${afterContainerInstallScript}" ]]; then
@@ -94,6 +135,24 @@ if [[ -n "${afterContainerInstallScript}" ]]; then
       "${afterContainerInstallParameters[@]}"
   else
     "${afterContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerInstallDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container install docker script: ${afterContainerInstallDockerScript}"
+  if [[ -n "${afterContainerInstallDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerInstallDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

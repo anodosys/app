@@ -288,11 +288,17 @@ completePath()
   local beforeStepScriptName
   local stepScriptName
   local afterStepScriptName
+  local beforeStepDockerScriptName
+  local stepDockerScriptName
+  local afterStepDockerScriptName
   for stepName in "${!stepScripts[@]}"; do
     beforeStepScriptName="before${stepName^}Script"
     stepScriptName="${stepName}Script"
     afterStepScriptName="after${stepName^}Script"
-    if [[ "${key}" == "${beforeStepScriptName}" ]] || [[ "${key}" == "${stepScriptName}" ]] || [[ "${key}" == "${afterStepScriptName}" ]]; then
+    beforeStepDockerScriptName="before${stepName^}DockerScript"
+    stepDockerScriptName="${stepName}DockerScript"
+    afterStepDockerScriptName="after${stepName^}DockerScript"
+    if [[ "${key}" == "${beforeStepScriptName}" ]] || [[ "${key}" == "${stepScriptName}" ]] || [[ "${key}" == "${afterStepScriptName}" ]] || [[ "${key}" == "${beforeStepDockerScriptName}" ]] || [[ "${key}" == "${stepDockerScriptName}" ]] || [[ "${key}" == "${afterStepDockerScriptName}" ]]; then
       canCompletePath=1
     fi
   done

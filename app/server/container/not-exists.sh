@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -51,6 +56,8 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+containerName="${systemName}_${serverName}"
+
 if [[ -n "${beforeContainerNotExistsScript}" ]]; then
   echo "Before container not exists script: ${beforeContainerNotExistsScript}"
   if [[ -n "${beforeContainerNotExistsParameters}" ]]; then
@@ -67,7 +74,23 @@ if [[ -n "${beforeContainerNotExistsScript}" ]]; then
   fi
 fi
 
-containerName="${systemName}_${serverName}"
+if [[ -n "${beforeContainerNotExistsDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container not exists docker script: ${beforeContainerNotExistsDockerScript}"
+  if [[ -n "${beforeContainerNotExistsDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerNotExistsDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
 
 if [[ $(containerExists "${containerName}") == 1 ]]; then
   >&2 echo "Container already exists: ${containerName}"
@@ -88,6 +111,24 @@ if [[ -n "${afterContainerNotExistsScript}" ]]; then
       "${afterContainerNotExistsParameters[@]}"
   else
     "${afterContainerNotExistsScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerNotExistsDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container not exists docker script: ${afterContainerNotExistsDockerScript}"
+  if [[ -n "${afterContainerNotExistsDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerNotExistsDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

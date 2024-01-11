@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -62,6 +67,24 @@ if [[ -n "${beforeContainerStartScript}" ]]; then
       "${beforeContainerStartParameters[@]}"
   else
     "${beforeContainerStartScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${beforeContainerStartDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container start docker script: ${beforeContainerStartDockerScript}"
+  if [[ -n "${beforeContainerStartDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerStartDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerStartDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerStartDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"
@@ -160,6 +183,24 @@ if [[ -n "${afterContainerStartScript}" ]]; then
       "${afterContainerStartParameters[@]}"
   else
     "${afterContainerStartScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerStartDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container start docker script: ${afterContainerStartDockerScript}"
+  if [[ -n "${afterContainerStartDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerStartDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerStartDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerStartDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

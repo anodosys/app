@@ -16,7 +16,14 @@ fi
 
 if [[ -n "${beforeContainerStopScript}" ]]; then
   echo "Before container stop script: ${beforeContainerStopScript}"
-  "${beforeContainerStopScript}"
+  if [[ -n "${beforeContainerStopParameters}" ]]; then
+    "${beforeContainerStopScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerStopParameters[@]}"
+  else
+    "${beforeContainerStopScript}" \
+      --systemName "${systemName}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -103,5 +110,12 @@ done
 
 if [[ -n "${afterContainerStopScript}" ]]; then
   echo "After container stop script: ${afterContainerStopScript}"
-  "${afterContainerStopScript}"
+  if [[ -n "${afterContainerStopParameters}" ]]; then
+    "${afterContainerStopScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerStopParameters[@]}"
+  else
+    "${afterContainerStopScript}" \
+      --systemName "${systemName}"
+  fi
 fi

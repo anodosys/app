@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${anodosysUserVarPath}" ]]; then
   >&2 echo "No anodosys user var path specified!"
   exit 1
@@ -74,6 +79,24 @@ if [[ -n "${beforeContainerCommencementScript}" ]]; then
   fi
 fi
 
+if [[ -n "${beforeContainerCommencementDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container commencement docker script: ${beforeContainerCommencementDockerScript}"
+  if [[ -n "${beforeContainerCommencementDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerCommencementDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerCommencementDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerCommencementDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
 if [[ -n "${containerPaths}" ]]; then
   for containerPath in "${containerPaths[@]}"; do
     readarray -d : -t containerPathParts < <(printf '%s' "${containerPath}")
@@ -131,10 +154,28 @@ if [[ -n "${containerCommencementScript}" ]]; then
       --serverName "${serverName}" \
       --containerName "${containerName}"
   fi
-elif [[ -n "${containerCommencement}" ]]; then
+fi
+
+if [[ -n "${containerCommencementDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Container commencement docker script: ${containerCommencementDockerScript}"
+  if [[ -n "${containerCommencementDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${containerCommencementDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerCommencementDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${containerCommencementDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${containerCommencement}" ]]; then
   containerCommand "${containerName}" "${containerCommencement}"
-else
-  echo "Nothing to commence"
 fi
 
 if [[ -n "${afterContainerCommencementScript}" ]]; then
@@ -147,6 +188,24 @@ if [[ -n "${afterContainerCommencementScript}" ]]; then
       "${afterContainerCommencementParameters[@]}"
   else
     "${afterContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerCommencementDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container commencement docker script: ${afterContainerCommencementDockerScript}"
+  if [[ -n "${afterContainerCommencementDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerCommencementDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

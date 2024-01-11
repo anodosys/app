@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${anodosysUserVarPath}" ]]; then
   >&2 echo "No anodosys user var path specified!"
   exit 1
@@ -74,7 +79,26 @@ if [[ -n "${beforeContainerFinishingScript}" ]]; then
   fi
 fi
 
+if [[ -n "${beforeContainerFinishingDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container finishing docker script: ${beforeContainerFinishingDockerScript}"
+  if [[ -n "${beforeContainerFinishingDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerFinishingDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerFinishingDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerFinishingDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
 if [[ -n "${containerFinishingScript}" ]]; then
+  echo "Container finishing docker script: ${containerFinishingScript}"
   if [[ -n "${containerFinishingParameters}" ]]; then
     "${containerFinishingScript}" \
       --systemName "${systemName}" \
@@ -87,10 +111,28 @@ if [[ -n "${containerFinishingScript}" ]]; then
       --serverName "${serverName}" \
       --containerName "${containerName}"
   fi
-elif [[ -n "${containerFinishing}" ]]; then
+fi
+
+if [[ -n "${containerFinishingDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Container finishing docker script: ${containerFinishingDockerScript}"
+  if [[ -n "${containerFinishingDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${containerFinishingDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerFinishingDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${containerFinishingDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${containerFinishing}" ]]; then
   containerCommand "${containerName}" "${containerFinishing}"
-else
-  echo "Nothing to finish"
 fi
 
 if [[ -n "${afterContainerFinishingScript}" ]]; then
@@ -103,6 +145,24 @@ if [[ -n "${afterContainerFinishingScript}" ]]; then
       "${afterContainerFinishingParameters[@]}"
   else
     "${afterContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerFinishingDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container finishing docker script: ${afterContainerFinishingDockerScript}"
+  if [[ -n "${afterContainerFinishingDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerFinishingDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerFinishingDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerFinishingDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

@@ -1,16 +1,21 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
+if [[ -z "${anodosysUserVarConfigurationPath}" ]]; then
+  >&2 echo "No anodosys user var configuration path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
 fi
 
 scriptName="${0##*/}"
-
-if [[ -z "${anodosysUserVarConfigurationPath}" ]]; then
-  >&2 echo "No anodosys user var configuration path defined!"
-  exit 1
-fi
 
 usage()
 {
@@ -63,6 +68,24 @@ if [[ -n "${beforeContainerPrepareScript}" ]]; then
       "${beforeContainerPrepareParameters[@]}"
   else
     "${beforeContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${beforeContainerPrepareDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container prepare docker script: ${beforeContainerPrepareDockerScript}"
+  if [[ -n "${beforeContainerPrepareDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerPrepareDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"
@@ -135,10 +158,28 @@ if [[ -n "${containerPrepareScript}" ]]; then
       --serverName "${serverName}" \
       --containerName "${containerName}"
   fi
-elif [[ -n "${containerPrepare}" ]]; then
+fi
+
+if [[ -n "${containerPrepareDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Container prepare docker script: ${containerPrepareDockerScript}"
+  if [[ -n "${containerPrepareDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${containerPrepareDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerPrepareDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${containerPrepareDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${containerPrepare}" ]]; then
   containerCommand "${containerName}" "${containerPrepare}"
-else
-  echo "Nothing to prepare"
 fi
 
 if [[ -n "${afterContainerPrepareScript}" ]]; then
@@ -151,6 +192,24 @@ if [[ -n "${afterContainerPrepareScript}" ]]; then
       "${afterContainerPrepareParameters[@]}"
   else
     "${afterContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerPrepareDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container prepare docker script: ${afterContainerPrepareDockerScript}"
+  if [[ -n "${afterContainerPrepareDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerPrepareDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

@@ -17,9 +17,12 @@ fi
 if [[ -n "${beforeContainerStartScript}" ]]; then
   echo "Before container start script: ${beforeContainerStartScript}"
   if [[ -n "${beforeContainerStartParameters}" ]]; then
-    "${beforeContainerStartScript}" "${beforeContainerStartParameters[@]}"
+    "${beforeContainerStartScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerStartParameters[@]}"
   else
-    "${beforeContainerStartScript}"
+    "${beforeContainerStartScript}" \
+      --systemName "${systemName}"
   fi
 fi
 
@@ -80,8 +83,11 @@ done
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
   if [[ -n "${afterContainerStartParameters}" ]]; then
-    "${afterContainerStartScript}" "${afterContainerStartParameters[@]}"
+    "${afterContainerStartScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerStartParameters[@]}"
   else
-    "${afterContainerStartScript}"
+    "${afterContainerStartScript}" \
+      --systemName "${systemName}"
   fi
 fi

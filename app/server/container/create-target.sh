@@ -1,12 +1,17 @@
 #!/bin/bash -e
 
-if [[ -z "${systemName}" ]]; then
-  >&2 echo "No system name specified!"
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
   exit 1
 fi
 
 if [[ -z "${anodosysUserVarPath}" ]]; then
   >&2 echo "No anodosys user var path specified!"
+  exit 1
+fi
+
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
   exit 1
 fi
 
@@ -72,6 +77,24 @@ if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
       "${beforeContainerCreateTargetParameters[@]}"
   else
     "${beforeContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${beforeContainerCreateTargetDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container create target docker script: ${beforeContainerCreateTargetDockerScript}"
+  if [[ -n "${beforeContainerCreateTargetDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerCreateTargetDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerCreateTargetDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerCreateTargetDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"
@@ -183,6 +206,24 @@ if [[ -n "${afterContainerCreateTargetScript}" ]]; then
       "${afterContainerCreateTargetParameters[@]}"
   else
     "${afterContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerCreateTargetDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container create target docker script: ${afterContainerCreateTargetDockerScript}"
+  if [[ -n "${afterContainerCreateTargetDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerCreateTargetDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerCreateTargetDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerCreateTargetDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

@@ -21,7 +21,14 @@ fi
 
 if [[ -n "${beforeContainerRemoveScript}" ]]; then
   echo "Before container remove script: ${beforeContainerRemoveScript}"
-  "${beforeContainerRemoveScript}"
+  if [[ -n "${beforeContainerRemoveParameters}" ]]; then
+    "${beforeContainerRemoveScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerRemoveParameters[@]}"
+  else
+    "${beforeContainerRemoveScript}" \
+      --systemName "${systemName}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -88,7 +95,14 @@ done
 
 if [[ -n "${afterContainerRemoveScript}" ]]; then
   echo "After container remove script: ${afterContainerRemoveScript}"
-  "${afterContainerRemoveScript}"
+  if [[ -n "${afterContainerRemoveParameters}" ]]; then
+    "${afterContainerRemoveScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerRemoveParameters[@]}"
+  else
+    "${afterContainerRemoveScript}" \
+      --systemName "${systemName}"
+  fi
 fi
 
 mkdir -p "${anodosysUserVarPath}/commencement"

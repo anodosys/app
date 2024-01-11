@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${anodosysUserVarPath}" ]]; then
   >&2 echo "No anodosys user var path specified!"
   exit 1
@@ -51,6 +56,8 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+containerName="${systemName}_${serverName}"
+
 if [[ -n "${beforeContainerRemoveScript}" ]]; then
   echo "Before container remove script: ${beforeContainerRemoveScript}"
   if [[ -n "${beforeContainerRemoveParameters}" ]]; then
@@ -67,7 +74,23 @@ if [[ -n "${beforeContainerRemoveScript}" ]]; then
   fi
 fi
 
-containerName="${systemName}_${serverName}"
+if [[ -n "${beforeContainerRemoveDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container remove docker script: ${beforeContainerRemoveDockerScript}"
+  if [[ -n "${beforeContainerRemoveDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerRemoveDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
 
 if [[ -z "${useNamedVolumes}" ]]; then
   useNamedVolumes="false"
@@ -96,6 +119,24 @@ if [[ -n "${afterContainerRemoveScript}" ]]; then
       "${afterContainerRemoveParameters[@]}"
   else
     "${afterContainerRemoveScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerRemoveDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container remove docker script: ${afterContainerRemoveDockerScript}"
+  if [[ -n "${afterContainerRemoveDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerRemoveDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

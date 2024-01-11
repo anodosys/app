@@ -27,9 +27,12 @@ fi
 if [[ -n "${beforeContainerProductionScript}" ]]; then
   echo "Before container production script: ${beforeContainerProductionScript}"
   if [[ -n "${beforeContainerProductionParameters}" ]]; then
-    "${beforeContainerProductionScript}" "${beforeContainerProductionParameters[@]}"
+    "${beforeContainerProductionScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerProductionParameters[@]}"
   else
-    "${beforeContainerProductionScript}"
+    "${beforeContainerProductionScript}" \
+      --systemName "${systemName}"
   fi
 fi
 
@@ -90,9 +93,12 @@ done
 if [[ -n "${afterContainerProductionScript}" ]]; then
   echo "After container production script: ${afterContainerProductionScript}"
   if [[ -n "${afterContainerProductionParameters}" ]]; then
-    "${afterContainerProductionScript}" "${afterContainerProductionParameters[@]}"
+    "${afterContainerProductionScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerProductionParameters[@]}"
   else
-    "${afterContainerProductionScript}"
+    "${afterContainerProductionScript}" \
+      --systemName "${systemName}"
   fi
 fi
 

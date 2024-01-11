@@ -20,8 +20,15 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerCreateTargetScript}" ]]; then
-  echo "Before container target script: ${beforeContainerCreateTargetScript}"
-  "${beforeContainerCreateTargetScript}"
+  echo "Before container create target script: ${beforeContainerCreateTargetScript}"
+  if [[ -n "${beforeContainerCreateTargetParameters}" ]]; then
+    "${beforeContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerCreateTargetParameters[@]}"
+  else
+    "${beforeContainerCreateTargetScript}" \
+      --systemName "${systemName}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -80,7 +87,14 @@ done
 
 if [[ -n "${afterContainerCreateTargetScript}" ]]; then
   echo "After container create target script: ${afterContainerCreateTargetScript}"
-  "${afterContainerCreateTargetScript}"
+  if [[ -n "${afterContainerCreateTargetParameters}" ]]; then
+    "${afterContainerCreateTargetScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerCreateTargetParameters[@]}"
+  else
+    "${afterContainerCreateTargetScript}" \
+      --systemName "${systemName}"
+  fi
 fi
 
 mkdir -p "${anodosysUserVarPath}/commencement"

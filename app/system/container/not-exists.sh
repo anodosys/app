@@ -16,7 +16,14 @@ fi
 
 if [[ -n "${beforeContainerNotExistsScript}" ]]; then
   echo "Before container not exists script: ${beforeContainerNotExistsScript}"
-  "${beforeContainerNotExistsScript}"
+  if [[ -n "${beforeContainerNotExistsParameters}" ]]; then
+    "${beforeContainerNotExistsScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerNotExistsParameters[@]}"
+  else
+    "${beforeContainerNotExistsScript}" \
+      --systemName "${systemName}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -45,5 +52,12 @@ done
 
 if [[ -n "${afterContainerNotExistsScript}" ]]; then
   echo "After container not exists script: ${afterContainerNotExistsScript}"
-  "${afterContainerNotExistsScript}"
+  if [[ -n "${afterContainerNotExistsParameters}" ]]; then
+    "${afterContainerNotExistsScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerNotExistsParameters[@]}"
+  else
+    "${afterContainerNotExistsScript}" \
+      --systemName "${systemName}"
+  fi
 fi

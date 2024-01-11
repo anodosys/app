@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -67,6 +72,24 @@ if [[ -n "${beforeContainerExistsScript}" ]]; then
   fi
 fi
 
+if [[ -n "${beforeContainerExistsDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container exists docker script: ${beforeContainerExistsDockerScript}"
+  if [[ -n "${beforeContainerExistsDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerExistsDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerExistsDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerExistsDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
 containerName="${systemName}_${serverName}"
 
 if [[ $(containerExists "${containerName}") == 0 ]]; then
@@ -93,6 +116,24 @@ if [[ -n "${afterContainerExistsScript}" ]]; then
       "${afterContainerExistsParameters[@]}"
   else
     "${afterContainerExistsScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerExistsDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container exists docker script: ${afterContainerExistsDockerScript}"
+  if [[ -n "${afterContainerExistsDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerExistsDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerExistsDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerExistsDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

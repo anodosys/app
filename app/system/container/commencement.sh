@@ -27,9 +27,12 @@ fi
 if [[ -n "${beforeContainerCommencementScript}" ]]; then
   echo "Before container commencement script: ${beforeContainerCommencementScript}"
   if [[ -n "${beforeContainerCommencementParameters}" ]]; then
-    "${beforeContainerCommencementScript}" "${beforeContainerCommencementParameters[@]}"
+    "${beforeContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerCommencementParameters[@]}"
   else
-    "${beforeContainerCommencementScript}"
+    "${beforeContainerCommencementScript}" \
+      --systemName "${systemName}"
   fi
 fi
 
@@ -90,9 +93,12 @@ done
 if [[ -n "${afterContainerCommencementScript}" ]]; then
   echo "After container commencement script: ${afterContainerCommencementScript}"
   if [[ -n "${afterContainerCommencementParameters}" ]]; then
-    "${afterContainerCommencementScript}" "${afterContainerCommencementParameters[@]}"
+    "${afterContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerCommencementParameters[@]}"
   else
-    "${afterContainerCommencementScript}"
+    "${afterContainerCommencementScript}" \
+      --systemName "${systemName}"
   fi
 fi
 

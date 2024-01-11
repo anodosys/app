@@ -1,5 +1,15 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name specified!"
+  exit 1
+fi
+
 scriptName="${0##*/}"
 
 usage()
@@ -31,11 +41,6 @@ while getopts hs:? option; do
   esac
 done
 
-if [[ -z "${systemName}" ]]; then
-  >&2 echo "No system name specified!"
-  exit 1
-fi
-
 if [[ -z "${serverName}" ]]; then
   >&2 echo "No server name specified!"
   usage
@@ -45,6 +50,8 @@ fi
 logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
+
+containerName="${systemName}_${serverName}"
 
 if [[ -n "${beforeContainerStopScript}" ]]; then
   echo "Before container stop script: ${beforeContainerStopScript}"
@@ -62,7 +69,23 @@ if [[ -n "${beforeContainerStopScript}" ]]; then
   fi
 fi
 
-containerName="${systemName}_${serverName}"
+if [[ -n "${beforeContainerStopDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container stop docker script: ${beforeContainerStopDockerScript}"
+  if [[ -n "${beforeContainerStopDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerStopDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
 
 containerStop "${containerName}"
 
@@ -76,6 +99,24 @@ if [[ -n "${afterContainerStopScript}" ]]; then
       "${afterContainerStopParameters[@]}"
   else
     "${afterContainerStopScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerStopDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container stop docker script: ${afterContainerStopDockerScript}"
+  if [[ -n "${afterContainerStopDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerStopDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

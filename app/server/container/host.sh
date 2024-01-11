@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -64,6 +69,24 @@ if [[ -n "${beforeContainerHostScript}" ]]; then
   fi
 fi
 
+if [[ -n "${beforeContainerHostDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container host docker script: ${beforeContainerHostDockerScript}"
+  if [[ -n "${beforeContainerHostDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerHostDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerHostDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerHostDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
 echo "Checking if ports are blocked for container: ${containerName}"
 if [[ $(containerPortBlocked "${containerName}") == 1 ]]; then
   >&2 echo "Cannot start container because ports are blocked"
@@ -108,6 +131,24 @@ if [[ -n "${afterContainerHostScript}" ]]; then
       "${afterContainerHostParameters[@]}"
   else
     "${afterContainerHostScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerHostDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container host docker script: ${afterContainerHostDockerScript}"
+  if [[ -n "${afterContainerHostDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerHostDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerHostDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerHostDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

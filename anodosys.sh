@@ -86,7 +86,7 @@ ACTION:
   install    Run installation process with created containers from source images
   image      Build the image from running containers
   push       Push the built images to remote
-  prepare    Pull the images required for running
+  prepare    Pull the built images required for running
   run        Create the container from built images and start them
   create     Create the container from built images
   start      Start the containers with created containers from built images

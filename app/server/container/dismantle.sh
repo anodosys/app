@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -64,6 +69,24 @@ if [[ -n "${beforeContainerDismantleScript}" ]]; then
   fi
 fi
 
+if [[ -n "${beforeContainerDismantleDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container dismantle docker script: ${beforeContainerDismantleDockerScript}"
+  if [[ -n "${beforeContainerDismantleDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerDismantleDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerDismantleDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerDismantleDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
 if [[ -n "${containerDismantleScript}" ]]; then
   echo "Container dismantle script: ${containerDismantleScript}"
   if [[ -n "${containerDismantleParameters}" ]]; then
@@ -78,10 +101,28 @@ if [[ -n "${containerDismantleScript}" ]]; then
       --serverName "${serverName}" \
       --containerName "${containerName}"
   fi
-elif [[ -n "${containerDismantle}" ]]; then
+fi
+
+if [[ -n "${containerDismantleDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Container dismantle docker script: ${containerDismantleDockerScript}"
+  if [[ -n "${containerDismantleDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${containerDismantleDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${containerDismantleDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${containerDismantleDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${containerDismantle}" ]]; then
   containerCommand "${containerName}" "${containerDismantle}"
-else
-  echo "Nothing to dismantle"
 fi
 
 if [[ -n "${afterContainerDismantleScript}" ]]; then
@@ -94,6 +135,24 @@ if [[ -n "${afterContainerDismantleScript}" ]]; then
       "${afterContainerDismantleParameters[@]}"
   else
     "${afterContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerDismantleDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container dismantle docker script: ${afterContainerDismantleDockerScript}"
+  if [[ -n "${afterContainerDismantleDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerDismantleDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerDismantleDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerDismantleDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"

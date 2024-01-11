@@ -16,7 +16,14 @@ fi
 
 if [[ -n "${beforeContainerDismantleScript}" ]]; then
   echo "Before container dismantle script: ${beforeContainerDismantleScript}"
-  "${beforeContainerDismantleScript}"
+  if [[ -n "${beforeContainerDismantleParameters}" ]]; then
+    "${beforeContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      "${beforeContainerDismantleParameters[@]}"
+  else
+    "${beforeContainerDismantleScript}" \
+      --systemName "${systemName}"
+  fi
 fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
@@ -75,5 +82,12 @@ done
 
 if [[ -n "${afterContainerDismantleScript}" ]]; then
   echo "After container dismantle script: ${afterContainerDismantleScript}"
-  "${afterContainerDismantleScript}"
+  if [[ -n "${afterContainerDismantleParameters}" ]]; then
+    "${afterContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      "${afterContainerDismantleParameters[@]}"
+  else
+    "${afterContainerDismantleScript}" \
+      --systemName "${systemName}"
+  fi
 fi

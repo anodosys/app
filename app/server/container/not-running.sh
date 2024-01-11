@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+if [[ -z "${anodosysAppPath}" ]]; then
+  >&2 echo "No anodosys app path defined!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -51,6 +56,8 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+containerName="${systemName}_${serverName}"
+
 if [[ -n "${beforeContainerNotRunningScript}" ]]; then
   echo "Before container not running script: ${beforeContainerNotRunningScript}"
   if [[ -n "${beforeContainerNotRunningParameters}" ]]; then
@@ -67,7 +74,23 @@ if [[ -n "${beforeContainerNotRunningScript}" ]]; then
   fi
 fi
 
-containerName="${systemName}_${serverName}"
+if [[ -n "${beforeContainerNotRunningDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Before container not running docker script: ${beforeContainerNotRunningDockerScript}"
+  if [[ -n "${beforeContainerNotRunningDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${beforeContainerNotRunningDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
 
 if [[ $(containerRunning "${containerName}") == 1 ]]; then
   >&2 echo "Container already running: ${containerName}"
@@ -88,6 +111,24 @@ if [[ -n "${afterContainerNotRunningScript}" ]]; then
       "${afterContainerNotRunningParameters[@]}"
   else
     "${afterContainerNotRunningScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${afterContainerNotRunningDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "After container not running docker script: ${afterContainerNotRunningDockerScript}"
+  if [[ -n "${afterContainerNotRunningDockerParameters}" ]]; then
+    containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${afterContainerNotRunningDockerParameters[@]}"
+  else
+    containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
       --containerName "${containerName}"
