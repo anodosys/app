@@ -67,7 +67,7 @@ while : ; do
       else
         supportsServerNames="none"
       fi
-      if [[ $("${currentPath}/../../server/container/independent.sh" -s "${serverName}" -p "${supportsServerNames}" -r "${runningServerNames}") == 1 ]]; then
+      if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/independent.sh" -s "${serverName}" -p "${supportsServerNames}" -r "${runningServerNames}") == 1 ]]; then
         stopScript="${PWD}/${serverName}/container/stop.sh"
         if [[ -f "${stopScript}" ]]; then
           echo "[${serverName}] Stopping container of server: ${serverName} with custom script: ${stopScript}"

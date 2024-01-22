@@ -39,7 +39,7 @@ while : ; do
 
     if ! test "${processedServerNameList["${serverName}"]+isset}"; then
       processedServerNames=$(IFS=,; printf '%s' "${!processedServerNameList[*]}")
-      if [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
+      if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         prepareScript="${PWD}/${serverName}/container/prepare.sh"
         if [[ -f "${prepareScript}" ]]; then
           echo "[${serverName}] Preparing container of server: ${serverName} with custom script: ${prepareScript}"
