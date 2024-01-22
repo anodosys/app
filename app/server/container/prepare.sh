@@ -82,13 +82,11 @@ if [[ -n "${beforeContainerPrepareDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${beforeContainerPrepareDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -168,13 +166,11 @@ if [[ -n "${containerPrepareDockerScript}" ]]; then
     containerExecute "${containerName}" "${containerPrepareDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${containerPrepareDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${containerPrepareDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -206,12 +202,10 @@ if [[ -n "${afterContainerPrepareDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${afterContainerPrepareDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi

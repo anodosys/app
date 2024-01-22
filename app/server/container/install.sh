@@ -77,13 +77,11 @@ if [[ -n "${beforeContainerInstallDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerInstallDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${beforeContainerInstallDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerInstallDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -111,13 +109,11 @@ if [[ -n "${containerInstallDockerScript}" ]]; then
     containerExecute "${containerName}" "${containerInstallDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${containerInstallDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${containerInstallDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -149,12 +145,10 @@ if [[ -n "${afterContainerInstallDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${afterContainerInstallDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi

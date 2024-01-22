@@ -87,13 +87,11 @@ if [[ -n "${beforeContainerCommencementDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerCommencementDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${beforeContainerCommencementDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerCommencementDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -164,13 +162,11 @@ if [[ -n "${containerCommencementDockerScript}" ]]; then
     containerExecute "${containerName}" "${containerCommencementDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${containerCommencementDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${containerCommencementDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -202,13 +198,11 @@ if [[ -n "${afterContainerCommencementDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${afterContainerCommencementDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 

@@ -82,13 +82,11 @@ if [[ -n "${beforeContainerRemoveDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${beforeContainerRemoveDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -133,13 +131,11 @@ if [[ -n "${afterContainerRemoveDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${afterContainerRemoveDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 

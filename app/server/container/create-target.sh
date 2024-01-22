@@ -91,13 +91,11 @@ if [[ -n "${beforeContainerCreateTargetDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerCreateTargetDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${beforeContainerCreateTargetDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerCreateTargetDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -220,12 +218,10 @@ if [[ -n "${afterContainerCreateTargetDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerCreateTargetDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${afterContainerCreateTargetDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerCreateTargetDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi

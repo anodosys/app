@@ -80,13 +80,11 @@ if [[ -n "${beforeContainerRunningDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerRunningDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${beforeContainerRunningDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerRunningDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
 
@@ -130,12 +128,10 @@ if [[ -n "${afterContainerRunningDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerRunningDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
-      --containerName "${containerName}" \
       "${afterContainerRunningDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerRunningDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --containerName "${containerName}"
+      --serverName "${serverName}"
   fi
 fi
