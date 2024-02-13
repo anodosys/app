@@ -6,15 +6,22 @@ imageCreate()
   local imageTag="${2}"
   local containerName="${3}"
   local buildImageEntryPoint="${4}"
+  local buildImageUser="${5}"
+  local command
   local result
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     echo "Creating image: ${imageName,,}:${imageTag,,} from container: ${containerName}"
-    if [[ -n "${buildImageEntryPoint}" ]]; then
-      result=$(docker commit --change="ENTRYPOINT ${buildImageEntryPoint}" "${containerName}" "${imageName,,}:${imageTag,,}" 2>&1 | cat)
-    else
-      result=$(docker commit "${containerName}" "${imageName,,}:${imageTag,,}" 2>&1 | cat)
+    command="docker commit"
+    if [[ -n "${buildImageEntryPoint}" ]] && [[ "${buildImageEntryPoint}" != "-" ]]; then
+      command+=" --change=\"ENTRYPOINT ${buildImageEntryPoint}\""
     fi
+    if [[ -n "${buildImageUser}" ]] && [[ "${buildImageUser}" != "-" ]]; then
+      command+=" --change=\"USER ${buildImageUser}\""
+    fi
+    command+=" \"${containerName}\" \"${imageName,,}:${imageTag,,}\""
+    echo "Image command: ${command}"
+    result=$(bash -c "${command}" 2>&1 | cat)
     if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
       echo "Successfully created image: ${imageName,,}:${imageTag,,}" | sed $'s,.*,\e[0;32m&\e[m,'
     else

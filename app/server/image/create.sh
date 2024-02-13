@@ -66,11 +66,15 @@ fi
 
 containerName="${systemName}_${serverName}"
 
-if [[ -n "${buildImageEntryPoint}" ]]; then
-  imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}" "${buildImageEntryPoint}"
-else
-  imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}"
+if [[ -z "${buildImageEntryPoint}" ]]; then
+  buildImageEntryPoint="-"
 fi
+
+if [[ -z "${buildImageUser}" ]]; then
+  buildImageUser="-"
+fi
+
+imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}" "${buildImageEntryPoint}" "${buildImageUser}"
 
 if [[ -n "${afterImageCreateScript}" ]]; then
   echo "After image create script: ${afterImageCreateScript}"
