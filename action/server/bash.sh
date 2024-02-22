@@ -17,7 +17,9 @@ else
 
   setServerConfiguration "${systemName}" "system"
 
-  if [[ -n "${serverNames}" ]]; then
+  if [[ -n "${bashServer}" ]]; then
+    serverName="${bashServer}"
+  elif [[ -n "${serverNames}" ]]; then
     if [[ "${#serverNames[@]}" -eq 1 ]]; then
       serverName="${serverNames[0]}"
     fi
