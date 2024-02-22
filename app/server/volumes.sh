@@ -61,10 +61,10 @@ for containerVolume in "${containerVolumes[@]}"; do
   if test "${containerVolumeParts[2]+isset}"; then
     targetUser="${containerVolumeParts[2]}"
     if [[ -z "${targetUser}" ]]; then
-      targetUser="local"
+      targetUser="me"
     fi
   else
-    targetUser="local"
+    targetUser="me"
   fi
   if test "${containerVolumeParts[3]+isset}"; then
     mode="${containerVolumeParts[3]}"

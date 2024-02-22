@@ -45,7 +45,7 @@ containerCreate()
         readarray -d : -t parameterParts < <(printf '%s' "${parameter:7}")
         sourcePath="${parameterParts[0]}"
         targetPath="${parameterParts[1]}"
-        targetUser=$(getArrayValue 2 "local" "${parameterParts[@]}")
+        targetUser=$(getArrayValue 2 "me" "${parameterParts[@]}")
         mode=$(getArrayValue 3 "r" "${parameterParts[@]}")
         userId=$(getArrayValue 4 "-" "${parameterParts[@]}")
         user=$(getArrayValue 5 "-" "${parameterParts[@]}")

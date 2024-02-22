@@ -124,7 +124,7 @@ containerVolumePrepare()
       userNameList=( $(echo "${userNames}" | sed -e 's/,/\n/g' | sort -u) )
 
       for targetUser in "${userNameList[@]}"; do
-        if [[ "${targetUser}" == "local" ]]; then
+        if [[ "${targetUser}" == "local" ]] || [[ "${targetUser}" == "me" ]]; then
           userId="${UID}"
           targetUser=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} | tr ':' ' ' | awk '{print \$1}'")
           targetUser=$(prepareValue "${targetUser}")

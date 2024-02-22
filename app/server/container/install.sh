@@ -88,6 +88,7 @@ fi
 if [[ -n "${containerInstallScript}" ]]; then
   echo "Container install script: ${containerInstallScript}"
   if [[ -n "${containerInstallParameters}" ]]; then
+    echo "Container install parameters: ${containerInstallParameters[*]}"
     "${containerInstallScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \

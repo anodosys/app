@@ -37,7 +37,7 @@ containerVolumeCheck()
         targetUser=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "targetUser")
         mode=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "mode")
 
-        if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "local" ]]; then
+        if [[ -n "${sourcePath}" ]] && [[ -n "${targetPath}" ]] && [[ "${targetUser}" != "local" ]] && [[ "${targetUser}" != "me" ]]; then
           empty=$(volumeMetadataGet "${containerName}" "${volumeSourcePath}" "empty")
 
           if [[ -n "${sourcePath}" ]] && [[ "${empty}" == "true" ]]; then
@@ -94,7 +94,7 @@ containerVolumeCheckSourcePath()
   local targetUser="${2}"
   local mode="${3}"
 
-  if [[ -n "${sourcePath}" ]] && [[ -e "${sourcePath}" ]] && [[ "${targetUser}" != "local" ]]; then
+  if [[ -n "${sourcePath}" ]] && [[ -e "${sourcePath}" ]] && [[ "${targetUser}" != "local" ]] && [[ "${targetUser}" != "me" ]]; then
     user=$(stat -L -c "%U" "${sourcePath}")
     accessRights=$(stat -L -c "%a" "${sourcePath}")
 

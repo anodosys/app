@@ -60,10 +60,10 @@ for containerPath in "${containerPaths[@]}"; do
   if test "${containerPathParts[1]+isset}"; then
     targetUser="${containerPathParts[1]}"
     if [[ -z "${targetUser}" ]]; then
-      targetUser="local"
+      targetUser="me"
     fi
   else
-    targetUser="local"
+    targetUser="me"
   fi
   if test "${containerPathParts[2]+isset}"; then
     mode="${containerPathParts[2]}"

@@ -103,7 +103,7 @@ if [[ "${#containerVolumes[@]}" -gt 0 ]]; then
   for containerVolume in "${containerVolumes[@]}"; do
     readarray -d : -t parameterParts < <(printf '%s' "${containerVolume}")
     sourcePath="${parameterParts[0]}"
-    targetUser=$(getArrayValue 2 "local" "${parameterParts[@]}")
+    targetUser=$(getArrayValue 2 "me" "${parameterParts[@]}")
     mode=$(getArrayValue 3 "r" "${parameterParts[@]}")
 
     checkResult=$(containerVolumeCheckSourcePath "${sourcePath}" "${targetUser}" "${mode}")
