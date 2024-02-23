@@ -77,11 +77,15 @@ if [[ -n "${beforeContainerDismantleDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerDismantleDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${beforeContainerDismantleDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerDismantleDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -109,11 +113,15 @@ if [[ -n "${containerDismantleDockerScript}" ]]; then
     containerExecute "${containerName}" "${containerDismantleDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${containerDismantleDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${containerDismantleDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -145,10 +153,14 @@ if [[ -n "${afterContainerDismantleDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerDismantleDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${afterContainerDismantleDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerDismantleDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi

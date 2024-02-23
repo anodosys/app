@@ -82,11 +82,15 @@ if [[ -n "${beforeContainerNotRunningDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${beforeContainerNotRunningDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -123,10 +127,14 @@ if [[ -n "${afterContainerNotRunningDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${afterContainerNotRunningDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi

@@ -77,11 +77,15 @@ if [[ -n "${beforeContainerInstallDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerInstallDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${beforeContainerInstallDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerInstallDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -110,11 +114,15 @@ if [[ -n "${containerInstallDockerScript}" ]]; then
     containerExecute "${containerName}" "${containerInstallDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${containerInstallDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${containerInstallDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -146,10 +154,14 @@ if [[ -n "${afterContainerInstallDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${afterContainerInstallDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi

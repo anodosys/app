@@ -82,11 +82,15 @@ if [[ -n "${beforeContainerNotExistsDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${beforeContainerNotExistsDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -123,10 +127,14 @@ if [[ -n "${afterContainerNotExistsDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${afterContainerNotExistsDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi

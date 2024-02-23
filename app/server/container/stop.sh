@@ -77,11 +77,15 @@ if [[ -n "${beforeContainerStopDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${beforeContainerStopDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -111,10 +115,14 @@ if [[ -n "${afterContainerStopDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${afterContainerStopDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi

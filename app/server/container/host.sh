@@ -77,11 +77,15 @@ if [[ -n "${beforeContainerHostDockerScript}" ]]; then
     containerExecute "${containerName}" "${beforeContainerHostDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${beforeContainerHostDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${beforeContainerHostDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
 
@@ -143,10 +147,14 @@ if [[ -n "${afterContainerHostDockerScript}" ]]; then
     containerExecute "${containerName}" "${afterContainerHostDockerScript}" \
       --systemName "${systemName}" \
       --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}" \
       "${afterContainerHostDockerParameters[@]}"
   else
     containerExecute "${containerName}" "${afterContainerHostDockerScript}" \
       --systemName "${systemName}" \
-      --serverName "${serverName}"
+      --serverName "${serverName}" \
+      --hostUserName "${USER}" \
+      --hostUserId "${UID}"
   fi
 fi
