@@ -101,13 +101,21 @@ containerVolumeCheckSourcePath()
     if [[ "${user}" != "${targetUser}" ]]; then
       if [[ "${mode}" == "r" ]] || [[ "${mode}" == "l" ]]; then
         if [[ "${accessRights:1:1}" != 4 ]] && [[ "${accessRights:1:1}" != 5 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
-          >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not readable for group"
+          chmod g+r "${sourcePath}" 2>/dev/null
+          accessRights=$(stat -L -c "%a" "${sourcePath}")
+          if [[ "${accessRights:1:1}" != 4 ]] && [[ "${accessRights:1:1}" != 5 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
+            >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not readable for group"
+          fi
         else
           echo "success"
         fi
       elif [[ "${mode}" == "w" ]]; then
         if [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
-          >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
+          chmod g+w "${sourcePath}" 2>/dev/null
+          accessRights=$(stat -L -c "%a" "${sourcePath}")
+          if [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
+            >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
+          fi
         else
           echo "success"
         fi
