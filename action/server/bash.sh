@@ -5,10 +5,18 @@ if [[ -z "${anodosysAppPath}" ]]; then
   exit 1
 fi
 
+resetBashPath=
+
 shift
 if [[ -n "${1}" ]]; then
   serverName="${1}"
   shift
+
+  setServerConfiguration "${systemName}" "system"
+
+  if [[ -n "${bashServer}" ]] && [[ "${bashServer}" != "${serverName}" ]] && [[ -n "${bashPath}" ]]; then
+    resetBashPath="${bashPath}"
+  fi
 else
   if [[ -z "${systemName}" ]]; then
     >&2 echo "No system name specified!"
@@ -62,6 +70,10 @@ else
   if [[ -z "${systemName}" ]]; then
     >&2 echo "No system name specified!"
     exit 1
+  fi
+
+  if [[ -n "${resetBashPath}" ]]; then
+    bashPath=
   fi
 
   setServerConfiguration "${systemName}" "${serverName}"
