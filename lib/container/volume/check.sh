@@ -105,6 +105,8 @@ containerVolumeCheckSourcePath()
           accessRights=$(stat -L -c "%a" "${sourcePath}")
           if [[ "${accessRights:1:1}" != 4 ]] && [[ "${accessRights:1:1}" != 5 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
             >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not readable for group"
+          else
+            echo "success"
           fi
         else
           echo "success"
@@ -115,6 +117,8 @@ containerVolumeCheckSourcePath()
           accessRights=$(stat -L -c "%a" "${sourcePath}")
           if [[ "${accessRights:1:1}" != 2 ]] && [[ "${accessRights:1:1}" != 3 ]] && [[ "${accessRights:1:1}" != 6 ]] && [[ "${accessRights:1:1}" != 7 ]]; then
             >&2 echo "Source path: ${sourcePath} has different user: ${user} than target user: ${targetUser} and is not writable for group"
+          else
+            echo "success"
           fi
         else
           echo "success"
