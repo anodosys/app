@@ -38,6 +38,14 @@ fi
 
 currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
 
+for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
+  "${currentPath}/../../server/container/path.sh" -s "${serverName}"
+done
+
 declare -A processedServerNameList
 
 while : ; do

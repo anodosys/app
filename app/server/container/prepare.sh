@@ -94,49 +94,6 @@ if [[ -n "${beforeContainerPrepareDockerScript}" ]]; then
   fi
 fi
 
-if [[ -n "${containerPaths}" ]]; then
-  for containerPath in "${containerPaths[@]}"; do
-    readarray -d : -t containerPathParts < <(printf '%s' "${containerPath}")
-    containerPath="${containerPathParts[0]}"
-    accessUser="${containerPathParts[1]}"
-    if test "${containerPathParts[2]+isset}"; then
-      mode="${containerPathParts[2]}"
-    else
-      mode="-"
-    fi
-    if test "${containerPathParts[3]+isset}"; then
-      accessRights="${containerPathParts[3]}"
-    else
-      accessRights="-"
-    fi
-    containerPath "${containerName}" "${containerPath}" "${accessUser}" "${mode}" "${accessRights}"
-  done
-fi
-
-if [[ -n "${containerCopies}" ]]; then
-  for containerCopy in "${containerCopies[@]}"; do
-    readarray -d : -t containerCopyParts < <(printf '%s' "${containerCopy}")
-    localPath="${containerCopyParts[0]}"
-    remotePath="${containerCopyParts[1]}"
-    if test "${containerCopyParts[2]+isset}"; then
-      remoteUserName="${containerCopyParts[2]}"
-    else
-      remoteUserName="-"
-    fi
-    if test "${containerCopyParts[3]+isset}"; then
-      remoteGroupName="${containerCopyParts[3]}"
-    else
-      remoteGroupName="-"
-    fi
-    if test "${containerCopyParts[4]+isset}"; then
-      remoteAccessRights="${containerCopyParts[4]}"
-    else
-      remoteAccessRights="-"
-    fi
-    containerCopy "${containerName}" "${localPath}" "${remotePath}" "${remoteUserName}" "${remoteGroupName}" "${remoteAccessRights}"
-  done
-fi
-
 configurationFile="${anodosysUserVarConfigurationPath}/${systemName}_${serverName}.ini"
 containerCopy "${containerName}" "${configurationFile}" "/container.sh"
 

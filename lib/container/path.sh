@@ -7,6 +7,7 @@ containerPath()
   local accessUser="${3}"
   local mode="${4}"
   local accessRights="${5}"
+  local missingMode="${6}"
   local containerGroupId
   local containerGroupName
   local containerUserId
@@ -18,6 +19,16 @@ containerPath()
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ -n "${containerPath}" ]]; then
+      if [[ $(containerCommandQuiet "${containerName}" "[[ -e ${containerPath} ]] && echo \"true\" || echo \"false\"") == "true" ]]; then
+        if [[ "${missingMode}" == "f" ]]; then
+          echo "Creating file at container path: ${containerPath}"
+          containerCommand "${containerName}" "touch ${containerPath}"
+        elif [[ "${missingMode}" == "d" ]]; then
+          echo "Creating directory at container path: ${containerPath}"
+          containerCommand "${containerName}" "mkdir -p ${containerPath}"
+        fi
+      fi
+
       if [[ $(containerCommandQuiet "${containerName}" "[[ -e ${containerPath} ]] && echo \"true\" || echo \"false\"") == "true" ]]; then
         if [[ -n "${accessRights}" ]] && [[ "${accessRights}" != "-" ]]; then
           echo "Setting access rights ${accessRights} to container path: ${containerPath}"
@@ -150,7 +161,12 @@ containerPath()
           exit 1
         fi
       else
-        echo "Container path: ${containerPath} does not exist" | sed $'s,.*,\e[1;33m&\e[m,'
+        if [[ "${missingMode}" == "i" ]]; then
+          echo "Container path: ${containerPath} does not exist" | sed $'s,.*,\e[1;33m&\e[m,'
+        else
+          >&2 echo "Container path: ${containerPath} does not exist"
+          exit 1
+        fi
       fi
     else
       >&2 echo "No container path to prepare"
