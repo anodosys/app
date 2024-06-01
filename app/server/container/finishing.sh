@@ -84,18 +84,35 @@ if [[ -n "${beforeContainerFinishingDockerScript}" ]]; then
 
   echo "Before container finishing docker script: ${beforeContainerFinishingDockerScript}"
   if [[ -n "${beforeContainerFinishingDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerFinishingDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerFinishingDockerParameters[@]}"
+    if [[ -n "${beforeContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerFinishingDockerUser}" "${beforeContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerFinishingDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerFinishingDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerFinishingDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerFinishingDockerUser}" "${beforeContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -120,18 +137,35 @@ if [[ -n "${containerFinishingDockerScript}" ]]; then
 
   echo "Container finishing docker script: ${containerFinishingDockerScript}"
   if [[ -n "${containerFinishingDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${containerFinishingDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${containerFinishingDockerParameters[@]}"
+    if [[ -n "${containerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${containerFinishingDockerUser}" "${containerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${containerFinishingDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${containerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${containerFinishingDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${containerFinishingDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${containerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${containerFinishingDockerUser}" "${containerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${containerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -160,18 +194,35 @@ if [[ -n "${afterContainerFinishingDockerScript}" ]]; then
 
   echo "After container finishing docker script: ${afterContainerFinishingDockerScript}"
   if [[ -n "${afterContainerFinishingDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerFinishingDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerFinishingDockerParameters[@]}"
+    if [[ -n "${afterContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerFinishingDockerUser}" "${afterContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerFinishingDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerFinishingDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerFinishingDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerFinishingDockerUser}" "${afterContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 

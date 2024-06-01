@@ -72,18 +72,35 @@ if [[ -n "${beforeContainerCreateSourceDockerScript}" ]]; then
 
   echo "Before container create source docker script: ${beforeContainerCreateSourceDockerScript}"
   if [[ -n "${beforeContainerCreateSourceDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerCreateSourceDockerParameters[@]}"
+    if [[ -n "${beforeContainerCreateSourceDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerCreateSourceDockerUser}" "${beforeContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerCreateSourceDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerCreateSourceDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerCreateSourceDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerCreateSourceDockerUser}" "${beforeContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -183,17 +200,34 @@ if [[ -n "${afterContainerCreateSourceDockerScript}" ]]; then
 
   echo "After container create source docker script: ${afterContainerCreateSourceDockerScript}"
   if [[ -n "${afterContainerCreateSourceDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerCreateSourceDockerParameters[@]}"
+    if [[ -n "${afterContainerCreateSourceDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerCreateSourceDockerUser}" "${afterContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerCreateSourceDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerCreateSourceDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerCreateSourceDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerCreateSourceDockerUser}" "${afterContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi

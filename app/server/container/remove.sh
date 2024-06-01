@@ -79,18 +79,35 @@ if [[ -n "${beforeContainerRemoveDockerScript}" ]]; then
 
   echo "Before container remove docker script: ${beforeContainerRemoveDockerScript}"
   if [[ -n "${beforeContainerRemoveDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerRemoveDockerParameters[@]}"
+    if [[ -n "${beforeContainerRemoveDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerRemoveDockerUser}" "${beforeContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerRemoveDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerRemoveDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerRemoveDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerRemoveDockerUser}" "${beforeContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -132,18 +149,35 @@ if [[ -n "${afterContainerRemoveDockerScript}" ]]; then
 
   echo "After container remove docker script: ${afterContainerRemoveDockerScript}"
   if [[ -n "${afterContainerRemoveDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerRemoveDockerParameters[@]}"
+    if [[ -n "${afterContainerRemoveDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerRemoveDockerUser}" "${afterContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerRemoveDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerRemoveDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerRemoveDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerRemoveDockerUser}" "${afterContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 

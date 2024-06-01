@@ -74,18 +74,35 @@ if [[ -n "${beforeContainerStopDockerScript}" ]]; then
 
   echo "Before container stop docker script: ${beforeContainerStopDockerScript}"
   if [[ -n "${beforeContainerStopDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerStopDockerParameters[@]}"
+    if [[ -n "${beforeContainerStopDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerStopDockerUser}" "${beforeContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerStopDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerStopDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerStopDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerStopDockerUser}" "${beforeContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -112,17 +129,34 @@ if [[ -n "${afterContainerStopDockerScript}" ]]; then
 
   echo "After container stop docker script: ${afterContainerStopDockerScript}"
   if [[ -n "${afterContainerStopDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerStopDockerParameters[@]}"
+    if [[ -n "${afterContainerStopDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerStopDockerUser}" "${afterContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerStopDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerStopDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerStopDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerStopDockerUser}" "${afterContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerStopDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi

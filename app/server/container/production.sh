@@ -84,18 +84,35 @@ if [[ -n "${beforeContainerProductionDockerScript}" ]]; then
 
   echo "Before container production docker script: ${beforeContainerProductionDockerScript}"
   if [[ -n "${beforeContainerProductionDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerProductionDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerProductionDockerParameters[@]}"
+    if [[ -n "${beforeContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerProductionDockerUser}" "${beforeContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerProductionDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerProductionDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerProductionDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerProductionDockerUser}" "${beforeContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -120,18 +137,35 @@ if [[ -n "${containerProductionDockerScript}" ]]; then
 
   echo "Container production docker script: ${containerProductionDockerScript}"
   if [[ -n "${containerProductionDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${containerProductionDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${containerProductionDockerParameters[@]}"
+    if [[ -n "${containerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${containerProductionDockerUser}" "${containerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${containerProductionDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${containerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${containerProductionDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${containerProductionDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${containerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${containerProductionDockerUser}" "${containerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${containerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -160,18 +194,35 @@ if [[ -n "${afterContainerProductionDockerScript}" ]]; then
 
   echo "After container production docker script: ${afterContainerProductionDockerScript}"
   if [[ -n "${afterContainerProductionDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerProductionDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerProductionDockerParameters[@]}"
+    if [[ -n "${afterContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerProductionDockerUser}" "${afterContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerProductionDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerProductionDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerProductionDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerProductionDockerUser}" "${afterContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 

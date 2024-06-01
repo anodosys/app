@@ -79,18 +79,35 @@ if [[ -n "${beforeContainerNotExistsDockerScript}" ]]; then
 
   echo "Before container not exists docker script: ${beforeContainerNotExistsDockerScript}"
   if [[ -n "${beforeContainerNotExistsDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerNotExistsDockerParameters[@]}"
+    if [[ -n "${beforeContainerNotExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerNotExistsDockerUser}" "${beforeContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerNotExistsDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerNotExistsDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerNotExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerNotExistsDockerUser}" "${beforeContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -124,17 +141,34 @@ if [[ -n "${afterContainerNotExistsDockerScript}" ]]; then
 
   echo "After container not exists docker script: ${afterContainerNotExistsDockerScript}"
   if [[ -n "${afterContainerNotExistsDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerNotExistsDockerParameters[@]}"
+    if [[ -n "${afterContainerNotExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerNotExistsDockerUser}" "${afterContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerNotExistsDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerNotExistsDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerNotExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerNotExistsDockerUser}" "${afterContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi

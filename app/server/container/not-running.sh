@@ -79,18 +79,35 @@ if [[ -n "${beforeContainerNotRunningDockerScript}" ]]; then
 
   echo "Before container not running docker script: ${beforeContainerNotRunningDockerScript}"
   if [[ -n "${beforeContainerNotRunningDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerNotRunningDockerParameters[@]}"
+    if [[ -n "${beforeContainerNotRunningDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerNotRunningDockerUser}" "${beforeContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerNotRunningDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerNotRunningDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerNotRunningDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerNotRunningDockerUser}" "${beforeContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -124,17 +141,34 @@ if [[ -n "${afterContainerNotRunningDockerScript}" ]]; then
 
   echo "After container not running docker script: ${afterContainerNotRunningDockerScript}"
   if [[ -n "${afterContainerNotRunningDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerNotRunningDockerParameters[@]}"
+    if [[ -n "${afterContainerNotRunningDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerNotRunningDockerUser}" "${afterContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerNotRunningDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerNotRunningDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerNotRunningDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerNotRunningDockerUser}" "${afterContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi

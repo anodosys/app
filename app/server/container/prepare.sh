@@ -79,18 +79,35 @@ if [[ -n "${beforeContainerPrepareDockerScript}" ]]; then
 
   echo "Before container prepare docker script: ${beforeContainerPrepareDockerScript}"
   if [[ -n "${beforeContainerPrepareDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerPrepareDockerParameters[@]}"
+    if [[ -n "${beforeContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerPrepareDockerUser}" "${beforeContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerPrepareDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerPrepareDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerPrepareDockerUser}" "${beforeContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -124,18 +141,35 @@ if [[ -n "${containerPrepareDockerScript}" ]]; then
 
   echo "Container prepare docker script: ${containerPrepareDockerScript}"
   if [[ -n "${containerPrepareDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${containerPrepareDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${containerPrepareDockerParameters[@]}"
+    if [[ -n "${containerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${containerPrepareDockerUser}" "${containerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${containerPrepareDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${containerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${containerPrepareDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${containerPrepareDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${containerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${containerPrepareDockerUser}" "${containerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${containerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -164,17 +198,34 @@ if [[ -n "${afterContainerPrepareDockerScript}" ]]; then
 
   echo "After container prepare docker script: ${afterContainerPrepareDockerScript}"
   if [[ -n "${afterContainerPrepareDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerPrepareDockerParameters[@]}"
+    if [[ -n "${afterContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerPrepareDockerUser}" "${afterContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerPrepareDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerPrepareDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerPrepareDockerUser}" "${afterContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi

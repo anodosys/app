@@ -77,18 +77,35 @@ if [[ -n "${beforeContainerExistsDockerScript}" ]]; then
 
   echo "Before container exists docker script: ${beforeContainerExistsDockerScript}"
   if [[ -n "${beforeContainerExistsDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${beforeContainerExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${beforeContainerExistsDockerParameters[@]}"
+    if [[ -n "${beforeContainerExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerExistsDockerUser}" "${beforeContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerExistsDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${beforeContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${beforeContainerExistsDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${beforeContainerExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${beforeContainerExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${beforeContainerExistsDockerUser}" "${beforeContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${beforeContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
 
@@ -129,17 +146,34 @@ if [[ -n "${afterContainerExistsDockerScript}" ]]; then
 
   echo "After container exists docker script: ${afterContainerExistsDockerScript}"
   if [[ -n "${afterContainerExistsDockerParameters}" ]]; then
-    containerExecute "${containerName}" "${afterContainerExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}" \
-      "${afterContainerExistsDockerParameters[@]}"
+    if [[ -n "${afterContainerExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerExistsDockerUser}" "${afterContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerExistsDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${afterContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        "${afterContainerExistsDockerParameters[@]}"
+    fi
   else
-    containerExecute "${containerName}" "${afterContainerExistsDockerScript}" \
-      --systemName "${systemName}" \
-      --serverName "${serverName}" \
-      --hostUserName "${USER}" \
-      --hostUserId "${UID}"
+    if [[ -n "${afterContainerExistsDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${afterContainerExistsDockerUser}" "${afterContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    else
+      containerExecute "${containerName}" "${afterContainerExistsDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}"
+    fi
   fi
 fi
