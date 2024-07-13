@@ -11,13 +11,17 @@ containerStart()
   local mountingIssue
   local ports
   local counter
+  local containerPorts
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ $(containerRunning "${containerName}") == 0 ]]; then
-      echo "Checking if ports are blocked for container: ${containerName}"
-      if [[ $(containerPortBlocked "${containerName}") == 1 ]]; then
-        >&2 echo "Cannot start container because ports are blocked"
-        exit 1
+      containerPorts=( $(containerPortHostList "${containerName}") )
+      if [[ "${#containerPorts[@]}" -gt 0 ]]; then
+        echo "Checking if ports: ${containerPorts[*]} are blocked for container: ${containerName}"
+        if [[ $(containerPortBlocked "${containerName}") == 1 ]]; then
+          >&2 echo "Cannot start container because ports: ${containerPorts[*]} are blocked"
+          exit 1
+        fi
       fi
       containerVolumeCheck "${containerName}"
       echo "Starting container: ${containerName}"
