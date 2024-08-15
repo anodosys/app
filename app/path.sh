@@ -65,14 +65,14 @@ if [[ -n "${anodosysPath}" ]]; then
   export anodosysUserVarVolumePath
 
   if [[ -d "${anodosysExtensionPath}" ]]; then
-    anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+    anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -xtype d -printf "%f\n") )
   else
     anodosysExtensions=()
   fi
   export anodosysExtensions
 
   if [[ -d "${anodosysUserExtensionPath}" ]]; then
-    anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+    anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -xtype d -printf "%f\n") )
   else
     anodosysUserExtensions=()
   fi

@@ -21,13 +21,13 @@ anodosysUserExtensionPath="${anodosysUserPath}/extension"
 mkdir -p "${anodosysUserExtensionPath}"
 
 if [[ -d "${anodosysExtensionPath}" ]]; then
-  anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+  anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -xtype d -printf "%f\n") )
 else
   anodosysExtensions=()
 fi
 
 if [[ -d "${anodosysUserExtensionPath}" ]]; then
-  anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -type d -printf "%f\n") )
+  anodosysUserExtensions=( $(find "${anodosysUserExtensionPath}" -mindepth 1 -maxdepth 1 -xtype d -printf "%f\n") )
 else
   anodosysUserExtensions=()
 fi
