@@ -35,6 +35,8 @@ containerCreate()
     for parameter in "${parameters[@]}"; do
       if [[ "${parameter:0:11}" == "entryPoint:" ]]; then
         command+=" --entrypoint \"${parameter:11}\""
+      elif [[ "${parameter:0:9}" == "hostname:" ]]; then
+        command+=" --hostname \"${parameter:9}\""
       elif [[ "${parameter:0:6}" == "alias:" ]]; then
         command+=" --network-alias \"${parameter:6}\""
       elif [[ "${parameter:0:5}" == "port:" ]]; then

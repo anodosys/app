@@ -149,6 +149,10 @@ if [[ -n "${imageEntryPoint}" ]]; then
   optionalParameters+=( "entryPoint:${imageEntryPoint}" )
 fi
 
+if [[ -n "${containerHostName}" ]]; then
+  optionalParameters+=( "hostname:${containerHostName}" )
+fi
+
 optionalParameters+=( "alias:${serverName}" )
 
 if [[ -z "${containerAliases}" ]]; then
