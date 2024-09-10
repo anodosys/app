@@ -4,9 +4,10 @@ containerStart()
 {
   local containerName="${1}"
   local useNamedVolumes="${2}"
-  local retry="${3:-no}"
-  local skipPortsAvailable="${4:-false}"
-  local follow="${5:-false}"
+  local networkName="${3}"
+  local retry="${4:-no}"
+  local skipPortsAvailable="${5:-false}"
+  local follow="${6:-false}"
   local result
   local mountingIssue
   local ports
@@ -24,6 +25,8 @@ containerStart()
         fi
       fi
       containerVolumeCheck "${containerName}"
+      echo "Connecting container to network: ${networkName}"
+      docker network connect "${networkName}" "${containerName}"
       echo "Starting container: ${containerName}"
       result=$(docker start "${containerName}" 2>&1 | cat)
       if [[ "${result}" == "${containerName}" ]]; then
@@ -69,7 +72,7 @@ containerStart()
           else
             if [[ "${retry}" == "no" ]]; then
               echo "Container not running: ${containerName}, try again"
-              containerStart "${containerName}" "${useNamedVolumes}" "yes" "${skipPortsAvailable}" "${follow}"
+              containerStart "${containerName}" "${useNamedVolumes}" "${networkName}" "yes" "${skipPortsAvailable}" "${follow}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1

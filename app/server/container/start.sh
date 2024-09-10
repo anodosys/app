@@ -194,7 +194,7 @@ if [[ -z "${follow}" ]]; then
   follow="false"
 fi
 
-containerStart "${containerName}" "${useNamedVolumes}" no "${skipPortsAvailable}" "${follow}"
+containerStart "${containerName}" "${useNamedVolumes}" "${systemName}" no "${skipPortsAvailable}" "${follow}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
