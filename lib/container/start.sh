@@ -4,15 +4,19 @@ containerStart()
 {
   local containerName="${1}"
   local useNamedVolumes="${2}"
-  local networkName="${3}"
-  local retry="${4:-no}"
-  local skipPortsAvailable="${5:-false}"
-  local follow="${6:-false}"
+  local serverNames="${3}"
+  local networkName="${4}"
+  local retry="${5:-no}"
+  local skipPortsAvailable="${6:-false}"
+  local follow="${7:-false}"
   local result
   local mountingIssue
   local ports
   local counter
   local containerPorts
+  local dockerNetworkConnectCommand
+  local serverNameList
+  local linkedContainerName
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ $(containerRunning "${containerName}") == 0 ]]; then
@@ -26,7 +30,16 @@ containerStart()
       fi
       containerVolumeCheck "${containerName}"
       echo "Connecting container to network: ${networkName}"
-      docker network connect "${networkName}" "${containerName}"
+      dockerNetworkConnectCommand="docker network connect"
+      readarray -d , -t serverNameList < <(printf '%s' "${serverNames}")
+      for serverName in "${serverNameList[@]}"; do
+        linkedContainerName="${networkName}_${serverName}"
+        if [[ "${linkedContainerName}" != "${containerName}" ]]; then
+          dockerNetworkConnectCommand+=" --link ${networkName}_${serverName}:${serverName}"
+        fi
+      done
+      dockerNetworkConnectCommand+=" ${networkName} ${containerName}"
+      bash -c "${dockerNetworkConnectCommand}"
       echo "Starting container: ${containerName}"
       result=$(docker start "${containerName}" 2>&1 | cat)
       if [[ "${result}" == "${containerName}" ]]; then
@@ -72,7 +85,7 @@ containerStart()
           else
             if [[ "${retry}" == "no" ]]; then
               echo "Container not running: ${containerName}, try again"
-              containerStart "${containerName}" "${useNamedVolumes}" "${networkName}" "yes" "${skipPortsAvailable}" "${follow}"
+              containerStart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "yes" "${skipPortsAvailable}" "${follow}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1

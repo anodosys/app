@@ -4,10 +4,11 @@ containerRestart()
 {
   local containerName="${1}"
   local useNamedVolumes="${2}"
-  local networkName="${3}"
-  local retry="${4:-no}"
-  local skipPortsAvailable="${5:-false}"
-  local follow="${6:-false}"
+  local serverNames="${3}"
+  local networkName="${4}"
+  local retry="${5:-no}"
+  local skipPortsAvailable="${6:-false}"
+  local follow="${7:-false}"
   local result
   local ports
   local counter
@@ -44,7 +45,7 @@ containerRestart()
           else
             if [[ "${retry}" == "no" ]]; then
               echo "Container not running: ${containerName}, try again"
-              containerRestart "${containerName}" "${useNamedVolumes}" "${networkName}" "yes" "${skipPortsAvailable}" "${follow}"
+              containerRestart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "yes" "${skipPortsAvailable}" "${follow}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1
@@ -61,7 +62,7 @@ containerRestart()
     fi
   else
     echo "No need to restart container: ${containerName}, starting container"
-    containerStart "${containerName}" "${useNamedVolumes}" "${networkName}" "${retry}" "${skipPortsAvailable}" "${follow}"
+    containerStart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "${retry}" "${skipPortsAvailable}" "${follow}"
   fi
 }
 

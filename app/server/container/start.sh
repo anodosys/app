@@ -49,6 +49,13 @@ fi
 
 logName "${systemName}" "${serverName}"
 
+setServerConfiguration "${systemName}" "system"
+
+if [[ -z "${serverNames}" ]]; then
+  >&2 echo "No server names specified!"
+  exit 1
+fi
+
 setServerConfiguration "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
@@ -194,7 +201,9 @@ if [[ -z "${follow}" ]]; then
   follow="false"
 fi
 
-containerStart "${containerName}" "${useNamedVolumes}" "${systemName}" no "${skipPortsAvailable}" "${follow}"
+serverNamesCombined=$(IFS=,; printf '%s' "${serverNames[*]}")
+
+containerStart "${containerName}" "${useNamedVolumes}" "${serverNamesCombined}" "${systemName}" no "${skipPortsAvailable}" "${follow}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"
