@@ -41,7 +41,6 @@ containerStart()
         fi
       done
       dockerNetworkConnectCommand+=" ${networkName} ${containerName}"
-      echo "${dockerNetworkConnectCommand}"
       bash -c "${dockerNetworkConnectCommand}"
       echo "Starting container: ${containerName}"
       result=$(docker start "${containerName}" 2>&1 | cat)
