@@ -36,9 +36,12 @@ containerStart()
         linkedContainerName="${networkName}_${serverName}"
         if [[ "${linkedContainerName}" != "${containerName}" ]]; then
           dockerNetworkConnectCommand+=" --link ${networkName}_${serverName}:${serverName}"
+        else
+          dockerNetworkConnectCommand+=" --alias ${serverName}"
         fi
       done
       dockerNetworkConnectCommand+=" ${networkName} ${containerName}"
+      echo "${dockerNetworkConnectCommand}"
       bash -c "${dockerNetworkConnectCommand}"
       echo "Starting container: ${containerName}"
       result=$(docker start "${containerName}" 2>&1 | cat)
