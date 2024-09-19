@@ -59,6 +59,18 @@ containerPath()
           echo "No need to create user: ${containerUserName}"
         fi
 
+        if [[ "${accessUser}" == "local" ]] || [[ "${accessUser}" == "me" ]]; then
+          userId="${UID}"
+          accessUser=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} | tr ':' ' ' | awk '{print \$1}'")
+          accessUser=$(prepareValue "${accessUser}")
+
+          if [[ -z "${accessUser}" ]]; then
+            accessUser="docker_volume_${userId}"
+            echo "Creating new user: ${accessUser}"
+            containerCommand "${containerName}" "useradd -m -u ${userId} -g ${containerGroupId} ${accessUser}"
+          fi
+        fi
+
         if [[ "${containerUserName}" != "${accessUser}" ]]; then
           result=$(containerCommandQuiet "${containerName}" "id -nG ${accessUser} | grep -w ${containerGroupName} | wc -l")
           result=$(prepareValue "${result}")
