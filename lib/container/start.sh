@@ -4,9 +4,9 @@ containerStart()
 {
   local containerName="${1}"
   local useNamedVolumes="${2}"
-  local serverNames="${3}"
-  local networkName="${4}"
-  local retry="${5:-no}"
+  local serverNames="${3:-none}"
+  local networkName="${4:-none}"
+  local retry="${5:-0}"
   local skipPortsAvailable="${6:-false}"
   local follow="${7:-false}"
   local result
@@ -29,19 +29,21 @@ containerStart()
         fi
       fi
       containerVolumeCheck "${containerName}"
-      echo "Connecting container to network: ${networkName}"
-      dockerNetworkConnectCommand="docker network connect"
-      readarray -d , -t serverNameList < <(printf '%s' "${serverNames}")
-      for serverName in "${serverNameList[@]}"; do
-        linkedContainerName="${networkName}_${serverName}"
-        if [[ "${linkedContainerName}" != "${containerName}" ]]; then
-          dockerNetworkConnectCommand+=" --link ${networkName}_${serverName}:${serverName}"
-        else
-          dockerNetworkConnectCommand+=" --alias ${serverName}"
-        fi
-      done
-      dockerNetworkConnectCommand+=" ${networkName} ${containerName}"
-      bash -c "${dockerNetworkConnectCommand}"
+      if [[ "${serverNames}" != "none" ]] && [[ "${networkName}" != "none" ]]; then
+        echo "Connecting container to network: ${networkName}"
+        dockerNetworkConnectCommand="docker network connect"
+        readarray -d , -t serverNameList < <(printf '%s' "${serverNames}")
+        for serverName in "${serverNameList[@]}"; do
+          linkedContainerName="${networkName}_${serverName}"
+          if [[ "${linkedContainerName}" != "${containerName}" ]]; then
+            dockerNetworkConnectCommand+=" --link ${networkName}_${serverName}:${serverName}"
+          else
+            dockerNetworkConnectCommand+=" --alias ${serverName}"
+          fi
+        done
+        dockerNetworkConnectCommand+=" ${networkName} ${containerName}"
+        bash -c "${dockerNetworkConnectCommand}"
+      fi
       echo "Starting container: ${containerName}"
       result=$(docker start "${containerName}" 2>&1 | cat)
       if [[ "${result}" == "${containerName}" ]]; then
@@ -50,7 +52,7 @@ containerStart()
           docker logs --follow "${containerName}" &
         fi
       else
-        if [[ "${retry}" == "no" ]]; then
+        if [[ "${retry}" == 0 ]]; then
           mountingIssue=$(echo "${result}" | grep "error while mounting volume" | wc -l)
           if [[ "${mountingIssue}" -gt 0 ]]; then
             >&2 echo "Container has mounting issue"
@@ -85,9 +87,10 @@ containerStart()
             >&2 echo "Not all ports are available for container: ${containerName}"
             exit 1
           else
-            if [[ "${retry}" == "no" ]]; then
+            if [[ "${retry}" -lt 20 ]]; then
               echo "Container not running: ${containerName}, try again"
-              containerStart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "yes" "${skipPortsAvailable}" "${follow}"
+              retry=$(( retry + 1 ))
+              containerStart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "${retry}" "${skipPortsAvailable}" "${follow}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1

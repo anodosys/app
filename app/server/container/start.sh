@@ -203,7 +203,7 @@ fi
 
 serverNamesCombined=$(IFS=,; printf '%s' "${serverNames[*]}")
 
-containerStart "${containerName}" "${useNamedVolumes}" "${serverNamesCombined}" "${systemName}" no "${skipPortsAvailable}" "${follow}"
+containerStart "${containerName}" "${useNamedVolumes}" "${serverNamesCombined}" "${systemName}" 0 "${skipPortsAvailable}" "${follow}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"

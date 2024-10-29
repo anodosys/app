@@ -4,9 +4,9 @@ containerRestart()
 {
   local containerName="${1}"
   local useNamedVolumes="${2}"
-  local serverNames="${3}"
-  local networkName="${4}"
-  local retry="${5:-no}"
+  local serverNames="${3:-none}"
+  local networkName="${4:-none}"
+  local retry="${5:-0}"
   local skipPortsAvailable="${6:-false}"
   local follow="${7:-false}"
   local result
@@ -30,7 +30,7 @@ containerRestart()
             protocol="${portParts[1]}"
             echo "Waiting until port: ${port} with protocol: ${protocol} is available"
           done
-          echo "Checking if all ports are available: ${containerName}"
+          echo "Checking if all ports are available for container: ${containerName}"
           counter=0
           while [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerPortAvailable "${containerName}") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
             echo "Waiting until ports are available for container: ${containerName}" | sed $'s,.*,\e[1;30m&\e[m,'
@@ -43,9 +43,10 @@ containerRestart()
             >&2 echo "Not all ports are available for containerName: ${containerName}"
             exit 1
           else
-            if [[ "${retry}" == "no" ]]; then
-              echo "Container not running: ${containerName}, try again"
-              containerRestart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "yes" "${skipPortsAvailable}" "${follow}"
+            if [[ "${retry}" -lt 20 ]]; then
+              echo "Container not running: ${containerName}, try starting"
+              retry=$(( retry + 1 ))
+              containerRestart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "${retry}" "${skipPortsAvailable}" "${follow}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1
