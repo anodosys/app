@@ -7,6 +7,7 @@ imageCreate()
   local containerName="${3}"
   local buildImageEntryPoint="${4}"
   local buildImageUser="${5}"
+  local buildImageCommand="${6}"
   local command
   local result
 
@@ -14,10 +15,23 @@ imageCreate()
     echo "Creating image: ${imageName,,}:${imageTag,,} from container: ${containerName}"
     command="docker commit"
     if [[ -n "${buildImageEntryPoint}" ]] && [[ "${buildImageEntryPoint}" != "-" ]]; then
-      command+=" --change=\"ENTRYPOINT ${buildImageEntryPoint}\""
+      if [[ "${buildImageEntryPoint}" =~ "," ]]; then
+        # shellcheck disable=SC2206
+        buildImageEntryPointParts=( ${buildImageEntryPoint//,/ } )
+        buildImageEntryPoint="$( printf "\\\\\",\\\\\"%s" "${buildImageEntryPointParts[@]}" | cut -c 6- )"
+      fi
+      command+=" --change=\"ENTRYPOINT [\\\"${buildImageEntryPoint}\\\"]\""
     fi
     if [[ -n "${buildImageUser}" ]] && [[ "${buildImageUser}" != "-" ]]; then
       command+=" --change=\"USER ${buildImageUser}\""
+    fi
+    if [[ -n "${buildImageCommand}" ]] && [[ "${buildImageCommand}" != "-" ]]; then
+      if [[ "${buildImageCommand}" =~ "," ]]; then
+        # shellcheck disable=SC2206
+        buildImageCommandParts=( ${buildImageCommand//,/ } )
+        buildImageCommand="$( printf "\\\\\",\\\\\"%s" "${buildImageCommandParts[@]}" | cut -c 6- )"
+      fi
+      command+=" --change=\"CMD [\\\"${buildImageCommand}\\\"]\""
     fi
     command+=" \"${containerName}\" \"${imageName,,}:${imageTag,,}\""
     echo "Image command: ${command}"

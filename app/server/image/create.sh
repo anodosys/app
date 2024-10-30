@@ -74,7 +74,11 @@ if [[ -z "${buildImageUser}" ]]; then
   buildImageUser="-"
 fi
 
-imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}" "${buildImageEntryPoint}" "${buildImageUser}"
+if [[ -z "${buildImageCommand}" ]]; then
+  buildImageCommand="-"
+fi
+
+imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}" "${buildImageEntryPoint}" "${buildImageUser}" "${buildImageCommand}"
 
 if [[ -n "${afterImageCreateScript}" ]]; then
   echo "After image create script: ${afterImageCreateScript}"
