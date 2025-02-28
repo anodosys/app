@@ -70,6 +70,8 @@ containerRun()
         fi
       elif [[ "${parameter:0:12}" == "environment:" ]]; then
         command+=" --env ${parameter:12}"
+      elif [[ "${parameter:0:5}" == "size:" ]]; then
+        command+=" --storage-opt size=${parameter:5}"
       fi
     done
 

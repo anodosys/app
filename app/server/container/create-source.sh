@@ -181,6 +181,10 @@ for containerVariable in "${containerVariables[@]}"; do
   optionalParameters+=( "environment:${containerVariable}" )
 done
 
+if [[ -n "${containerSize}" ]]; then
+  optionalParameters+=( "size:${containerSize}" )
+fi
+
 containerCreate "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
 
 if [[ -n "${afterContainerCreateSourceScript}" ]]; then

@@ -195,6 +195,10 @@ for containerVariable in "${containerVariables[@]}"; do
   optionalParameters+=( "environment:${containerVariable}" )
 done
 
+if [[ -n "${containerSize}" ]]; then
+  optionalParameters+=( "size:${containerSize}" )
+fi
+
 if [[ -n "${imageInteractiveRun}" ]] && [[ "${imageInteractiveRun}" == "true" ]]; then
   echo "Image requires interactive run"
   if [[ -n "${imageInteractiveCommand}" ]]; then
