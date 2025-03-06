@@ -85,6 +85,7 @@ if [[ -n "${beforeContainerPrepareDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerPrepareDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
@@ -92,6 +93,7 @@ if [[ -n "${beforeContainerPrepareDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerPrepareDockerParameters[@]}"
     fi
   else
@@ -100,13 +102,15 @@ if [[ -n "${beforeContainerPrepareDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${beforeContainerPrepareDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -147,6 +151,7 @@ if [[ -n "${containerPrepareDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${containerPrepareDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${containerPrepareDockerScript}" \
@@ -154,6 +159,7 @@ if [[ -n "${containerPrepareDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${containerPrepareDockerParameters[@]}"
     fi
   else
@@ -162,13 +168,15 @@ if [[ -n "${containerPrepareDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${containerPrepareDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -204,6 +212,7 @@ if [[ -n "${afterContainerPrepareDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerPrepareDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
@@ -211,6 +220,7 @@ if [[ -n "${afterContainerPrepareDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerPrepareDockerParameters[@]}"
     fi
   else
@@ -219,13 +229,15 @@ if [[ -n "${afterContainerPrepareDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi

@@ -85,6 +85,7 @@ if [[ -n "${beforeContainerNotRunningDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerNotRunningDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
@@ -92,6 +93,7 @@ if [[ -n "${beforeContainerNotRunningDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerNotRunningDockerParameters[@]}"
     fi
   else
@@ -100,13 +102,15 @@ if [[ -n "${beforeContainerNotRunningDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${beforeContainerNotRunningDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -147,6 +151,7 @@ if [[ -n "${afterContainerNotRunningDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerNotRunningDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
@@ -154,6 +159,7 @@ if [[ -n "${afterContainerNotRunningDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerNotRunningDockerParameters[@]}"
     fi
   else
@@ -162,13 +168,15 @@ if [[ -n "${afterContainerNotRunningDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerNotRunningDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi

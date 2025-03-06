@@ -90,6 +90,7 @@ if [[ -n "${beforeContainerCommencementDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerCommencementDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${beforeContainerCommencementDockerScript}" \
@@ -97,6 +98,7 @@ if [[ -n "${beforeContainerCommencementDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerCommencementDockerParameters[@]}"
     fi
   else
@@ -105,13 +107,15 @@ if [[ -n "${beforeContainerCommencementDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${beforeContainerCommencementDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -143,6 +147,7 @@ if [[ -n "${containerCommencementDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${containerCommencementDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${containerCommencementDockerScript}" \
@@ -150,6 +155,7 @@ if [[ -n "${containerCommencementDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${containerCommencementDockerParameters[@]}"
     fi
   else
@@ -158,13 +164,15 @@ if [[ -n "${containerCommencementDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${containerCommencementDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -200,6 +208,7 @@ if [[ -n "${afterContainerCommencementDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerCommencementDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
@@ -207,6 +216,7 @@ if [[ -n "${afterContainerCommencementDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerCommencementDockerParameters[@]}"
     fi
   else

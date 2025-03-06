@@ -85,6 +85,7 @@ if [[ -n "${beforeContainerNotExistsDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerNotExistsDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
@@ -92,6 +93,7 @@ if [[ -n "${beforeContainerNotExistsDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerNotExistsDockerParameters[@]}"
     fi
   else
@@ -100,13 +102,15 @@ if [[ -n "${beforeContainerNotExistsDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${beforeContainerNotExistsDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -147,6 +151,7 @@ if [[ -n "${afterContainerNotExistsDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerNotExistsDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
@@ -154,6 +159,7 @@ if [[ -n "${afterContainerNotExistsDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerNotExistsDockerParameters[@]}"
     fi
   else
@@ -162,13 +168,15 @@ if [[ -n "${afterContainerNotExistsDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerNotExistsDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi

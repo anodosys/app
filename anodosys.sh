@@ -179,6 +179,11 @@ if [[ -L "${scriptName}" ]]; then
   scriptName=$(readlink -f "${scriptName}")
 fi
 
+if [[ -z "${GID}" ]]; then
+  GID=$(id -g)
+  export GID
+fi
+
 anodosysPath=$(cd -P "$(dirname "${scriptName}")" && pwd)
 export anodosysPath
 

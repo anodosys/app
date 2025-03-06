@@ -78,6 +78,7 @@ if [[ -n "${beforeContainerCreateSourceDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerCreateSourceDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
@@ -85,6 +86,7 @@ if [[ -n "${beforeContainerCreateSourceDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerCreateSourceDockerParameters[@]}"
     fi
   else
@@ -93,13 +95,15 @@ if [[ -n "${beforeContainerCreateSourceDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${beforeContainerCreateSourceDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -214,6 +218,7 @@ if [[ -n "${afterContainerCreateSourceDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerCreateSourceDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
@@ -221,6 +226,7 @@ if [[ -n "${afterContainerCreateSourceDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerCreateSourceDockerParameters[@]}"
     fi
   else
@@ -229,13 +235,15 @@ if [[ -n "${afterContainerCreateSourceDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerCreateSourceDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi

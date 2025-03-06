@@ -85,6 +85,7 @@ if [[ -n "${beforeContainerRemoveDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerRemoveDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
@@ -92,6 +93,7 @@ if [[ -n "${beforeContainerRemoveDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${beforeContainerRemoveDockerParameters[@]}"
     fi
   else
@@ -100,13 +102,15 @@ if [[ -n "${beforeContainerRemoveDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${beforeContainerRemoveDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
@@ -155,6 +159,7 @@ if [[ -n "${afterContainerRemoveDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerRemoveDockerParameters[@]}"
     else
       containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
@@ -162,6 +167,7 @@ if [[ -n "${afterContainerRemoveDockerScript}" ]]; then
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
         --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
         "${afterContainerRemoveDockerParameters[@]}"
     fi
   else
@@ -170,13 +176,15 @@ if [[ -n "${afterContainerRemoveDockerScript}" ]]; then
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerRemoveDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
