@@ -123,7 +123,7 @@ imageRemoveRemote()
       if [[ -z "${reason}" ]]; then
         reason=$(echo "${remoteData}" | jq -r '.message //empty')
       fi
-      if [[ "${retry}" == "no" ]] && [[ "${reason}" == "unauthorized" ]]; then
+      if [[ "${retry}" == "no" ]] && [[ "${reason}" == "unauthorized" ]] && $(sh -c ": >/dev/tty" >/dev/null 2>/dev/null); then
         echo "Please specify the user name to the repository, followed by [ENTER]:"
         read -r userName < /dev/tty
         echo "Please specify the password to the repository, followed by [ENTER]:"

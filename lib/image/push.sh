@@ -17,9 +17,11 @@ imagePush()
     mkdir -p "$(dirname "${pushErrorFileName}")"
 
     echo "Pushing image: ${imageName,,}:${imageTag,,}"
-    exec >/dev/tty
-    exec 2>/dev/tty
-    logDisable
+    if sh -c ": >/dev/tty" >/dev/null 2>/dev/null; then
+      exec >/dev/tty
+      exec 2>/dev/tty
+      logDisable
+    fi
     set +e
     docker push "${imageName,,}:${imageTag,,}" 2>"${pushErrorFileName}"
     pushResult=$?
