@@ -21,8 +21,10 @@ typeset -fx logName
 
 logDisable()
 {
-  exec >/dev/tty
-  exec 2>/dev/tty
+  if sh -c ": >/dev/tty" >/dev/null 2>/dev/null; then
+    exec >/dev/tty
+    exec 2>/dev/tty
+  fi
 }
 
 # shellcheck disable=SC2034
