@@ -14,30 +14,39 @@ export anodosysAppPath
 source "${anodosysAppPath}/path.sh"
 source "${anodosysAppPath}/lib.sh"
 
-oldIFS="${IFS}"
-IFS=$'\n'
-images=( $(imageList) )
-IFS="${oldIFS}"
+while :; do
+  oldIFS="${IFS}"
+  IFS=$'\n'
+  images=( $(imageList) )
+  IFS="${oldIFS}"
 
-for image in "${images[@]}"; do
-  imageName=$(echo "${image}" | awk '{print $1}')
-  imageTag=$(echo "${image}" | awk '{print $2}')
-  imageId=$(echo "${image}" | awk '{print $3}')
+  imageDeleted=0
 
-  echo -n "Checking ${imageName,,}:${imageTag,,}: "
-  imageUsedByContainerResult=$(imageUsedByContainer "${imageId}")
-  if [[ "${imageUsedByContainerResult}" == 0 ]]; then
-    imageUsedByImageResult=$(imageUsedByImage "${imageId}")
-    if [[ "${imageUsedByImageResult}" == 0 ]]; then
-      echo "Not in use" | sed $'s,.*,\e[1;31m&\e[m,'
-      imageRemove "${imageId}" "-" "no"
+  for image in "${images[@]}"; do
+    imageName=$(echo "${image}" | awk '{print $1}')
+    imageTag=$(echo "${image}" | awk '{print $2}')
+    imageId=$(echo "${image}" | awk '{print $3}')
+
+    echo -n "Checking ${imageName,,}:${imageTag,,}: "
+    imageUsedByContainerResult=$(imageUsedByContainer "${imageId}")
+    if [[ "${imageUsedByContainerResult}" == 0 ]]; then
+      imageUsedByImageResult=$(imageUsedByImage "${imageId}")
+      if [[ "${imageUsedByImageResult}" == 0 ]]; then
+        echo "Not in use" | sed $'s,.*,\e[1;31m&\e[m,'
+        imageRemove "${imageId}" "-" "no"
+        imageDeleted=1
+      else
+        echo -n "In use by image (" | sed $'s,.*,\e[0;32m&\e[m,'
+        echo -n "$(imageName "${imageUsedByImageResult}"):" | sed $'s,.*,\e[0;32m&\e[m,'
+        echo "$(imageTag "${imageUsedByImageResult}"))" | sed $'s,.*,\e[0;32m&\e[m,'
+      fi
     else
-      echo -n "In use by image (" | sed $'s,.*,\e[0;32m&\e[m,'
-      echo -n "$(imageName "${imageUsedByImageResult}"):" | sed $'s,.*,\e[0;32m&\e[m,'
-      echo "$(imageTag "${imageUsedByImageResult}"))" | sed $'s,.*,\e[0;32m&\e[m,'
+      echo -n "In use by container (" | sed $'s,.*,\e[0;32m&\e[m,'
+      echo "$(containerName "${imageUsedByContainerResult}"))" | sed $'s,.*,\e[0;32m&\e[m,'
     fi
-  else
-    echo -n "In use by container (" | sed $'s,.*,\e[0;32m&\e[m,'
-    echo "$(containerName "${imageUsedByContainerResult}"))" | sed $'s,.*,\e[0;32m&\e[m,'
+  done
+
+  if [[ "${imageDeleted}" == 0 ]]; then
+    break
   fi
 done
