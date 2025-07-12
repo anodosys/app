@@ -13,6 +13,9 @@ containerPortBlocked()
       readarray -d / -t portParts < <(printf '%s' "${port}")
       port="${portParts[0]}"
       protocol="${portParts[1]}"
+      if [[ -z "${protocol}" ]]; then
+        protocol="tcp"
+      fi
       portBlocked=$(bash -c "echo > /dev/${protocol}/127.0.0.1/${port}" 2>/dev/null && echo 1 || echo 0)
       if [[ "${portBlocked}" == 1 ]]; then
         echo 1
