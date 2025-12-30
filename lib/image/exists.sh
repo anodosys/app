@@ -13,9 +13,9 @@ imageExists()
   imageName=$(echo "${imageName,,}" | sed 's/^library\///')
 
   if [[ -n "${imageTag}" ]]; then
-    docker image ls -a | grep -E "^${imageName,,}\\s+${imageTag,,}\\s" | wc -l
+    docker images --format "{{.Repository}}:{{.Tag}}" | grep -E "^${imageName,,}:${imageTag,,}$" | wc -l
   else
-    docker image ls -a | awk '{print $3}' | grep -E "^${imageName,,}$" | wc -l
+    ( docker images --format "{{.Repository}}"; docker images --format "{{.ID}}" ) | grep -E "^${imageName,,}$" | wc -l
   fi
 }
 

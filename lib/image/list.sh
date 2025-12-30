@@ -2,7 +2,7 @@
 
 imageList()
 {
-  docker image ls -a | awk '{print $1,$2,$3}' | tail -n +2 | sort -n
+  docker images --format "{{.Repository}} {{.Tag}} {{.ID}}" | sort -n
 }
 
 # shellcheck disable=SC2034

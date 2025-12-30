@@ -64,7 +64,7 @@ imageUsedByImage()
       imageId="${imageName,,}"
     fi
 
-    imageIds=( $(docker image ls -a | tail -n +2 | awk '{print $3}') )
+    imageIds=( $(docker images --format "{{.ID}}") )
     if [[ "${#imageIds[@]}" -gt 0 ]]; then
       for nextImageId in "${imageIds[@]}"; do
         if [[ "${nextImageId}" != "${imageId}" ]]; then
