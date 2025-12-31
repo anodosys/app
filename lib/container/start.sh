@@ -9,6 +9,7 @@ containerStart()
   local retry="${5:-0}"
   local skipPortsAvailable="${6:-false}"
   local follow="${7:-false}"
+  local containerStartedCommand="${8:-false}"
   local result
   local mountingIssue
   local ports
@@ -65,6 +66,21 @@ containerStart()
       fi
       containerVolumePrepare "${containerName}" "${useNamedVolumes}"
       containerHostNameAdd "${containerName}"
+      if [[ "${containerStartedCommand}" != "false" ]]; then
+        echo "Using started script for container: ${containerName} at: ${containerStartedCommand}"
+        counter=0
+        while [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerCommandQuiet "${containerName}" "${containerStartedCommand} && echo \"1\" || echo \"0\"") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
+          echo "Waiting for started script for container: ${containerName}" | sed $'s,.*,\e[1;30m&\e[m,'
+          counter=$(( counter + 1 ))
+          sleep 1
+        done
+        if [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerCommandQuiet "${containerName}" "${containerStartedCommand} && echo \"1\" || echo \"0\"") == 1 ]]; then
+          echo "Started script has finished for container: ${containerName}" | sed $'s,.*,\e[0;36m&\e[m,'
+        elif [[ $(containerRunning "${containerName}") == 1 ]]; then
+          >&2 echo "Started script has not finished for container: ${containerName}"
+          exit 1
+        fi
+      fi
       if [[ "${skipPortsAvailable}" == "false" ]]; then
         ports=( $(containerPortList "${containerName}") )
         if [[ "${#ports[@]}" -gt 0 ]]; then
@@ -82,7 +98,7 @@ containerStart()
             sleep 1
           done
           if [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerPortAvailable "${containerName}") == 1 ]]; then
-            echo "All ports are available for containerName: ${containerName}" | sed $'s,.*,\e[0;36m&\e[m,'
+            echo "All ports are available for container: ${containerName}" | sed $'s,.*,\e[0;36m&\e[m,'
           elif [[ $(containerRunning "${containerName}") == 1 ]]; then
             >&2 echo "Not all ports are available for container: ${containerName}"
             exit 1
@@ -90,7 +106,15 @@ containerStart()
             if [[ "${retry}" -lt 20 ]]; then
               echo "Container not running: ${containerName}, try again"
               retry=$(( retry + 1 ))
-              containerStart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "${retry}" "${skipPortsAvailable}" "${follow}"
+              containerStart \
+                "${containerName}" \
+                "${useNamedVolumes}" \
+                "${serverNames}" \
+                "${networkName}" \
+                "${retry}" \
+                "${skipPortsAvailable}" \
+                "${follow}" \
+                "${containerStartedCommand}"
             else
               >&2 echo "Container not running: ${containerName}"
               exit 1

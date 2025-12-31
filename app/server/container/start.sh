@@ -209,9 +209,21 @@ if [[ -z "${follow}" ]]; then
   follow="false"
 fi
 
+if [[ -z "${containerStartedCommand}" ]]; then
+  containerStartedCommand="false"
+fi
+
 serverNamesCombined=$(IFS=,; printf '%s' "${serverNames[*]}")
 
-containerStart "${containerName}" "${useNamedVolumes}" "${serverNamesCombined}" "${systemName}" 0 "${skipPortsAvailable}" "${follow}"
+containerStart \
+  "${containerName}" \
+  "${useNamedVolumes}" \
+  "${serverNamesCombined}" \
+  "${systemName}" \
+  0 \
+  "${skipPortsAvailable}" \
+  "${follow}" \
+  "${containerStartedCommand}"
 
 if [[ -n "${afterContainerStartScript}" ]]; then
   echo "After container start script: ${afterContainerStartScript}"

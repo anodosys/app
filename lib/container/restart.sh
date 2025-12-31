@@ -9,6 +9,7 @@ containerRestart()
   local retry="${5:-0}"
   local skipPortsAvailable="${6:-false}"
   local follow="${7:-false}"
+  local containerStartedCommand="${8:-false}"
   local result
   local ports
   local counter
@@ -63,7 +64,15 @@ containerRestart()
     fi
   else
     echo "No need to restart container: ${containerName}, starting container"
-    containerStart "${containerName}" "${useNamedVolumes}" "${serverNames}" "${networkName}" "${retry}" "${skipPortsAvailable}" "${follow}"
+    containerStart \
+      "${containerName}" \
+      "${useNamedVolumes}" \
+      "${serverNames}" \
+      "${networkName}" \
+      "${retry}" \
+      "${skipPortsAvailable}" \
+      "${follow}" \
+      "${containerStartedCommand}"
   fi
 }
 
