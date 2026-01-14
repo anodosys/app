@@ -79,7 +79,7 @@ if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 0 ]]; then
     >&2 echo "No repository password for server: ${serverName}"
     exit 1
   elif [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
-    imagePull "${imageName,,}" "${imageTag,,}"
+    imagePull "${imageName,,}" "${imageTag,,}" "no" "${repositoryUserName}" "${repositoryPassword}"
   else
     >&2 echo "Source image does not exist: ${imageName,,}:${imageTag,,}"
     exit 1
