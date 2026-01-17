@@ -14,6 +14,16 @@ setServerConfiguration "${systemName}" "system"
 
 echo "- Container commencement -" | sed $'s,.*,\e[1;37m&\e[m,'
 
+currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
+
+for serverName in "${serverNames[@]}"; do
+  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
+    continue
+  fi
+
+  "${currentPath}/../../server/container/path.sh" -s "${serverName}"
+done
+
 if [[ -f "${anodosysUserVarPath}/commencement/${systemName}" ]]; then
   echo "Commencement already processed"
   exit 0
@@ -35,16 +45,6 @@ if [[ -n "${beforeContainerCommencementScript}" ]]; then
       --systemName "${systemName}"
   fi
 fi
-
-currentPath=$(cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd)
-
-for serverName in "${serverNames[@]}"; do
-  if [[ -n "${server}" ]] && [[ "${server}" != "${serverName}" ]]; then
-    continue
-  fi
-
-  "${currentPath}/../../server/container/path.sh" -s "${serverName}"
-done
 
 declare -A processedServerNameList
 
