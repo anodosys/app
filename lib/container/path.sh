@@ -19,7 +19,7 @@ containerPath()
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ -n "${containerPath}" ]]; then
-      if [[ $(containerCommandQuiet "${containerName}" "[[ -e ${containerPath} ]] && echo \"true\" || echo \"false\"") == "true" ]]; then
+      if [[ $(containerCommandQuiet "${containerName}" "[[ -e ${containerPath} ]] && echo \"true\" || echo \"false\"") == "false" ]]; then
         if [[ "${missingMode}" == "f" ]]; then
           echo "Creating file at container path: ${containerPath}"
           containerCommand "${containerName}" "touch ${containerPath}"
