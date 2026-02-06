@@ -130,7 +130,11 @@ if [[ -n "${systemActionPath}" ]] && [[ -d "${systemActionPath}" ]]; then
 fi
 
 for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
-  userExtensionActions=( $(find "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+  if [[ -d "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" ]]; then
+    userExtensionActions=( $(find "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+  else
+    userExtensionActions=()
+  fi
   if [[ -n "${userExtensionActions[*]}" ]]; then
     >&2 echo ""
     for userExtensionAction in "${userExtensionActions[@]}"; do
@@ -144,7 +148,11 @@ for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
 done
 
 for anodosysExtension in "${anodosysExtensions[@]}"; do
-  extensionActions=( $(find "${anodosysExtensionPath}/${anodosysExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+  if [[ -d "${anodosysExtensionPath}/${anodosysExtension}/action/server/" ]]; then
+    extensionActions=( $(find "${anodosysExtensionPath}/${anodosysExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+  else
+    extensionActions=()
+  fi
   if [[ -n "${extensionActions[*]}" ]]; then
     >&2 echo ""
     for extensionAction in "${extensionActions[@]}"; do
