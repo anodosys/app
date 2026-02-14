@@ -10,8 +10,8 @@ if [[ -z "${serverNames}" ]]; then
   exit 1
 fi
 
-echo "server     | source image                                                      | target image                                                      | container"
-echo "---------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------"
+echo "server          | source image                                                      | target image                                                      | container"
+echo "--------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------- | -------------------------"
 for serverName in "${serverNames[@]}"; do
   "${anodosysAppPath}/server/names.sh" -s "${serverName}"
 done

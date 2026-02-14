@@ -5,6 +5,11 @@ if [[ -z "${anodosysAppPath}" ]]; then
   exit 1
 fi
 
+if [[ -z "${anodosysUserVarEnvPath}" ]]; then
+  >&2 echo "No anodosys user var env path specified!"
+  exit 1
+fi
+
 if [[ -z "${systemName}" ]]; then
   >&2 echo "No system name specified!"
   exit 1
@@ -214,6 +219,15 @@ if [[ -z "${containerStartedCommand}" ]]; then
 fi
 
 serverNamesCombined=$(IFS=,; printf '%s' "${serverNames[*]}")
+
+echo -n "" > "${anodosysUserVarEnvPath}/${containerName}"
+
+if [[ -n "${env}" ]]; then
+  readarray -d , -t envs < <(printf '%s' "${env}")
+  for nextEnv in "${envs[@]}"; do
+    echo "${nextEnv}" >> "${anodosysUserVarEnvPath}/${containerName}"
+  done
+fi
 
 containerStart \
   "${containerName}" \

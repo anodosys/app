@@ -44,7 +44,7 @@ fi
 
 setServerConfiguration "${systemName}" "${serverName}"
 
-printf '%-10s' "${serverName}"
+printf '%-15s' "${serverName}"
 echo -n " | "
 
 if [[ -n "${imageName}" ]] && [[ -n "${imageTag}" ]]; then

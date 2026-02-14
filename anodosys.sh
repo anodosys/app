@@ -216,6 +216,7 @@ local=0
 source "${anodosysAppPath}/prepare-parameters.sh"
 export force
 export local
+export env
 
 source "${anodosysAppPath}/lib.sh"
 

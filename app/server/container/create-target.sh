@@ -5,8 +5,8 @@ if [[ -z "${anodosysAppPath}" ]]; then
   exit 1
 fi
 
-if [[ -z "${anodosysUserVarPath}" ]]; then
-  >&2 echo "No anodosys user var path specified!"
+if [[ -z "${anodosysUserVarEnvPath}" ]]; then
+  >&2 echo "No anodosys user var env path specified!"
   exit 1
 fi
 
@@ -190,6 +190,10 @@ fi
 for containerVolume in "${containerVolumes[@]}"; do
   optionalParameters+=( "volume:${containerVolume}" )
 done
+
+rm -rf "${anodosysUserVarEnvPath:?}/${containerName}"
+touch "${anodosysUserVarEnvPath}/${containerName}"
+optionalParameters+=( "volume:${anodosysUserVarPath}/env/${containerName}:/usr/local/etc/.anodosys" )
 
 if [[ -z "${containerVariables}" ]]; then
   containerVariables=()
