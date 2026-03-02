@@ -232,6 +232,18 @@ prepareConfigurationJson()
             else
               preparedValue="${sourcePath}:${valueParts[1]}"
             fi
+          elif [[ "${key}" == "containerCopies" ]]; then
+            readarray -d : -t valueParts < <(printf '%s' "${value}")
+            sourcePath=$(completePath "${configurationFile}" "include" "${valueParts[0]}")
+            if test "${valueParts[4]+isset}"; then
+              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}:${valueParts[3]}:${valueParts[4]}"
+            elif test "${valueParts[3]+isset}"; then
+              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}:${valueParts[3]}"
+            elif test "${valueParts[2]+isset}"; then
+              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}"
+            else
+              preparedValue="${sourcePath}:${valueParts[1]}"
+            fi
           else
             preparedValue=$(completePath "${configurationFile}" "${key}" "${preparedValue}")
           fi
