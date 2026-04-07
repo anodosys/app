@@ -221,17 +221,19 @@ if [[ -n "${afterContainerCommencementDockerScript}" ]]; then
     fi
   else
     if [[ -n "${afterContainerCommencementDockerUser}" ]]; then
-      containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
+      containerExecuteUser "${containerName}" "${afterContainerCommencementDockerUser}" "${afterContainerCommencementDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
-        --hostUserId "${UID}"
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
     fi
   fi
 fi
