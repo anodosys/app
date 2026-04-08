@@ -72,47 +72,47 @@ cat >&2 << EOF
 usage: ads <ACTION>
 
 ACTION:
-  list       List all known systems
+  list                List all known systems
 
-  construct  Create or update system components
-  reset      Remove all generated data of the system
+  construct           Create or update system components
+  reset               Remove all generated data of the system
 
-  host       Check host requirements
-  init       Pull the images required for building
-  build      Build the target images and push if required
-  rebuild    Re-build the target images and push if required
-  shell      Re-build the target images
-  rise       Create the containers from source images and run installation process
-  source     Create the containers from source images
-  install    Run installation process with created containers from source images
-  image      Build the image from running containers
-  push       Push the built images to remote
-  prepare    Pull the built images required for running
-  run        Create the container from built images and start them
-  create     Create the container from built images
-  start      Start the containers with created containers from built images
-  stop       Stop the containers
-  restart    Re-start the containers
-  remove     Remove the containers
-  clean      Remove the the built images
-  purge      Stop and remove the containers
-  erase      Stop and remove the containers and remove the build images
-  destroy    Remove the built images locally and remotely
+  host                Check host requirements
+  init                Pull the images required for building
+  build               Build the target images and push if required
+  rebuild             Re-build the target images and push if required
+  shell               Re-build the target images
+  rise                Create the containers from source images and run installation process
+  source              Create the containers from source images
+  install             Run installation process with created containers from source images
+  image               Build the image from running containers
+  push                Push the built images to remote
+  prepare             Pull the built images required for running
+  run                 Create the container from built images and start them
+  create              Create the container from built images
+  start               Start the containers with created containers from built images
+  stop                Stop the containers
+  restart             Re-start the containers
+  remove              Remove the containers
+  clean               Remove the the built images
+  purge               Stop and remove the containers
+  erase               Stop and remove the containers and remove the build images
+  destroy             Remove the built images locally and remotely
 
-  config     Show the complete configuration of the system
-  names      Show the names of images and containers of the system
-  status     Show a current status of images and containers of the system
-  volumes    Show the details of all volumes
-  paths      Show the details of all paths
-  ports      Show the details of all ports
+  config              Show the complete configuration of the system
+  names               Show the names of images and containers of the system
+  status              Show a current status of images and containers of the system
+  volumes             Show the details of all volumes
+  paths               Show the details of all paths
+  ports               Show the details of all ports
 
-  bash       Open a bash shell in a container
-  cmd        Execute a command in a container
-  cmdi       Execute a command in a container in interactive mode
-  cmdiq      Execute a command in a container in interactive mode and without any messages
-  cmdq       Execute a command in a container without any messages
-  copy       Copy a local file into a container
-  exec       Copy and execute a local script in a container
+  bash                Open a bash shell in a container
+  cmd                 Execute a command in a container
+  cmdi                Execute a command in a container in interactive mode
+  cmdiq               Execute a command in a container in interactive mode and without any messages
+  cmdq                Execute a command in a container without any messages
+  copy                Copy a local file into a container
+  exec                Copy and execute a local script in a container
 EOF
 
 if [[ -n "${systemActionPath}" ]] && [[ -d "${systemActionPath}" ]]; then
@@ -124,7 +124,7 @@ if [[ -n "${systemActionPath}" ]] && [[ -d "${systemActionPath}" ]]; then
       if [[ -f "${systemActionPath}/${systemAction}.txt" ]]; then
         systemActionDescription=$(cat "${systemActionPath}/${systemAction}.txt")
       fi
-      >&2 echo "  $(printf '%-11s' "${systemAction}")${systemActionDescription}"
+      >&2 echo "  $(printf '%-20s' "${systemAction}")${systemActionDescription}"
     done
   fi
 fi
@@ -142,7 +142,7 @@ for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
       if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt" ]]; then
         userExtensionActionDescription=$(cat "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt")
       fi
-      >&2 echo "  $(printf '%-11s' "${userExtensionAction}")${userExtensionActionDescription}"
+      >&2 echo "  $(printf '%-20s' "${userExtensionAction}")${userExtensionActionDescription}"
     done
   fi
 done
@@ -160,7 +160,7 @@ for anodosysExtension in "${anodosysExtensions[@]}"; do
       if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt" ]]; then
         extensionActionDescription=$(cat "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt")
       fi
-      >&2 echo "  $(printf '%-11s' "${extensionAction}")${extensionActionDescription}"
+      >&2 echo "  $(printf '%-20s' "${extensionAction}")${extensionActionDescription}"
     done
   fi
 done
