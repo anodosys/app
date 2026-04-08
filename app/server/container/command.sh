@@ -20,6 +20,7 @@ OPTIONS:
   -i  Flag if the command show by executed interactively (optional)
   -q  Flag if the command is hidden
   -u  User name (optional)
+  -w  Working dir (optional)
 
 Example: ${scriptName} -s web -c "echo \"test\"" -u www-data
 EOF
@@ -35,8 +36,9 @@ command=
 interactive=0
 quiet=0
 userName=
+workDir=
 
-while getopts hs:c:iqu:? option; do
+while getopts hs:c:iqu:w:? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
@@ -44,6 +46,7 @@ while getopts hs:c:iqu:? option; do
     i) interactive=1;;
     q) quiet=1;;
     u) userName=$(trim "$OPTARG");;
+    w) workDir=$(trim "$OPTARG");;
     ?) usage; exit 1;;
   esac
 done
@@ -67,15 +70,18 @@ logDisable
 containerName="${systemName}_${serverName}"
 
 if [[ -n "${userName}" ]]; then
-  if [[ $(containerCommandQuiet "${containerName}" "getent passwd ${userName} | cat" | wc -l) == 0 ]]; then
-    userId=$(getent passwd "${userName}" | tr ':' ' ' | awk '{print $3}')
+  if [[ $(containerCommandQuiet "${containerName}" "getent passwd ${userName} 2>/dev/null | cat" | wc -l) == 0 ]]; then
+    userId=$(getent passwd "${userName}" 2>/dev/null | tr ':' ' ' | awk '{print $3}')
+    if [[ -z "${userId}" ]] && [[ "${userName}" == "me" ]]; then
+      userId="${UID}"
+    fi
     if [[ -n "${userId}" ]]; then
-      userName=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} | cat" | tr ':' ' ' | awk '{print $1}')
+      userName=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} 2>/dev/null | cat" | tr ':' ' ' | awk '{print $1}')
       if [[ -z "${userName}" ]]; then
         userName="${USER}"
-        userHome=$(getent passwd "${userName}" | tr ':' ' ' | awk '{print $6}')
+        userHome=$(getent passwd "${userName}" 2>/dev/null | tr ':' ' ' | awk '{print $6}')
         groupId=$(stat -c '%g' "${userHome}")
-        groupName=$(containerCommandQuiet "${containerName}" "getent group ${groupId} | tr ':' ' ' | awk '{print \$1}'")
+        groupName=$(containerCommandQuiet "${containerName}" "getent group ${groupId} 2>/dev/null | tr ':' ' ' | awk '{print \$1}'")
         if [[ -z "${groupName}" ]]; then
           groupName="docker_volume_${groupId}"
           echo "Creating new group: ${groupName}"
@@ -90,15 +96,16 @@ if [[ -n "${userName}" ]]; then
       fi
     fi
   fi
-  if [[ "${quiet}" == 0 ]]; then
-    containerCommand "${containerName}" "${command}" "${interactive}" "${userName}"
-  else
-    containerCommandQuiet "${containerName}" "${command}" "${interactive}" "${userName}"
-  fi
 else
-  if [[ "${quiet}" == 0 ]]; then
-    containerCommand "${containerName}" "${command}" "${interactive}"
-  else
-    containerCommandQuiet "${containerName}" "${command}" "${interactive}"
-  fi
+  userName="none"
+fi
+
+if [[ -z "${workDir}" ]]; then
+  workDir="none"
+fi
+
+if [[ "${quiet}" == 0 ]]; then
+  containerCommand "${containerName}" "${command}" "${interactive}" "${userName}" "${workDir}"
+else
+  containerCommandQuiet "${containerName}" "${command}" "${interactive}" "${userName}" "${workDir}"
 fi

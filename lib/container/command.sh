@@ -6,18 +6,30 @@ containerCommand()
   local command="${2}"
   local interactive="${3:-0}"
   local userName="${4}"
+  local workDir="${5}"
   local flags="-t"
 
   if [[ "${interactive}" == 1 ]]; then
     flags+="i"
   fi
+
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     if [[ -z "${userName}" ]] || [[ "${userName}" == "none" ]]; then
-      echo "Executing command in container: ${containerName}: ${command}"
-      docker exec "${flags}" "${containerName}" bash -c "${command}"
+      if [[ -z "${workDir}" ]] || [[ "${workDir}" == "none" ]]; then
+        echo "Executing command in container: ${containerName}: ${command}"
+        docker exec "${flags}" "${containerName}" bash -c "${command}"
+      else
+        echo "Executing command with work dir: ${workDir} in container: ${containerName}: ${command}"
+        docker exec "${flags}" -w "${workDir}" "${containerName}" bash -c "${command}"
+      fi
     else
-      echo "Executing command with user: ${userName} in container: ${containerName}: ${command}"
-      docker exec "${flags}" -u "${userName}" "${containerName}" bash -c "${command}"
+      if [[ -z "${workDir}" ]] || [[ "${workDir}" == "none" ]]; then
+        echo "Executing command with user: ${userName} in container: ${containerName}: ${command}"
+        docker exec "${flags}" -u "${userName}" "${containerName}" bash -c "${command}"
+      else
+        echo "Executing command with user: ${userName} and work dir: ${workDir} in container: ${containerName}: ${command}"
+        docker exec "${flags}" -u "${userName}" -w "${workDir}" "${containerName}" bash -c "${command}"
+      fi
     fi
   else
     >&2 echo "Container not running: ${containerName}"
@@ -34,19 +46,40 @@ containerCommandQuiet()
   local command="${2}"
   local interactive="${3:-0}"
   local userName="${4}"
+  local workDir="${5}"
+
+  if [[ "${interactive}" == 1 ]]; then
+    flags+="i"
+  fi
 
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
     if [[ -z "${userName}" ]] || [[ "${userName}" == "none" ]]; then
-      if [[ "${interactive}" == 1 ]]; then
-        docker exec -it "${containerName}" bash -c "${command}"
+      if [[ -z "${workDir}" ]] || [[ "${workDir}" == "none" ]]; then
+        if [[ "${interactive}" == 1 ]]; then
+          docker exec -it "${containerName}" bash -c "${command}"
+        else
+          docker exec "${containerName}" bash -c "${command}"
+        fi
       else
-        docker exec "${containerName}" bash -c "${command}"
+        if [[ "${interactive}" == 1 ]]; then
+          docker exec -it -w "${workDir}" "${containerName}" bash -c "${command}"
+        else
+          docker exec -w "${workDir}" "${containerName}" bash -c "${command}"
+        fi
       fi
     else
-      if [[ "${interactive}" == 1 ]]; then
-        docker exec -it -u "${userName}" "${containerName}" bash -c "${command}"
+      if [[ -z "${workDir}" ]] || [[ "${workDir}" == "none" ]]; then
+        if [[ "${interactive}" == 1 ]]; then
+          docker exec -it -u "${userName}" "${containerName}" bash -c "${command}"
+        else
+          docker exec -u "${userName}" "${containerName}" bash -c "${command}"
+        fi
       else
-        docker exec -u "${userName}" "${containerName}" bash -c "${command}"
+        if [[ "${interactive}" == 1 ]]; then
+          docker exec -it -u "${userName}" -w "${workDir}" "${containerName}" bash -c "${command}"
+        else
+          docker exec -u "${userName}" -w "${workDir}" "${containerName}" bash -c "${command}"
+        fi
       fi
     fi
   else
