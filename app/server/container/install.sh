@@ -53,6 +53,63 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
+if [[ -n "${priorContainerInstallScript}" ]]; then
+  echo "Prior container install script: ${priorContainerInstallScript}"
+  if [[ -n "${priorContainerInstallParameters}" ]]; then
+    "${priorContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${priorContainerInstallParameters[@]}"
+  else
+    "${priorContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${priorContainerInstallDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Prior container install docker script: ${priorContainerInstallDockerScript}"
+  if [[ -n "${priorContainerInstallDockerParameters}" ]]; then
+    if [[ -n "${priorContainerInstallDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerInstallDockerUser}" "${priorContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerInstallDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${priorContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerInstallDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${priorContainerInstallDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerInstallDockerUser}" "${priorContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${priorContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
 if [[ -n "${beforeContainerInstallScript}" ]]; then
   echo "Before container install script: ${beforeContainerInstallScript}"
   if [[ -n "${beforeContainerInstallParameters}" ]]; then
@@ -212,7 +269,7 @@ if [[ -n "${afterContainerInstallDockerScript}" ]]; then
     fi
   else
     if [[ -n "${afterContainerInstallDockerUser}" ]]; then
-      containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
+      containerExecuteUser "${containerName}" "${afterContainerInstallDockerUser}" "${afterContainerInstallDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
@@ -220,6 +277,63 @@ if [[ -n "${afterContainerInstallDockerScript}" ]]; then
         --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
+if [[ -n "${postContainerInstallScript}" ]]; then
+  echo "Post container install script: ${postContainerInstallScript}"
+  if [[ -n "${postContainerInstallParameters}" ]]; then
+    "${postContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${postContainerInstallParameters[@]}"
+  else
+    "${postContainerInstallScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${postContainerInstallDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Post container install docker script: ${postContainerInstallDockerScript}"
+  if [[ -n "${postContainerInstallDockerParameters}" ]]; then
+    if [[ -n "${postContainerInstallDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerInstallDockerUser}" "${postContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerInstallDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${postContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerInstallDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${postContainerInstallDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerInstallDockerUser}" "${postContainerInstallDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${postContainerInstallDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \

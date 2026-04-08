@@ -63,6 +63,63 @@ fi
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+if [[ -n "${priorContainerCommencementScript}" ]]; then
+  echo "Prior container commencement script: ${priorContainerCommencementScript}"
+  if [[ -n "${priorContainerCommencementParameters}" ]]; then
+    "${priorContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${priorContainerCommencementParameters[@]}"
+  else
+    "${priorContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${priorContainerCommencementDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Prior container commencement docker script: ${priorContainerCommencementDockerScript}"
+  if [[ -n "${priorContainerCommencementDockerParameters}" ]]; then
+    if [[ -n "${priorContainerCommencementDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerCommencementDockerUser}" "${priorContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerCommencementDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${priorContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerCommencementDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${priorContainerCommencementDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerCommencementDockerUser}" "${priorContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${priorContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
 if [[ -n "${beforeContainerCommencementScript}" ]]; then
   echo "Before container commencement script: ${beforeContainerCommencementScript}"
   if [[ -n "${beforeContainerCommencementParameters}" ]]; then
@@ -229,6 +286,63 @@ if [[ -n "${afterContainerCommencementDockerScript}" ]]; then
         --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
+if [[ -n "${postContainerCommencementScript}" ]]; then
+  echo "Post container commencement script: ${postContainerCommencementScript}"
+  if [[ -n "${postContainerCommencementParameters}" ]]; then
+    "${postContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${postContainerCommencementParameters[@]}"
+  else
+    "${postContainerCommencementScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${postContainerCommencementDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Post container commencement docker script: ${postContainerCommencementDockerScript}"
+  if [[ -n "${postContainerCommencementDockerParameters}" ]]; then
+    if [[ -n "${postContainerCommencementDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerCommencementDockerUser}" "${postContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerCommencementDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${postContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerCommencementDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${postContainerCommencementDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerCommencementDockerUser}" "${postContainerCommencementDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${postContainerCommencementDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \

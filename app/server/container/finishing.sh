@@ -63,6 +63,63 @@ fi
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+if [[ -n "${priorContainerFinishingScript}" ]]; then
+  echo "Prior container finishing script: ${priorContainerFinishingScript}"
+  if [[ -n "${priorContainerFinishingParameters}" ]]; then
+    "${priorContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${priorContainerFinishingParameters[@]}"
+  else
+    "${priorContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${priorContainerFinishingDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Prior container finishing docker script: ${priorContainerFinishingDockerScript}"
+  if [[ -n "${priorContainerFinishingDockerParameters}" ]]; then
+    if [[ -n "${priorContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerFinishingDockerUser}" "${priorContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerFinishingDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${priorContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerFinishingDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${priorContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerFinishingDockerUser}" "${priorContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${priorContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
 if [[ -n "${beforeContainerFinishingScript}" ]]; then
   echo "Before container finishing script: ${beforeContainerFinishingScript}"
   if [[ -n "${beforeContainerFinishingParameters}" ]]; then
@@ -229,6 +286,63 @@ if [[ -n "${afterContainerFinishingDockerScript}" ]]; then
         --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
+if [[ -n "${postContainerFinishingScript}" ]]; then
+  echo "Post container finishing script: ${postContainerFinishingScript}"
+  if [[ -n "${postContainerFinishingParameters}" ]]; then
+    "${postContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${postContainerFinishingParameters[@]}"
+  else
+    "${postContainerFinishingScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${postContainerFinishingDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Post container finishing docker script: ${postContainerFinishingDockerScript}"
+  if [[ -n "${postContainerFinishingDockerParameters}" ]]; then
+    if [[ -n "${postContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerFinishingDockerUser}" "${postContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerFinishingDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${postContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerFinishingDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${postContainerFinishingDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerFinishingDockerUser}" "${postContainerFinishingDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${postContainerFinishingDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \

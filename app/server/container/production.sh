@@ -63,6 +63,63 @@ fi
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+if [[ -n "${priorContainerProductionScript}" ]]; then
+  echo "Prior container production script: ${priorContainerProductionScript}"
+  if [[ -n "${priorContainerProductionParameters}" ]]; then
+    "${priorContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${priorContainerProductionParameters[@]}"
+  else
+    "${priorContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${priorContainerProductionDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Prior container production docker script: ${priorContainerProductionDockerScript}"
+  if [[ -n "${priorContainerProductionDockerParameters}" ]]; then
+    if [[ -n "${priorContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerProductionDockerUser}" "${priorContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerProductionDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${priorContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerProductionDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${priorContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerProductionDockerUser}" "${priorContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${priorContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
 if [[ -n "${beforeContainerProductionScript}" ]]; then
   echo "Before container production script: ${beforeContainerProductionScript}"
   if [[ -n "${beforeContainerProductionParameters}" ]]; then
@@ -229,6 +286,63 @@ if [[ -n "${afterContainerProductionDockerScript}" ]]; then
         --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
+if [[ -n "${postContainerProductionScript}" ]]; then
+  echo "Post container production script: ${postContainerProductionScript}"
+  if [[ -n "${postContainerProductionParameters}" ]]; then
+    "${postContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${postContainerProductionParameters[@]}"
+  else
+    "${postContainerProductionScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${postContainerProductionDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Post container production docker script: ${postContainerProductionDockerScript}"
+  if [[ -n "${postContainerProductionDockerParameters}" ]]; then
+    if [[ -n "${postContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerProductionDockerUser}" "${postContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerProductionDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${postContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerProductionDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${postContainerProductionDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerProductionDockerUser}" "${postContainerProductionDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${postContainerProductionDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \

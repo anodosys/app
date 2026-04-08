@@ -58,6 +58,63 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
+if [[ -n "${priorContainerPrepareScript}" ]]; then
+  echo "Prior container prepare script: ${priorContainerPrepareScript}"
+  if [[ -n "${priorContainerPrepareParameters}" ]]; then
+    "${priorContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${priorContainerPrepareParameters[@]}"
+  else
+    "${priorContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${priorContainerPrepareDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Prior container prepare docker script: ${priorContainerPrepareDockerScript}"
+  if [[ -n "${priorContainerPrepareDockerParameters}" ]]; then
+    if [[ -n "${priorContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerPrepareDockerUser}" "${priorContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerPrepareDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${priorContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerPrepareDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${priorContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerPrepareDockerUser}" "${priorContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${priorContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
 if [[ -n "${beforeContainerPrepareScript}" ]]; then
   echo "Before container prepare script: ${beforeContainerPrepareScript}"
   if [[ -n "${beforeContainerPrepareParameters}" ]]; then
@@ -233,6 +290,63 @@ if [[ -n "${afterContainerPrepareDockerScript}" ]]; then
         --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
+if [[ -n "${postContainerPrepareScript}" ]]; then
+  echo "Post container prepare script: ${postContainerPrepareScript}"
+  if [[ -n "${postContainerPrepareParameters}" ]]; then
+    "${postContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${postContainerPrepareParameters[@]}"
+  else
+    "${postContainerPrepareScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${postContainerPrepareDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Post container prepare docker script: ${postContainerPrepareDockerScript}"
+  if [[ -n "${postContainerPrepareDockerParameters}" ]]; then
+    if [[ -n "${postContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerPrepareDockerUser}" "${postContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerPrepareDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${postContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerPrepareDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${postContainerPrepareDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerPrepareDockerUser}" "${postContainerPrepareDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${postContainerPrepareDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \

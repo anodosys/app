@@ -304,13 +304,17 @@ completePath()
   local stepDockerScriptName
   local afterStepDockerScriptName
   for stepName in "${!stepScripts[@]}"; do
+    priorStepScriptName="prior${stepName^}Script"
     beforeStepScriptName="before${stepName^}Script"
     stepScriptName="${stepName}Script"
     afterStepScriptName="after${stepName^}Script"
+    postStepScriptName="post${stepName^}Script"
+    priorStepDockerScriptName="prior${stepName^}DockerScript"
     beforeStepDockerScriptName="before${stepName^}DockerScript"
     stepDockerScriptName="${stepName}DockerScript"
     afterStepDockerScriptName="after${stepName^}DockerScript"
-    if [[ "${key}" == "${beforeStepScriptName}" ]] || [[ "${key}" == "${stepScriptName}" ]] || [[ "${key}" == "${afterStepScriptName}" ]] || [[ "${key}" == "${beforeStepDockerScriptName}" ]] || [[ "${key}" == "${stepDockerScriptName}" ]] || [[ "${key}" == "${afterStepDockerScriptName}" ]]; then
+    postStepDockerScriptName="post${stepName^}DockerScript"
+    if [[ "${key}" == "${priorStepScriptName}" ]] || [[ "${key}" == "${beforeStepScriptName}" ]] || [[ "${key}" == "${stepScriptName}" ]] || [[ "${key}" == "${afterStepScriptName}" ]] || [[ "${key}" == "${postStepScriptName}" ]] || [[ "${key}" == "${priorStepDockerScriptName}" ]] || [[ "${key}" == "${beforeStepDockerScriptName}" ]] || [[ "${key}" == "${stepDockerScriptName}" ]] || [[ "${key}" == "${afterStepDockerScriptName}" ]] || [[ "${key}" == "${postStepDockerScriptName}" ]]; then
       canCompletePath=1
     fi
   done
@@ -323,66 +327,86 @@ completePath()
         realpath "${sourceFilePath}/${value}"
         exit 0
       else
+        readarray -d : -t valueParts < <(printf '%s' "${value}")
+        if test "${valueParts[1]+isset}"; then
+          valueExtension="${valueParts[0]}"
+          valueValue="${valueParts[1]}"
+        else
+          valueExtension=
+          valueValue="${value}"
+        fi
         if [[ "${key}" == "require" ]] || [[ "${key}" == "include" ]]; then
-          if [[ -f "${anodosysConfigurationPath}/${value}" ]]; then
-            realpath "${anodosysConfigurationPath}/${value}"
+          if [[ -f "${anodosysConfigurationPath}/${valueValue}" ]]; then
+            realpath "${anodosysConfigurationPath}/${valueValue}"
             exit 0
           fi
-          if [[ -f "${anodosysUserConfigurationPath}/${value}" ]]; then
-            realpath "${anodosysUserConfigurationPath}/${value}"
+          if [[ -f "${anodosysUserConfigurationPath}/${valueValue}" ]]; then
+            realpath "${anodosysUserConfigurationPath}/${valueValue}"
             exit 0
           fi
           if [[ -n "${anodosysExtensions}" ]]; then
             for anodosysExtension in "${anodosysExtensions[@]}"; do
-              if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/configuration/${value}" ]]; then
-                realpath "${anodosysExtensionPath}/${anodosysExtension}/configuration/${value}"
+              if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
+                continue
+              fi
+              if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/configuration/${valueValue}" ]]; then
+                realpath "${anodosysExtensionPath}/${anodosysExtension}/configuration/${valueValue}"
                 exit 0
               fi
             done
           fi
           if [[ -n "${anodosysUserExtensions}" ]]; then
             for anodosysExtension in "${anodosysUserExtensions[@]}"; do
-              if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${value}" ]]; then
-                realpath "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${value}"
+              if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
+                continue
+              fi
+              if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${valueValue}" ]]; then
+                realpath "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${valueValue}"
                 exit 0
               fi
             done
           fi
         else
-          if [[ -f "${anodosysUserActionSystemPath}/${value}" ]]; then
-            realpath "${anodosysUserActionSystemPath}/${value}"
+          if [[ -f "${anodosysUserActionSystemPath}/${valueValue}" ]]; then
+            realpath "${anodosysUserActionSystemPath}/${valueValue}"
             exit 0
           fi
-          if [[ -f "${anodosysUserActionServerPath}/${value}" ]]; then
-            realpath "${anodosysUserActionServerPath}/${value}"
+          if [[ -f "${anodosysUserActionServerPath}/${valueValue}" ]]; then
+            realpath "${anodosysUserActionServerPath}/${valueValue}"
             exit 0
           fi
           for anodosysExtension in "${anodosysExtensions[@]}"; do
-            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/system/${value}" ]]; then
-              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/system/${value}"
+            if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
+              continue
+            fi
+            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/system/${valueValue}" ]]; then
+              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/system/${valueValue}"
               exit 0
             fi
-            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${value}" ]]; then
-              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/server/${value}"
+            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${valueValue}" ]]; then
+              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/server/${valueValue}"
               exit 0
             fi
           done
-          if [[ -f "${anodosysActionSystemPath}/${value}" ]]; then
-            realpath "${anodosysActionSystemPath}/${value}"
+          if [[ -f "${anodosysActionSystemPath}/${valueValue}" ]]; then
+            realpath "${anodosysActionSystemPath}/${valueValue}"
             exit 0
           fi
-          if [[ -f "${anodosysActionServerPath}/${value}" ]]; then
-            realpath "${anodosysActionServerPath}/${value}"
+          if [[ -f "${anodosysActionServerPath}/${valueValue}" ]]; then
+            realpath "${anodosysActionServerPath}/${valueValue}"
             exit 0
           fi
           for anodosysExtension in "${anodosysUserExtensions[@]}"; do
-            if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/script/${value}" ]]; then
-              realpath "${anodosysUserExtensionPath}/${anodosysExtension}/script/${value}"
+            if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
+              continue
+            fi
+            if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/script/${valueValue}" ]]; then
+              realpath "${anodosysUserExtensionPath}/${anodosysExtension}/script/${valueValue}"
               exit 0
             fi
           done
-          if [[ -f "${anodosysAppPath}/${value}" ]]; then
-            realpath "${anodosysAppPath}/${value}"
+          if [[ -f "${anodosysAppPath}/${valueValue}" ]]; then
+            realpath "${anodosysAppPath}/${valueValue}"
             exit 0
           fi
         fi

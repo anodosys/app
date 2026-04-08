@@ -53,6 +53,63 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
+if [[ -n "${priorContainerDismantleScript}" ]]; then
+  echo "Prior container dismantle script: ${priorContainerDismantleScript}"
+  if [[ -n "${priorContainerDismantleParameters}" ]]; then
+    "${priorContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${priorContainerDismantleParameters[@]}"
+  else
+    "${priorContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${priorContainerDismantleDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Prior container dismantle docker script: ${priorContainerDismantleDockerScript}"
+  if [[ -n "${priorContainerDismantleDockerParameters}" ]]; then
+    if [[ -n "${priorContainerDismantleDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerDismantleDockerUser}" "${priorContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerDismantleDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${priorContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${priorContainerDismantleDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${priorContainerDismantleDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${priorContainerDismantleDockerUser}" "${priorContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${priorContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
 if [[ -n "${beforeContainerDismantleScript}" ]]; then
   echo "Before container dismantle script: ${beforeContainerDismantleScript}"
   if [[ -n "${beforeContainerDismantleParameters}" ]]; then
@@ -219,6 +276,63 @@ if [[ -n "${afterContainerDismantleDockerScript}" ]]; then
         --hostGroupId "${GID}"
     else
       containerExecute "${containerName}" "${afterContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    fi
+  fi
+fi
+
+if [[ -n "${postContainerDismantleScript}" ]]; then
+  echo "Post container dismantle script: ${postContainerDismantleScript}"
+  if [[ -n "${postContainerDismantleParameters}" ]]; then
+    "${postContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}" \
+      "${postContainerDismantleParameters[@]}"
+  else
+    "${postContainerDismantleScript}" \
+      --systemName "${systemName}" \
+      --serverName "${serverName}" \
+      --containerName "${containerName}"
+  fi
+fi
+
+if [[ -n "${postContainerDismantleDockerScript}" ]]; then
+  containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
+
+  echo "Post container dismantle docker script: ${postContainerDismantleDockerScript}"
+  if [[ -n "${postContainerDismantleDockerParameters}" ]]; then
+    if [[ -n "${postContainerDismantleDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerDismantleDockerUser}" "${postContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerDismantleDockerParameters[@]}"
+    else
+      containerExecute "${containerName}" "${postContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}" \
+        "${postContainerDismantleDockerParameters[@]}"
+    fi
+  else
+    if [[ -n "${postContainerDismantleDockerUser}" ]]; then
+      containerExecuteUser "${containerName}" "${postContainerDismantleDockerUser}" "${postContainerDismantleDockerScript}" \
+        --systemName "${systemName}" \
+        --serverName "${serverName}" \
+        --hostUserName "${USER}" \
+        --hostUserId "${UID}" \
+        --hostGroupId "${GID}"
+    else
+      containerExecute "${containerName}" "${postContainerDismantleDockerScript}" \
         --systemName "${systemName}" \
         --serverName "${serverName}" \
         --hostUserName "${USER}" \
