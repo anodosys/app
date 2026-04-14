@@ -4,7 +4,7 @@ imageName()
 {
   local imageId="${1}"
 
-  docker images --format "{{.Repository}} {{.Tag}} {{.ID}}" | grep -E "\s${imageId}$" | awk '{print $1}'
+  docker images --all --format "{{.Repository}} {{.Tag}} {{.ID}}" | grep -E "\s${imageId}$" | awk '{print $1}'
 }
 
 # shellcheck disable=SC2034

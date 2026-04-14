@@ -2,7 +2,7 @@
 
 imageList()
 {
-  docker images --format "{{.Repository}} {{.Tag}} {{.ID}}" | sort -n
+  docker images --all --format "{{.Repository}} {{.Tag}} {{.ID}}" | sort -n
 }
 
 # shellcheck disable=SC2034
