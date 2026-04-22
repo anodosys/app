@@ -277,7 +277,7 @@ fi
 
 if [[ ! -L "${binPath}/ads-jump" ]]; then
   echo "Linking jump script from: ${currentReleasePath}/jump.sh to: ${binPath}/ads-jump"
-  ln -s "${currentReleasePath}/host.sh" "${binPath}/jump.sh"
+  ln -s "${currentReleasePath}/host.sh" "${binPath}/ads-jump"
 fi
 
 if [[ ! -f "${binPath}/ads-update" ]]; then
