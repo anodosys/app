@@ -1,5 +1,5 @@
 # Installation
 
 ```
-wget --no-cache -nv -O - https://raw.githubusercontent.com/anodosys/app/master/init.sh | sudo bash
+wget --no-cache -q -O - https://raw.githubusercontent.com/anodosys/app/master/setup.sh | bash
 ```
