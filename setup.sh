@@ -124,7 +124,7 @@ if [[ "${alreadyInstalled}" == 0 ]]; then
   fi
 
   if [[ "${distribution}" == "Ubuntu" ]]; then
-    requiredPackages=( git head sed wget unzip )
+    requiredPackages=( git head moreutils sed wget unzip )
   else
     >&2 echo "Unsupported OS: ${distribution}"
     exit 1
