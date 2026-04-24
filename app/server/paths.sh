@@ -48,6 +48,9 @@ if [[ -z "${containerPaths}" ]]; then
   containerPaths=()
 fi
 
+IFS=$'\n' containerPaths=($(sort -n <<<"${containerPaths[*]}"))
+unset IFS
+
 for containerPath in "${containerPaths[@]}"; do
   printf '%-10s' "${serverName}"
   echo -n " | "

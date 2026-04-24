@@ -10,6 +10,8 @@ if [[ -z "${serverNames}" ]]; then
   exit 1
 fi
 
+logDisable
+
 echo "server     | container path                                                         | user            | mode"
 echo "---------- | ---------------------------------------------------------------------- | --------------- | ----"
 for serverName in "${serverNames[@]}"; do
