@@ -67,10 +67,10 @@ if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
 elif [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}") == 1 ]]; then
   echo "Remote source image exists"
 elif [[ -z "${repositoryUserName}" ]]; then
-  >&2 echo "No repository user name for server: ${serverName}"
+  >&2 echo "No repository user name to check if source image exists for server: ${serverName}"
   exit 1
 elif [[ -z "${repositoryPassword}" ]]; then
-  >&2 echo "No repository password for server: ${serverName}"
+  >&2 echo "No repository password to check if source image exists for server: ${serverName}"
   exit 1
 elif [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
   echo "Remote source image exists"

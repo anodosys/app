@@ -68,10 +68,10 @@ if [[ -z "${repositoryUserName}" ]] && [[ -z "${repositoryPassword}" ]]; then
   imageRemoveRemote "${imageName,,}" "${imageTag,,}"
 else
   if [[ -z "${repositoryUserName}" ]]; then
-    >&2 echo "No repository user name for server: ${serverName}"
+    >&2 echo "No repository user name to remove target image for server: ${serverName}"
     exit 1
   elif [[ -z "${repositoryPassword}" ]]; then
-    >&2 echo "No repository password for server: ${serverName}"
+    >&2 echo "No repository password to remove target image for server: ${serverName}"
     exit 1
   fi
 
