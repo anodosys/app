@@ -64,18 +64,20 @@ if [[ -n "${buildImageTag}" ]]; then
   imageTag="${buildImageTag,,}"
 fi
 
-if [[ -z "${repositoryUserName}" ]] && [[ -z "${repositoryPassword}" ]]; then
+if [[ -z "${repositoryUserName}" ]] && [[ -z "${repositoryPassword}" ]] && [[ -z "${targetRepositoryUserName}" ]] && [[ -z "${targetRepositoryPassword}" ]]; then
   imageRemoveRemote "${imageName,,}" "${imageTag,,}"
 else
-  if [[ -z "${repositoryUserName}" ]]; then
+  if [[ -z "${repositoryUserName}" ]] && [[ -z "${targetRepositoryUserName}" ]]; then
     >&2 echo "No repository user name to remove target image for server: ${serverName}"
     exit 1
-  elif [[ -z "${repositoryPassword}" ]]; then
+  elif [[ -z "${repositoryPassword}" ]]&& [[ -z "${targetRepositoryPassword}" ]]; then
     >&2 echo "No repository password to remove target image for server: ${serverName}"
     exit 1
+  elif [[ -n "${targetRepositoryUserName}" ]]; then
+    imageRemoveRemote "${imageName,,}" "${imageTag,,}" "${targetRepositoryUserName}" "${targetRepositoryPassword}"
+  else
+    imageRemoveRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}"
   fi
-
-  imageRemoveRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}"
 fi
 
 if [[ -n "${afterImageRemoveSourceRemoteScript}" ]]; then

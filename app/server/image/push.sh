@@ -65,7 +65,13 @@ if [[ -n "${buildImageTag}" ]]; then
 fi
 
 if [[ -n "${buildImageMode}" ]] && [[ "${buildImageMode}" == "remote" ]]; then
-  imagePush "${imageName,,}" "${imageTag,,}"
+  if [[ -n "${targetRepositoryUserName}" ]] && [[ -n "${targetRepositoryPassword}" ]]; then
+    imagePush "${imageName,,}" "${imageTag,,}" "${targetRepositoryUserName}" "${targetRepositoryPassword}"
+  elif [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]]; then
+    imagePush "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}"
+  else
+    imagePush "${imageName,,}" "${imageTag,,}"
+  fi
 else
   echo "No pushing of image required"
 fi

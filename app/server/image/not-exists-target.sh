@@ -74,6 +74,9 @@ if [[ -n "${buildImageName}" ]] || [[ -n "${buildImageTag}" ]]; then
   if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
     >&2 echo "Local target image exists: ${imageName,,}:${imageTag,,}"
     exit 1
+  elif [[ -n "${targetRepositoryUserName}" ]] && [[ -n "${targetRepositoryPassword}" ]] && [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${targetRepositoryUserName}" "${targetRepositoryPassword}") == 1 ]]; then
+    >&2 echo "Remote target image exists: ${imageName,,}:${imageTag,,}"
+    exit 1
   elif [[ -n "${repositoryUserName}" ]] && [[ -n "${repositoryPassword}" ]] && [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
     >&2 echo "Remote target image exists: ${imageName,,}:${imageTag,,}"
     exit 1

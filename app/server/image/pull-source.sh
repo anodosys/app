@@ -72,17 +72,26 @@ fi
 if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 0 ]]; then
   if [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}") == 1 ]]; then
     imagePull "${imageName,,}" "${imageTag,,}"
-  elif [[ -z "${repositoryUserName}" ]]; then
+  elif [[ -z "${repositoryUserName}" ]] && [[ -z "${sourceRepositoryUserName}" ]]; then
     >&2 echo "No repository user name to pull source image for server: ${serverName}"
     exit 1
-  elif [[ -z "${repositoryPassword}" ]]; then
+  elif [[ -z "${repositoryPassword}" ]] && [[ -z "${sourceRepositoryPassword}" ]]; then
     >&2 echo "No repository password to pull source image for server: ${serverName}"
     exit 1
-  elif [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
-    imagePull "${imageName,,}" "${imageTag,,}" "no" "${repositoryUserName}" "${repositoryPassword}"
+  elif [[ -n "${sourceRepositoryUserName}" ]]; then
+    if [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${sourceRepositoryUserName}" "${sourceRepositoryPassword}") == 1 ]]; then
+      imagePull "${imageName,,}" "${imageTag,,}" "no" "${sourceRepositoryUserName}" "${sourceRepositoryPassword}"
+    else
+      >&2 echo "Source image does not exist: ${imageName,,}:${imageTag,,}"
+      exit 1
+    fi
   else
-    >&2 echo "Source image does not exist: ${imageName,,}:${imageTag,,}"
-    exit 1
+    if [[ $(imageExistsRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 1 ]]; then
+      imagePull "${imageName,,}" "${imageTag,,}" "no" "${repositoryUserName}" "${repositoryPassword}"
+    else
+      >&2 echo "Source image does not exist: ${imageName,,}:${imageTag,,}"
+      exit 1
+    fi
   fi
 else
   if [[ "${skipImageCheck}" == "true" ]]; then
@@ -92,16 +101,24 @@ else
     if [[ "${imageCheckRemoteResult}" == 2 ]]; then
       imagePull "${imageName,,}" "${imageTag,,}" yes
     elif [[ "${imageCheckRemoteResult}" == 0 ]]; then
-      if [[ -z "${repositoryUserName}" ]]; then
+      if [[ -z "${repositoryUserName}" ]] && [[ -z "${sourceRepositoryUserName}" ]]; then
         >&2 echo "No repository user name to pull source image for server: ${serverName}"
         exit 1
-      elif [[ -z "${repositoryPassword}" ]]; then
+      elif [[ -z "${repositoryPassword}" ]] && [[ -z "${sourceRepositoryPassword}" ]]; then
         >&2 echo "No repository password to pull source image for server: ${serverName}"
         exit 1
-      elif [[ $(imageCheckRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 2 ]]; then
-        imagePull "${imageName,,}" "${imageTag,,}" yes
+      elif [[ -n "${sourceRepositoryUserName}" ]]; then
+        if [[ $(imageCheckRemote "${imageName,,}" "${imageTag,,}" "${sourceRepositoryUserName}" "${sourceRepositoryPassword}") == 2 ]]; then
+          imagePull "${imageName,,}" "${imageTag,,}" yes
+        else
+          echo "No need to pull source image: ${imageName,,}:${imageTag,,}"
+        fi
       else
-        echo "No need to pull source image: ${imageName,,}:${imageTag,,}"
+        if [[ $(imageCheckRemote "${imageName,,}" "${imageTag,,}" "${repositoryUserName}" "${repositoryPassword}") == 2 ]]; then
+          imagePull "${imageName,,}" "${imageTag,,}" yes
+        else
+          echo "No need to pull source image: ${imageName,,}:${imageTag,,}"
+        fi
       fi
     else
       echo "No need to pull source image: ${imageName,,}:${imageTag,,}"

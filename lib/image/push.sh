@@ -9,8 +9,8 @@ imagePush()
 {
   local imageName="${1}"
   local imageTag="${2}"
-  local repositoryUserName
-  local repositoryPassword
+  local repositoryUserName="${3}"
+  local repositoryPassword="${4}"
 
   if [[ $(imageExists "${imageName,,}" "${imageTag,,}") == 1 ]]; then
     pushErrorFileName="${anodosysUserVarPath}/push/${imageName,,}_${imageTag,,}.err"
@@ -30,10 +30,14 @@ imagePush()
       pushResultMessage=$(cat "${pushErrorFileName}")
       if [[ "${pushResultMessage}" == "denied: requested access to the resource is denied" ]] ||
         [[ "${pushResultMessage}" == "push access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed" ]]; then
-        echo "Please specify the user name to the repository, followed by [ENTER]:"
-        read -r repositoryUserName
-        echo "Please specify the password to the repository, followed by [ENTER]:"
-        read -r repositoryPassword
+        if [[ -z "${repositoryUserName}" ]] || [[ "${repositoryUserName}" == "-" ]]; then
+          echo "Please specify the user name to the repository, followed by [ENTER]:"
+          read -r repositoryUserName
+        fi
+        if [[ -z "${repositoryPassword}" ]] || [[ "${repositoryPassword}" == "-" ]]; then
+          echo "Please specify the password to the repository, followed by [ENTER]:"
+          read -r repositoryPassword
+        fi
         echo "${repositoryPassword}" | docker login --username "${repositoryUserName}" --password-stdin
         docker push "${imageName,,}:${imageTag,,}"
       fi
