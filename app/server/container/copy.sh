@@ -18,6 +18,7 @@ OPTIONS:
   -s  Server name
   -f  local file path
   -r  remote file path (optional)
+  -q  Flag if the command is hidden
 
 Example: ${scriptName} -s web -f "/path/to/local/file" -r "/path/to/remote/file"
 EOF
@@ -31,13 +32,15 @@ trim()
 serverName=
 localFileName=
 remoteFileName=
+quiet=0
 
-while getopts hs:f:r:? option; do
+while getopts hs:f:r:q? option; do
   case "${option}" in
     h) usage; exit 1;;
     s) serverName=$(trim "$OPTARG");;
     f) localFileName=$(trim "$OPTARG");;
     r) remoteFileName=$(trim "$OPTARG");;
+    q) quiet=1;;
     ?) usage; exit 1;;
   esac
 done
@@ -58,8 +61,16 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 containerName="${systemName}_${serverName}"
 
-if [[ -n "${remoteFileName}" ]]; then
-  containerCopy "${containerName}" "${localFileName}" "${remoteFileName}"
+if [[ "${quiet}" == 0 ]]; then
+  if [[ -n "${remoteFileName}" ]]; then
+    containerCopy "${containerName}" "${localFileName}" "${remoteFileName}"
+  else
+    containerCopy "${containerName}" "${localFileName}"
+  fi
 else
-  containerCopy "${containerName}" "${localFileName}"
+  if [[ -n "${remoteFileName}" ]]; then
+    containerCopyQuiet "${containerName}" "${localFileName}" "${remoteFileName}"
+  else
+    containerCopyQuiet "${containerName}" "${localFileName}"
+  fi
 fi
