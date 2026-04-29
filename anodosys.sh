@@ -25,7 +25,7 @@ finish()
   local runningProcessIds
   local runningProcessId
 
-  if [[ "${action}" != "" ]] && [[ "${action}" != "steps" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]]; then
+  if [[ "${action}" != "" ]] && [[ "${action}" != "steps" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "extension" ]]; then
     lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
@@ -67,105 +67,117 @@ scriptName="${0##*/}"
 
 usage()
 {
-cat >&2 << EOF
+  local extensionName="${1}"
+
+  cat >&2 << EOF
 
 usage: ads <ACTION>
 
 ACTION:
-  list                List all known systems
-
-  construct           Create or update system components
-  reset               Remove all generated data of the system
-
-  host                Check host requirements
-  init                Pull the images required for building
-  build               Build the target images and push if required
-  rebuild             Re-build the target images and push if required
-  shell               Re-build the target images
-  rise                Create the containers from source images and run installation process
-  source              Create the containers from source images
-  install             Run installation process with created containers from source images
-  image               Build the image from running containers
-  push                Push the built images to remote
-  prepare             Pull the built images required for running
-  run                 Create the container from built images and start them
-  create              Create the container from built images
-  start               Start the containers with created containers from built images
-  stop                Stop the containers
-  restart             Re-start the containers
-  remove              Remove the containers
-  clean               Remove the the built images
-  purge               Stop and remove the containers
-  erase               Stop and remove the containers and remove the build images
-  destroy             Remove the built images locally and remotely
-
-  config              Show the complete configuration of the system
-  names               Show the names of images and containers of the system
-  status              Show a current status of images and containers of the system
-  volumes             Show the details of all volumes
-  paths               Show the details of all paths
-  ports               Show the details of all ports
-
-  bash                Open a bash shell in a container
-  cmd                 Execute a command in a container
-  cmdi                Execute a command in a container in interactive mode
-  cmdiq               Execute a command in a container in interactive mode and without any messages
-  cmdq                Execute a command in a container without any messages
-  copy                Copy a local file into a container
-  exec                Copy and execute a local script in a container
 EOF
 
-if [[ -n "${systemActionPath}" ]] && [[ -d "${systemActionPath}" ]]; then
-  systemActions=( $(find "${systemActionPath}/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
-  if [[ -n "${systemActions[*]}" ]]; then
-    >&2 echo ""
-    for systemAction in "${systemActions[@]}"; do
-      systemActionDescription=
-      if [[ -f "${systemActionPath}/${systemAction}.txt" ]]; then
-        systemActionDescription=$(cat "${systemActionPath}/${systemAction}.txt")
-      fi
-      >&2 echo "  $(printf '%-20s' "${systemAction}")${systemActionDescription}"
-    done
-  fi
-fi
-
-for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
-  if [[ -d "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" ]]; then
-    userExtensionActions=( $(find "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
-  else
-    userExtensionActions=()
-  fi
-  if [[ -n "${userExtensionActions[*]}" ]]; then
-    >&2 echo ""
-    for userExtensionAction in "${userExtensionActions[@]}"; do
-      userExtensionActionDescription=
-      if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt" ]]; then
-        userExtensionActionDescription=$(cat "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt")
-      fi
-      >&2 echo "  $(printf '%-20s' "${userExtensionAction}")${userExtensionActionDescription}"
-    done
-  fi
-done
-
-for anodosysExtension in "${anodosysExtensions[@]}"; do
-  if [[ -d "${anodosysExtensionPath}/${anodosysExtension}/action/server/" ]]; then
-    extensionActions=( $(find "${anodosysExtensionPath}/${anodosysExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
-  else
-    extensionActions=()
-  fi
-  if [[ -n "${extensionActions[*]}" ]]; then
-    >&2 echo ""
-    for extensionAction in "${extensionActions[@]}"; do
-      extensionActionDescription=
-      if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt" ]]; then
-        extensionActionDescription=$(cat "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt")
-      fi
-      >&2 echo "  $(printf '%-20s' "${extensionAction}")${extensionActionDescription}"
-    done
-  fi
-done
-
+  if [[ -z "${extensionName}" ]]; then
 cat >&2 << EOF
+
+  list                          List all known systems
+
+  construct                     Create or update system components
+  reset                         Remove all generated data of the system
+
+  host                          Check host requirements
+  init                          Pull the images required for building
+  build                         Build the target images and push if required
+  rebuild                       Re-build the target images and push if required
+  shell                         Re-build the target images
+  rise                          Create the containers from source images and run installation process
+  source                        Create the containers from source images
+  install                       Run installation process with created containers from source images
+  image                         Build the image from running containers
+  push                          Push the built images to remote
+  prepare                       Pull the built images required for running
+  run                           Create the container from built images and start them
+  create                        Create the container from built images
+  start                         Start the containers with created containers from built images
+  stop                          Stop the containers
+  restart                       Re-start the containers
+  remove                        Remove the containers
+  clean                         Remove the the built images
+  purge                         Stop and remove the containers
+  erase                         Stop and remove the containers and remove the build images
+  destroy                       Remove the built images locally and remotely
+
+  config                        Show the complete configuration of the system
+  names                         Show the names of images and containers of the system
+  status                        Show a current status of images and containers of the system
+  volumes                       Show the details of all volumes
+  paths                         Show the details of all paths
+  ports                         Show the details of all ports
+
+  bash                          Open a bash shell in a container
+  cmd                           Execute a command in a container
+  cmdi                          Execute a command in a container in interactive mode
+  cmdiq                         Execute a command in a container in interactive mode and without any messages
+  cmdq                          Execute a command in a container without any messages
+  copy                          Copy a local file into a container
+  exec                          Copy and execute a local script in a container
+EOF
+  fi
+
+  if [[ -z "${extensionName}" ]] && [[ -n "${systemActionPath}" ]] && [[ -d "${systemActionPath}" ]]; then
+    systemActions=( $(find "${systemActionPath}/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+    if [[ -n "${systemActions[*]}" ]]; then
+      >&2 echo ""
+      for systemAction in "${systemActions[@]}"; do
+        systemActionDescription=
+        if [[ -f "${systemActionPath}/${systemAction}.txt" ]]; then
+          systemActionDescription=$(cat "${systemActionPath}/${systemAction}.txt")
+        fi
+        >&2 echo "  $(printf '%-30s' "${systemAction}")${systemActionDescription}"
+      done
+    fi
+  fi
+
+  for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+    if [[ -z "${extensionName}" ]] || { [[ -n "${extensionName}" ]] && [[ "${extensionName}" == "${anodosysUserExtension}" ]]; }; then
+      if [[ -d "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" ]]; then
+        userExtensionActions=( $(find "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+      else
+        userExtensionActions=()
+      fi
+      if [[ -n "${userExtensionActions[*]}" ]]; then
+        >&2 echo ""
+        for userExtensionAction in "${userExtensionActions[@]}"; do
+          userExtensionActionDescription=
+          if [[ -f "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt" ]]; then
+            userExtensionActionDescription=$(cat "${anodosysUserExtensionPath}/${anodosysUserExtension}/action/server/${userExtensionAction}.txt")
+          fi
+          >&2 echo "  $(printf '%-30s' "${anodosysUserExtension}:${userExtensionAction}")${userExtensionActionDescription}"
+        done
+      fi
+    fi
+  done
+
+  for anodosysExtension in "${anodosysExtensions[@]}"; do
+    if [[ -z "${extensionName}" ]] || { [[ -n "${extensionName}" ]] && [[ "${extensionName}" == "${anodosysExtension}" ]]; }; then
+      if [[ -d "${anodosysExtensionPath}/${anodosysExtension}/action/server/" ]]; then
+        extensionActions=( $(find "${anodosysExtensionPath}/${anodosysExtension}/action/server/" -name "*.sh" -exec basename {} .sh \; | sort -n) )
+      else
+        extensionActions=()
+      fi
+      if [[ -n "${extensionActions[*]}" ]]; then
+        >&2 echo ""
+        for extensionAction in "${extensionActions[@]}"; do
+          extensionActionDescription=
+          if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt" ]]; then
+            extensionActionDescription=$(cat "${anodosysExtensionPath}/${anodosysExtension}/action/server/${extensionAction}.txt")
+          fi
+          >&2 echo "  $(printf '%-20s' "${extensionAction}")${extensionActionDescription}"
+        done
+      fi
+    fi
+  done
+
+  cat >&2 << EOF
 
 Example: ads build
 
@@ -322,6 +334,29 @@ fi
 
 setServerConfiguration "${systemName}" "system"
 
+readarray -d : -t actionParts < <(printf '%s' "${action}")
+
+if test "${actionParts[1]+isset}"; then
+  actionExtension="${actionParts[0]}"
+  action="${actionParts[1]}"
+
+  for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+    if [[ "${anodosysUserExtension}" == "${actionExtension}" ]] && [[ -f "${anodosysUserExtensionPath}/${actionExtension}/action/server/${action}.sh" ]]; then
+      trap - EXIT
+      source "${anodosysUserExtensionPath}/${actionExtension}/action/server/${action}.sh"
+      exit 0
+    fi
+  done
+
+  for anodosysExtension in "${anodosysExtensions[@]}"; do
+    if [[ "${anodosysExtension}" == "${actionExtension}" ]] && [[ -f "${anodosysExtensionPath}/${actionExtension}/action/server/${action}.sh" ]]; then
+      trap - EXIT
+      source "${anodosysExtensionPath}/${actionExtension}/action/server/${action}.sh"
+      exit 0
+    fi
+  done
+fi
+
 if [[ -f "${systemActionPath}/${action}.sh" ]]; then
   source "${systemActionPath}/${action}.sh"
   exit 0
@@ -353,5 +388,23 @@ if [[ -f "${anodosysActionServerPath}/${action}.sh" ]]; then
   source "${anodosysActionServerPath}/${action}.sh"
   exit 0
 fi
+
+for anodosysUserExtension in "${anodosysUserExtensions[@]}"; do
+  if [[ "${action}" == "${anodosysUserExtension}" ]]; then
+    logDisable
+    action="extension"
+    usage "${anodosysUserExtension}"
+    exit 1
+  fi
+done
+
+for anodosysExtension in "${anodosysExtensions[@]}"; do
+  if [[ "${action}" == "${anodosysExtension}" ]]; then
+    logDisable
+    action="extension"
+    usage "${anodosysExtension}"
+    exit 1
+  fi
+done
 
 source "${anodosysAppPath}/steps.sh"

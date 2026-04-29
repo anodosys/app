@@ -91,6 +91,7 @@ if [[ "${#actionSteps[@]}" -gt 0 ]]; then
     fi
   done
 else
+  logDisable
   >&2 echo "No steps found for action: ${action}"
   action="steps"
   usage
