@@ -100,6 +100,7 @@ cat >&2 << EOF
   start                         Start the containers with created containers from built images
   stop                          Stop the containers
   restart                       Re-start the containers
+  teardown                      Teardown the containers
   remove                        Remove the containers
   clean                         Remove the the built images
   purge                         Stop and remove the containers

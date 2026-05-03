@@ -60,9 +60,10 @@ steps["up"]="containerExists,containerNotRunning,containerHost,networkCreate,con
 steps["start"]="action:up,containerCommencement,containerProduction,containerFinishing,start"
 steps["stop"]="containerExists,containerStop,containerNotRunning,stop"
 steps["restart"]="action:stop,action:start"
+steps["teardown"]="containerExists,containerTeardown,action:stop"
 steps["remove"]="containerExists,containerNotRunning,containerRemove,networkRemove,remove"
 steps["clean"]="containerNotExists,imageRemoveTargetLocal"
-steps["purge"]="action:stop,action:remove"
+steps["purge"]="action:teardown,action:remove"
 steps["erase"]="action:purge,action:clean"
 steps["destroy"]="containerNotExists,imageRemoveSourceLocal,imageRemoveTargetRemote"
 
