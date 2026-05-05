@@ -43,10 +43,12 @@ prepareConfigurationVariables()
   local placeholderKey
   local placeholderKeys=()
 
+  # shellcheck disable=SC2002
   keys=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} //empty | keys_unsorted[]") )
   for key in "${keys[@]}"; do
     oldIFS="${IFS}"
     IFS=$'\n'
+    # shellcheck disable=SC2002
     values=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} .${key} | if type==\"array\" then values[] else if type==\"null\" then \"\" else . end end") )
     IFS="${oldIFS}"
     if [[ "${#values[@]}" -gt 1 ]]; then
@@ -98,6 +100,7 @@ prepareConfigurationVariables()
   for key in "${placeholderKeys[@]}"; do
     oldIFS="${IFS}"
     IFS=$'\n'
+    # shellcheck disable=SC2002
     values=( $(cat "${anodosysConfigurationFile}" | jq -r ".${serverName} .${key} | if type==\"array\" then values[] else if type==\"null\" then \"\" else . end end") )
     IFS="${oldIFS}"
     if [[ "${#values[@]}" -gt 1 ]]; then
@@ -108,6 +111,17 @@ prepareConfigurationVariables()
         fi
       fi
       for value in "${values[@]}"; do
+        valueKeys=( $(echo "${value}" | grep -oP '<([[:alnum:]]+)>' | sed 's/^<//g' | sed 's/>$//g') )
+        for valueKey in "${valueKeys[@]}"; do
+          valueType=$(declare -p "${valueKey}" 2>/dev/null)
+          if [[ "${valueType}" =~ "declare -a" ]]; then
+            value="${value/<${valueKey}>/"\${${valueKey}Concatenated}"}"
+            eval "declare -n valueList=${valueKey}"
+            # shellcheck disable=SC2154
+            valueConcatenated=$(IFS=,; echo "${valueList[*]}")
+            eval "${valueKey}Concatenated=\"${valueConcatenated}\""
+          fi
+        done
         value=$(echo "${value}" | sed 's/<\([[:alnum:]]\+\)>/${\1}/g')
         value=$(prepareValue "${value}")
         eval "${key}+=(\"${value}\")"
