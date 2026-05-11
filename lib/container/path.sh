@@ -143,18 +143,25 @@ containerPath()
             exit 1
           fi
         elif [[ "${mode}" == "o" ]] || [[ "${mode}" == "or" ]]; then
-          if [[ "${mode}" == "o" ]]; then
-            echo "Changing user of container path: ${containerPath} to: ${accessUser}"
-            containerCommand "${containerName}" "chown ${accessUser} ${containerPath}"
+          if [[ "${accessUser}" == "local" ]] || [[ "${accessUser}" == "me" ]]; then
+            userId="${UID}"
+            containerAccessUser=$(containerCommandQuiet "${containerName}" "getent passwd ${userId} | tr ':' ' ' | awk '{print \$1}'")
+            containerAccessUser=$(prepareValue "${containerAccessUser}")
           else
-            echo "Changing user of container path: ${containerPath} to: ${accessUser} recursively"
-            containerCommand "${containerName}" "chown -R ${accessUser} ${containerPath}"
+            containerAccessUser="${accessUser}"
+          fi
+          if [[ "${mode}" == "o" ]]; then
+            echo "Changing user of container path: ${containerPath} to: ${containerAccessUser}"
+            containerCommand "${containerName}" "chown ${containerAccessUser} ${containerPath}"
+          else
+            echo "Changing user of container path: ${containerPath} to: ${containerAccessUser} recursively"
+            containerCommand "${containerName}" "chown -R ${containerAccessUser} ${containerPath}"
           fi
           containerUserName=$(containerCommandQuiet "${containerName}" "stat -L -c \"%U\" ${containerPath}")
-          if [[ "${containerUserName}" == "${accessUser}" ]]; then
-            echo "Successfully changed owner of container path: ${containerPath} to: ${accessUser}" | sed $'s,.*,\e[1;36m&\e[m,'
+          if [[ "${containerUserName}" == "${containerAccessUser}" ]]; then
+            echo "Successfully changed owner of container path: ${containerPath} to: ${containerAccessUser}" | sed $'s,.*,\e[1;36m&\e[m,'
           else
-            >&2 echo "Could not change owner of container path: ${containerPath} to: ${accessUser}"
+            >&2 echo "Could not change owner of container path: ${containerPath} to: ${containerAccessUser}"
             exit 1
           fi
         elif [[ -n "${mode}" ]] && [[ "${mode}" != "-" ]]; then
