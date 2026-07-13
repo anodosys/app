@@ -11,7 +11,7 @@ if [[ -f "${anodosysUserPath}/systems.json" ]]; then
   stoppedSystemNames=()
   for systemName in "${systemNames[@]}"; do
     if [[ -f "${anodosysUserPath}/status.json" ]]; then
-      running=$(jq -r ".${systemName} // empty" "${anodosysUserPath}/status.json")
+      running=$(jq -r ".\"${systemName}\" // empty" "${anodosysUserPath}/status.json")
     else
       running="false"
     fi

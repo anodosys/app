@@ -15,14 +15,14 @@ systemRemove()
 
   if [[ $(jq -r ". | has(\"${systemName}\")" "${anodosysUserPath}/systems.json") == "true" ]]; then
     echo "Removing system with name: ${systemName}"
-    $(cd "${anodosysUserPath}"; jq "del(.${systemName})" systems.json | ex -sc 'wq!systems.json' /dev/stdin)
+    $(cd "${anodosysUserPath}"; jq "del(.\"${systemName}\")" systems.json | ex -sc 'wq!systems.json' /dev/stdin)
   else
     echo "No need to remove system with name: ${systemName}"
   fi
 
   if [[ $(jq -r ". | has(\"${systemName}\")" "${anodosysUserPath}/status.json") == "true" ]]; then
     echo "Removing system status with name: ${systemName}"
-    $(cd "${anodosysUserPath}"; jq "del(.${systemName})" status.json | ex -sc 'wq!status.json' /dev/stdin)
+    $(cd "${anodosysUserPath}"; jq "del(.\"${systemName}\")" status.json | ex -sc 'wq!status.json' /dev/stdin)
   else
     echo "No need to remove system status with name: ${systemName}"
   fi
