@@ -45,22 +45,37 @@ if [[ -z "${serverName}" ]]; then
   exit 1
 fi
 
+setServerConfiguration "${systemName}" "system"
+
+if [[ -z "${serverNames}" ]]; then
+  >&2 echo "No server names"
+  exit 1
+fi
+
 setServerConfiguration "${systemName}" "${serverName}"
 
 readarray -d , -t processedServerNameList < <(printf '%s' "${processedServerNames}")
 
 if [[ -n "${depends}" ]]; then
   for dependServerName in "${depends[@]}"; do
-    found=0
-    for processedServerName in "${processedServerNameList[@]}"; do
-      if [[ "${processedServerName}" == "${dependServerName}" ]]; then
-        found=1
-        break
+    available=0
+    for nextServerName in "${serverNames[@]}"; do
+      if [[ "${nextServerName}" == "${dependServerName}" ]]; then
+        available=1
       fi
     done
-    if [[ "${found}" == 0 ]]; then
-      echo 0
-      exit 0
+    if [[ "${available}" == 1 ]]; then
+      found=0
+      for processedServerName in "${processedServerNameList[@]}"; do
+        if [[ "${processedServerName}" == "${dependServerName}" ]]; then
+          found=1
+          break
+        fi
+      done
+      if [[ "${found}" == 0 ]]; then
+        echo 0
+        exit 0
+      fi
     fi
   done
 fi
