@@ -359,6 +359,7 @@ if test "${actionParts[1]+isset}"; then
 fi
 
 if [[ -f "${systemActionPath}/${action}.sh" ]]; then
+  trap - EXIT
   source "${systemActionPath}/${action}.sh"
   exit 0
 fi
@@ -386,6 +387,7 @@ if [[ -f "${anodosysUserActionServerPath}/${action}.sh" ]]; then
 fi
 
 if [[ -f "${anodosysActionServerPath}/${action}.sh" ]]; then
+  trap - EXIT
   source "${anodosysActionServerPath}/${action}.sh"
   exit 0
 fi
