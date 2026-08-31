@@ -20,7 +20,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerInstallScript}" ]]; then
-  echo "Before container install script: ${beforeContainerInstallScript}"
+  echo "Before system container install script: ${beforeContainerInstallScript}"
   if [[ -n "${beforeContainerInstallParameters}" ]]; then
     "${beforeContainerInstallScript}" \
       --systemName "${systemName}" \
@@ -47,7 +47,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         installScript="${systemPath}/${serverName}/container/install.sh"
         if [[ -f "${installScript}" ]]; then
-          echo "[${serverName}] Installing container of server: ${serverName} with custom script: ${installScript}"
+          echo "[${serverName}] Installing system container of server: ${serverName} with custom script: ${installScript}"
           "${installScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/install.sh" -s "${serverName}" &
@@ -86,7 +86,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerInstallScript}" ]]; then
-  echo "After container install script: ${afterContainerInstallScript}"
+  echo "After system container install script: ${afterContainerInstallScript}"
   if [[ -n "${afterContainerInstallParameters}" ]]; then
     "${afterContainerInstallScript}" \
       --systemName "${systemName}" \

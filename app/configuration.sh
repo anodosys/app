@@ -1,52 +1,12 @@
 #!/bin/bash -e
 
-if [[ -z "${reset}" ]]; then
-  >&2 echo "No reset specified!"
-  exit 1
-fi
-
 if [[ -z "${anodosysAppPath}" ]]; then
   >&2 echo "No app path specified!"
   exit 1
 fi
 
-if [[ -z "${anodosysUserPath}" ]]; then
-  >&2 echo "No anodosys user path defined"
-  exit 1
-fi
-
-if [[ -z "${anodosysConfigurationPath}" ]]; then
-  >&2 echo "No configuration path specified!"
-  exit 1
-fi
-
-if [[ -z "${anodosysUserConfigurationPath}" ]]; then
-  >&2 echo "No user configuration path specified!"
-  exit 1
-fi
-
 if [[ -z "${anodosysUserVarConfigurationPath}" ]]; then
   >&2 echo "No user var configuration path specified!"
-  exit 1
-fi
-
-if [[ -z "${anodosysActionSystemPath}" ]]; then
-  >&2 echo "No action system path specified!"
-  exit 1
-fi
-
-if [[ -z "${anodosysActionServerPath}" ]]; then
-  >&2 echo "No action server path specified!"
-  exit 1
-fi
-
-if [[ -z "${anodosysUserActionSystemPath}" ]]; then
-  >&2 echo "No user action system path specified!"
-  exit 1
-fi
-
-if [[ -z "${anodosysUserActionServerPath}" ]]; then
-  >&2 echo "No user action server path specified!"
   exit 1
 fi
 
@@ -65,358 +25,37 @@ if [[ -z "${fileName}" ]]; then
   exit 1
 fi
 
+if [[ -z "${reset}" ]]; then
+  >&2 echo "No reset specified!"
+  exit 1
+fi
+
 # shellcheck disable=SC2154
 if [[ "${#stepScripts[@]}" -eq 0 ]]; then
   >&2 echo "No step scripts defined"
   exit 1
 fi
 
-collectConfigurationFiles()
+createServerConfiguration()
 {
-  local anodosysFileName="${1}"
-  local ignoreIfMissing="${2:-no}"
+  local configurationHash="${1}"
+  local systemName="${2}"
+  local serverName="${3}"
+  local reset="${4:-0}"
+  local configurationHashServerFile
+  local systemServerFile
 
-  if [[ -z "${anodosysFileName}" ]] && [[ -f "anodosys.json" ]]; then
-    anodosysFileName="anodosys.json"
-  elif [[ -z "${anodosysFileName}" ]] && [[ -f "ads.json" ]]; then
-    anodosysFileName="ads.json"
-  fi
+  configurationHashServerFile="${anodosysUserVarConfigurationPath}/${configurationHash}_${serverName}.ini"
+  systemServerFile="${anodosysUserVarConfigurationPath}/${systemName}_${serverName}.ini"
 
-  if [[ ! -f "${anodosysFileName}" ]]; then
-    if [[ "${ignoreIfMissing}" == "yes" ]]; then
-      exit 0
+  if [[ ! -f "${configurationHashServerFile}" ]] || [[ "${reset}" == 1 ]]; then
+    if [[ "${serverName}" == "system" ]]; then
+      j2v convert --file "${anodosysConfigurationFile}" --key global --key "${serverName}" --output "${configurationHashServerFile}"
     else
-      >&2 echo "Could not find configuration at: ${anodosysFileName}"
-      exit 1
+      j2v convert --file "${anodosysConfigurationFile}" --key global --key any --key "${serverName}" --output "${configurationHashServerFile}"
     fi
+    cp "${configurationHashServerFile}" "${systemServerFile}"
   fi
-
-  anodosysFileName=$(realpath "${anodosysFileName}")
-
-  #>&2 echo "Parsing: ${anodosysFileName}"
-  configurationFiles=( "${anodosysFileName}" )
-
-  oldIFS="${IFS}"
-  IFS=$'\n'
-  requireFileNames=( $(jq -r '.require | if type=="array" then values[] else . end //empty' "${anodosysFileName}") )
-  IFS="${oldIFS}"
-  #>&2 echo "requireFileNames: ${requireFileNames[*]}"
-  if [[ "${#requireFileNames[@]}" -gt 0 ]]; then
-    for requireFileName in "${requireFileNames[@]}"; do
-      if [[ "${requireFileName: -2}" == ":i" ]]; then
-        ignoreIfMissing="yes"
-        requireFileName="${requireFileName::-2}"
-      else
-        ignoreIfMissing="no"
-      fi
-      requireFileName=$(completePath "${anodosysFileName}" "require" "${requireFileName}")
-      requiredConfigurationFiles=( $(collectConfigurationFiles "${requireFileName}" "${ignoreIfMissing}") )
-      requiredConfigurationFiles=( $(printf '%s\n' "${requiredConfigurationFiles[@]}" | tac | tr '\n' ' '; echo) )
-      for requiredConfigurationFile in "${requiredConfigurationFiles[@]}"; do
-        configurationFiles=("${requiredConfigurationFile}" "${configurationFiles[@]}")
-      done
-    done
-  fi
-
-  oldIFS="${IFS}"
-  IFS=$'\n'
-  includeFileNames=( $(jq -r '.include | if type=="array" then values[] else . end //empty' "${anodosysFileName}") )
-  IFS="${oldIFS}"
-  #>&2 echo "includeFileNames: ${includeFileNames[*]}"
-  if [[ "${#includeFileNames[@]}" -gt 0 ]]; then
-    for includeFileName in "${includeFileNames[@]}"; do
-      if [[ "${includeFileName: -2}" == ":i" ]]; then
-        ignoreIfMissing="yes"
-        includeFileName="${includeFileName::-2}"
-      else
-        ignoreIfMissing="no"
-      fi
-      includeFileName=$(completePath "${anodosysFileName}" "include" "${includeFileName}")
-      includedConfigurationFiles=( $(collectConfigurationFiles "${includeFileName}" "${ignoreIfMissing}") )
-      for includedConfigurationFile in "${includedConfigurationFiles[@]}"; do
-        configurationFiles+=("${includedConfigurationFile}")
-      done
-    done
-  fi
-
-  #>&2 echo "configurationFiles: ${configurationFiles[*]}"
-  echo "${configurationFiles[@]}"
-}
-
-prepareConfigurationFiles()
-{
-  local mainConfigurationFileName="${1}"
-  shift
-  local reset="${1}"
-  shift
-  local configurationFiles=( "${@}" )
-  local mainConfigurationFileNameHash
-  local mainConfigurationFileContentHash
-  local configurationFile
-  local configurationFileName
-  local configurationFileNameHash
-  local configurationFileContentHash
-  local preparedConfigurationFiles
-  local preparedConfigurationPath
-  local preparedConfigurationFile
-  local configurationJson
-  local preparedConfigurationJson
-
-  mainConfigurationFileNameHash=$(echo "${mainConfigurationFileName}" | md5sum | awk '{print $1}')
-  mainConfigurationFileContentHash=$(md5sum "${mainConfigurationFileName}" | awk '{print $1}')
-
-  preparedConfigurationFiles=( )
-  for configurationFile in "${configurationFiles[@]}"; do
-    configurationFileName=$(basename "${configurationFile}")
-    configurationFileNameHash=$(echo "${configurationFile}" | md5sum | awk '{print $1}')
-    configurationFileContentHash=$(md5sum "${configurationFile}" | awk '{print $1}')
-    preparedConfigurationPath="${anodosysUserVarConfigurationPath}/${mainConfigurationFileNameHash}/${mainConfigurationFileContentHash}/${configurationFileNameHash}/${configurationFileContentHash}"
-    mkdir -p "${preparedConfigurationPath}"
-    preparedConfigurationFile="${preparedConfigurationPath}/${configurationFileName}"
-    if [[ ! -f "${preparedConfigurationFile}" ]] || [[ "${reset}" == 1 ]]; then
-      >&2 echo "Preparing configuration file at: ${configurationFile}"
-      configurationJson=$(cat "${configurationFile}")
-      preparedConfigurationJson=$(prepareConfigurationJson "${configurationFile}" "${configurationJson}")
-      #>&2 echo "Storing parsed configuration in file at: ${preparedConfigurationFile}"
-      echo "${preparedConfigurationJson}" > "${preparedConfigurationFile}"
-    fi
-    preparedConfigurationFiles+=("${preparedConfigurationFile}")
-  done
-
-  echo "${preparedConfigurationFiles[@]}"
-}
-
-prepareConfigurationJson()
-{
-  local configurationFile="${1}"
-  local configurationJson="${2}"
-  local preparedConfigurationJson
-  local keys
-  local key
-  local type
-  local subKeys
-  local subKey
-  local subConfigurationJson
-  local simpleList
-  local value
-  local valueType
-  local preparedValue
-
-  preparedConfigurationJson="{}"
-
-  keys=( $(echo "${configurationJson}" | jq -r 'keys_unsorted[]') )
-  for key in "${keys[@]}"; do
-    type=$(echo "${configurationJson}" | jq -r ".${key} | type")
-    if [[ "${type}" == "array" ]]; then
-      subKeys=( $(echo "${configurationJson}" | jq -r ".${key} | keys_unsorted[]") )
-      simpleList=1
-      for subKey in "${subKeys[@]}"; do
-        if ! [[ "${subKey}" =~ ^[0-9]+$ ]]; then
-          simpleList=0
-        fi
-      done
-      for subKey in "${subKeys[@]}"; do
-        value=$(echo "${configurationJson}" | jq -r ".${key}[${subKey}]")
-        valueType=$(echo "${configurationJson}" | jq -r ".${key}[${subKey}] | type")
-        if [[ "${value:0:1}" == "{" ]]; then
-          preparedValue=$(prepareConfigurationJson "${configurationFile}" "${value}")
-        else
-          preparedValue=$(prepareValue "${value}")
-          if [[ "${key}" == "containerVolumes" ]]; then
-            readarray -d : -t valueParts < <(printf '%s' "${value}")
-            sourcePath=$(completePath "${configurationFile}" "include" "${valueParts[0]}")
-            if test "${valueParts[3]+isset}"; then
-              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}:${valueParts[3]}"
-            elif test "${valueParts[2]+isset}"; then
-              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}"
-            else
-              preparedValue="${sourcePath}:${valueParts[1]}"
-            fi
-          elif [[ "${key}" == "containerCopies" ]]; then
-            readarray -d : -t valueParts < <(printf '%s' "${value}")
-            sourcePath=$(completePath "${configurationFile}" "include" "${valueParts[0]}")
-            if test "${valueParts[4]+isset}"; then
-              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}:${valueParts[3]}:${valueParts[4]}"
-            elif test "${valueParts[3]+isset}"; then
-              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}:${valueParts[3]}"
-            elif test "${valueParts[2]+isset}"; then
-              preparedValue="${sourcePath}:${valueParts[1]}:${valueParts[2]}"
-            else
-              preparedValue="${sourcePath}:${valueParts[1]}"
-            fi
-          else
-            preparedValue=$(completePath "${configurationFile}" "${key}" "${preparedValue}")
-          fi
-        fi
-        if [[ "${simpleList}" == 1 ]]; then
-          if [[ "${valueType}" == "string" ]]; then
-            preparedConfigurationJson=$(echo "${preparedConfigurationJson}" | jq ".${key} += [\"${preparedValue}\"]")
-          else
-            preparedConfigurationJson=$(echo "${preparedConfigurationJson}" | jq ".${key} += [${preparedValue}]")
-          fi
-        else
-          preparedConfigurationJson=$(echo "${preparedConfigurationJson}" | jq ".${key}[${subKey}] = ${preparedValue}]")
-        fi
-      done
-    fi
-    if [[ "${type}" == "object" ]]; then
-      subConfigurationJson=$(echo "${configurationJson}" | jq ".${key}")
-      preparedSubConfigurationJson=$(prepareConfigurationJson "${configurationFile}" "${subConfigurationJson}")
-      preparedConfigurationJson=$(echo "${preparedConfigurationJson}" | jq ".${key} = ${preparedSubConfigurationJson}")
-    fi
-    if [[ "${type}" == "string" ]] || [[ "${type}" == "number" ]] || [[ "${type}" == "boolean" ]] || [[ "${type}" == "null" ]]; then
-      value=$(echo "${configurationJson}" | jq -r ".${key}")
-      preparedValue=$(prepareValue "${value}")
-      preparedValue=$(completePath "${configurationFile}" "${key}" "${preparedValue}")
-      if [[ "${type}" == "string" ]]; then
-        preparedConfigurationJson=$(echo "${preparedConfigurationJson}" | jq ".${key} = \"${preparedValue}\"")
-      elif [[ "${type}" == "number" ]] || [[ "${type}" == "boolean" ]]; then
-        preparedConfigurationJson=$(echo "${preparedConfigurationJson}" | jq ".${key} = ${preparedValue}")
-      elif [[ "${type}" == "null" ]]; then
-        preparedConfigurationJson=$(echo "${preparedConfigurationJson}" | jq ".${key} = null")
-      fi
-    fi
-  done
-
-  echo "${preparedConfigurationJson}"
-}
-
-completePath()
-{
-  local sourceFile="${1}"
-  local key="${2}"
-  local value="${3}"
-  local sourceFilePath
-
-  local canCompletePath=0
-  if [[ "${key}" == "require" ]] || [[ "${key}" == "include" ]] || [[ "${key}" == "source" ]]; then
-    canCompletePath=1
-  fi
-  if [[ "${key}" == "actionStartScript" ]] || [[ "${key}" == "actionFinishScript" ]]; then
-    canCompletePath=1
-  fi
-
-  local stepName
-  local beforeStepScriptName
-  local stepScriptName
-  local afterStepScriptName
-  local beforeStepDockerScriptName
-  local stepDockerScriptName
-  local afterStepDockerScriptName
-  for stepName in "${!stepScripts[@]}"; do
-    priorStepScriptName="prior${stepName^}Script"
-    beforeStepScriptName="before${stepName^}Script"
-    stepScriptName="${stepName}Script"
-    afterStepScriptName="after${stepName^}Script"
-    postStepScriptName="post${stepName^}Script"
-    priorStepDockerScriptName="prior${stepName^}DockerScript"
-    beforeStepDockerScriptName="before${stepName^}DockerScript"
-    stepDockerScriptName="${stepName}DockerScript"
-    afterStepDockerScriptName="after${stepName^}DockerScript"
-    postStepDockerScriptName="post${stepName^}DockerScript"
-    if [[ "${key}" == "${priorStepScriptName}" ]] || [[ "${key}" == "${beforeStepScriptName}" ]] || [[ "${key}" == "${stepScriptName}" ]] || [[ "${key}" == "${afterStepScriptName}" ]] || [[ "${key}" == "${postStepScriptName}" ]] || [[ "${key}" == "${priorStepDockerScriptName}" ]] || [[ "${key}" == "${beforeStepDockerScriptName}" ]] || [[ "${key}" == "${stepDockerScriptName}" ]] || [[ "${key}" == "${afterStepDockerScriptName}" ]] || [[ "${key}" == "${postStepDockerScriptName}" ]]; then
-      canCompletePath=1
-    fi
-  done
-
-  if [[ "${canCompletePath}" == 1 ]]; then
-    eval "value=\"${value}\""
-    if [[ "${value:0:1}" != "/" ]]; then
-      sourceFilePath=$(dirname "${sourceFile}")
-      if [[ -f "${sourceFilePath}/${value}" ]]; then
-        realpath "${sourceFilePath}/${value}"
-        exit 0
-      else
-        readarray -d : -t valueParts < <(printf '%s' "${value}")
-        if test "${valueParts[1]+isset}"; then
-          valueExtension="${valueParts[0]}"
-          valueValue="${valueParts[1]}"
-        else
-          valueExtension=
-          valueValue="${value}"
-        fi
-        if [[ "${key}" == "require" ]] || [[ "${key}" == "include" ]]; then
-          if [[ -f "${anodosysConfigurationPath}/${valueValue}" ]]; then
-            realpath "${anodosysConfigurationPath}/${valueValue}"
-            exit 0
-          fi
-          if [[ -f "${anodosysUserConfigurationPath}/${valueValue}" ]]; then
-            realpath "${anodosysUserConfigurationPath}/${valueValue}"
-            exit 0
-          fi
-          if [[ -n "${anodosysExtensions}" ]]; then
-            for anodosysExtension in "${anodosysExtensions[@]}"; do
-              if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
-                continue
-              fi
-              if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/configuration/${valueValue}" ]]; then
-                realpath "${anodosysExtensionPath}/${anodosysExtension}/configuration/${valueValue}"
-                exit 0
-              fi
-            done
-          fi
-          if [[ -n "${anodosysUserExtensions}" ]]; then
-            for anodosysExtension in "${anodosysUserExtensions[@]}"; do
-              if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
-                continue
-              fi
-              if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${valueValue}" ]]; then
-                realpath "${anodosysUserExtensionPath}/${anodosysExtension}/configuration/${valueValue}"
-                exit 0
-              fi
-            done
-          fi
-        else
-          if [[ -f "${anodosysUserActionSystemPath}/${valueValue}" ]]; then
-            realpath "${anodosysUserActionSystemPath}/${valueValue}"
-            exit 0
-          fi
-          if [[ -f "${anodosysUserActionServerPath}/${valueValue}" ]]; then
-            realpath "${anodosysUserActionServerPath}/${valueValue}"
-            exit 0
-          fi
-          for anodosysExtension in "${anodosysExtensions[@]}"; do
-            if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
-              continue
-            fi
-            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/system/${valueValue}" ]]; then
-              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/system/${valueValue}"
-              exit 0
-            fi
-            if [[ -f "${anodosysExtensionPath}/${anodosysExtension}/action/server/${valueValue}" ]]; then
-              realpath "${anodosysExtensionPath}/${anodosysExtension}/action/server/${valueValue}"
-              exit 0
-            fi
-          done
-          if [[ -f "${anodosysActionSystemPath}/${valueValue}" ]]; then
-            realpath "${anodosysActionSystemPath}/${valueValue}"
-            exit 0
-          fi
-          if [[ -f "${anodosysActionServerPath}/${valueValue}" ]]; then
-            realpath "${anodosysActionServerPath}/${valueValue}"
-            exit 0
-          fi
-          for anodosysExtension in "${anodosysUserExtensions[@]}"; do
-            if [[ -n "${valueExtension}" ]] && [[ "${valueExtension}" != "${anodosysExtension}" ]]; then
-              continue
-            fi
-            if [[ -f "${anodosysUserExtensionPath}/${anodosysExtension}/script/${valueValue}" ]]; then
-              realpath "${anodosysUserExtensionPath}/${anodosysExtension}/script/${valueValue}"
-              exit 0
-            fi
-          done
-          if [[ -f "${anodosysAppPath}/${valueValue}" ]]; then
-            realpath "${anodosysAppPath}/${valueValue}"
-            exit 0
-          fi
-        fi
-      fi
-      echo "${sourceFilePath}/${value}"
-      exit 0
-    fi
-  fi
-
-  echo "${value}"
 }
 
 setServerConfiguration()
@@ -438,20 +77,59 @@ typeset -fx setServerConfiguration
 configurationFileName=$(realpath "${fileName}")
 export configurationFileName
 
-configurationFiles=( $(collectConfigurationFiles "${configurationFileName}") )
-configurationFiles=( $(tr ' ' '\n' <<<"${configurationFiles[@]}" | awk '!u[$0]++' | tr '\n' ' ') )
-configurationFiles=( $(prepareConfigurationFiles "${configurationFileName}" "${reset}" "${configurationFiles[@]}") )
-configurationHash=$(for configurationFile in "${configurationFiles[@]}"; do md5sum "${configurationFile}"; done | md5sum | awk '{print $1}')
+params=( "--file" "${configurationFileName}" )
+
+if [[ -n "${anodosysExtensions}" ]]; then
+  for anodosysExtension in "${anodosysExtensions[@]}"; do
+    params+=( "--param" "${anodosysExtension}:${anodosysExtensionPath}/${anodosysExtension}" )
+  done
+fi
+
+if [[ -n "${anodosysUserExtensions}" ]]; then
+  for anodosysExtension in "${anodosysUserExtensions[@]}"; do
+    params+=( "--param" "${anodosysExtension}:${anodosysUserExtensionPath}/${anodosysExtension}" )
+  done
+fi
+
+params+=( "--level" "1:input" )
+params+=( "--level" "2:object:global" )
+params+=( "--level" "3:suffix:/configuration" )
+params+=( "--level" "4:suffix:/script" )
+params+=( "--sort" )
+
+set +e
+configuration=$(jcp process "${params[@]}")
+lastExitCode=$?
+set -e
+
+if [[ "${lastExitCode}" != 0 ]]; then
+  >&2 echo "${configuration}"
+  echo ""
+  exit 1
+fi
+
+configurationHash=$(echo "${configuration}" | md5sum | awk '{print $1}')
 anodosysConfigurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}.json"
 export anodosysConfigurationFile
 
-if [[ ! -f "${anodosysConfigurationFile}" ]]; then
-  #echo "Creating configuration file at: ${anodosysConfigurationFile}"
-  jq -s 'def deepmerge(a;b): reduce b[] as $item (a; reduce ($item | keys_unsorted[]) as $key (.; $item[$key] as $val | ($val | type) as $type | .[$key] = if ($type == "object") then deepmerge({}; [if .[$key] == null then {} else .[$key] end, $val]) elif ($type == "array") then (.[$key] + $val | unique) else $val end)); deepmerge({}; .)' "${configurationFiles[@]}" > "${anodosysConfigurationFile}"
+echo "${configuration}" > "${anodosysConfigurationFile}"
+
+systemName=$(jq -r '.global .systemName //empty' "${anodosysConfigurationFile}")
+
+if [[ -z "${systemName}" ]]; then
+  >&2 echo "No system name defined!"
+  exit 1
 fi
 
-if [[ "${reset}" == 1 ]]; then
-  "${anodosysAppPath}/system/container/configuration.sh" -c "${configurationHash}" -r
-else
-  "${anodosysAppPath}/system/container/configuration.sh" -c "${configurationHash}"
+createServerConfiguration "${configurationHash}" "${systemName}" "system" "${reset}"
+
+setServerConfiguration "${systemName}" "system"
+
+if [[ -z "${serverNames}" ]]; then
+  >&2 echo "No server names specified!"
+  exit 1
 fi
+
+for serverName in "${serverNames[@]}"; do
+  createServerConfiguration "${configurationHash}" "${systemName}" "${serverName}" "${reset}"
+done

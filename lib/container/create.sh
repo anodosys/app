@@ -93,6 +93,7 @@ containerCreate()
     done
     command+=" --name \"${containerName}\" \"${imageName,,}\""
     echo "Creating container: ${containerName} with image: ${imageName,,}"
+    echo "Command: ${command}"
     result=$(bash -c "${command}" 2>&1 | cat)
     if [[ $(containerExists "${containerName}") == 1 ]]; then
       echo "Successfully created container: ${containerName}" | sed $'s,.*,\e[0;32m&\e[m,'

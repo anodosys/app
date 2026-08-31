@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerDismantleScript}" ]]; then
-  echo "Before container dismantle script: ${beforeContainerDismantleScript}"
+  echo "Before system container dismantle script: ${beforeContainerDismantleScript}"
   if [[ -n "${beforeContainerDismantleParameters}" ]]; then
     "${beforeContainerDismantleScript}" \
       --systemName "${systemName}" \
@@ -50,7 +50,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         dismantleScript="${PWD}/${serverName}/container/dismantle.sh"
         if [[ -f "${dismantleScript}" ]]; then
-          echo "[${serverName}] Dismantling container of server: ${serverName} with custom script: ${dismantleScript}"
+          echo "[${serverName}] Dismantling system container of server: ${serverName} with custom script: ${dismantleScript}"
           "${dismantleScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/dismantle.sh" -s "${serverName}" &
@@ -89,7 +89,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerDismantleScript}" ]]; then
-  echo "After container dismantle script: ${afterContainerDismantleScript}"
+  echo "After system container dismantle script: ${afterContainerDismantleScript}"
   if [[ -n "${afterContainerDismantleParameters}" ]]; then
     "${afterContainerDismantleScript}" \
       --systemName "${systemName}" \

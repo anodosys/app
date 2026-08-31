@@ -20,7 +20,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerRemoveScript}" ]]; then
-  echo "Before container remove script: ${beforeContainerRemoveScript}"
+  echo "Before system container remove script: ${beforeContainerRemoveScript}"
   if [[ -n "${beforeContainerRemoveParameters}" ]]; then
     "${beforeContainerRemoveScript}" \
       --systemName "${systemName}" \
@@ -55,7 +55,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         removeScript="${PWD}/${serverName}/container/remove.sh"
         if [[ -f "${removeScript}" ]]; then
-          echo "[${serverName}] Removing container of server: ${serverName} with custom script: ${removeScript}"
+          echo "[${serverName}] Removing system container of server: ${serverName} with custom script: ${removeScript}"
           "${removeScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/remove.sh" -s "${serverName}" &
@@ -94,7 +94,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerRemoveScript}" ]]; then
-  echo "After container remove script: ${afterContainerRemoveScript}"
+  echo "After system container remove script: ${afterContainerRemoveScript}"
   if [[ -n "${afterContainerRemoveParameters}" ]]; then
     "${afterContainerRemoveScript}" \
       --systemName "${systemName}" \

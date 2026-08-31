@@ -25,7 +25,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerFinishingScript}" ]]; then
-  echo "Before container finishing script: ${beforeContainerFinishingScript}"
+  echo "Before system container finishing script: ${beforeContainerFinishingScript}"
   if [[ -n "${beforeContainerFinishingParameters}" ]]; then
     "${beforeContainerFinishingScript}" \
       --systemName "${systemName}" \
@@ -60,7 +60,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         finishingScript="${PWD}/${serverName}/container/finishing.sh"
         if [[ -f "${finishingScript}" ]]; then
-          echo "[${serverName}] Finishing container of server: ${serverName} with custom script: ${finishingScript}"
+          echo "[${serverName}] Finishing system container of server: ${serverName} with custom script: ${finishingScript}"
           "${finishingScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/finishing.sh" -s "${serverName}" &
@@ -99,7 +99,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerFinishingScript}" ]]; then
-  echo "After container finishing script: ${afterContainerFinishingScript}"
+  echo "After system container finishing script: ${afterContainerFinishingScript}"
   if [[ -n "${afterContainerFinishingParameters}" ]]; then
     "${afterContainerFinishingScript}" \
       --systemName "${systemName}" \

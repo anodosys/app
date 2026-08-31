@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerTeardownScript}" ]]; then
-  echo "Before container teardown script: ${beforeContainerTeardownScript}"
+  echo "Before system container teardown script: ${beforeContainerTeardownScript}"
   if [[ -n "${beforeContainerTeardownParameters}" ]]; then
     "${beforeContainerTeardownScript}" \
       --systemName "${systemName}" \
@@ -50,7 +50,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         teardownScript="${PWD}/${serverName}/container/teardown.sh"
         if [[ -f "${teardownScript}" ]]; then
-          echo "[${serverName}] Tearing down container of server: ${serverName} with custom script: ${teardownScript}"
+          echo "[${serverName}] Tearing down system container of server: ${serverName} with custom script: ${teardownScript}"
           "${teardownScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/teardown.sh" -s "${serverName}" &
@@ -89,7 +89,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerTeardownScript}" ]]; then
-  echo "After container teardown script: ${afterContainerTeardownScript}"
+  echo "After system container teardown script: ${afterContainerTeardownScript}"
   if [[ -n "${afterContainerTeardownParameters}" ]]; then
     "${afterContainerTeardownScript}" \
       --systemName "${systemName}" \

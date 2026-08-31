@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerPrepareScript}" ]]; then
-  echo "Before container prepare script: ${beforeContainerPrepareScript}"
+  echo "Before system container prepare script: ${beforeContainerPrepareScript}"
   if [[ -n "${beforeContainerPrepareParameters}" ]]; then
     "${beforeContainerPrepareScript}" \
       --systemName "${systemName}" \
@@ -50,7 +50,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         prepareScript="${PWD}/${serverName}/container/prepare.sh"
         if [[ -f "${prepareScript}" ]]; then
-          echo "[${serverName}] Preparing container of server: ${serverName} with custom script: ${prepareScript}"
+          echo "[${serverName}] Preparing system container of server: ${serverName} with custom script: ${prepareScript}"
           "${prepareScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/prepare.sh" -s "${serverName}" &
@@ -89,7 +89,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerPrepareScript}" ]]; then
-  echo "After container prepare script: ${afterContainerPrepareScript}"
+  echo "After system container prepare script: ${afterContainerPrepareScript}"
   if [[ -n "${afterContainerPrepareParameters}" ]]; then
     "${afterContainerPrepareScript}" \
       --systemName "${systemName}" \

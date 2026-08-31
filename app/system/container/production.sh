@@ -25,7 +25,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerProductionScript}" ]]; then
-  echo "Before container production script: ${beforeContainerProductionScript}"
+  echo "Before system container production script: ${beforeContainerProductionScript}"
   if [[ -n "${beforeContainerProductionParameters}" ]]; then
     "${beforeContainerProductionScript}" \
       --systemName "${systemName}" \
@@ -52,7 +52,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         productionScript="${PWD}/${serverName}/container/production.sh"
         if [[ -f "${productionScript}" ]]; then
-          echo "[${serverName}] Production container of server: ${serverName} with custom script: ${productionScript}"
+          echo "[${serverName}] Production system container of server: ${serverName} with custom script: ${productionScript}"
           "${productionScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/production.sh" -s "${serverName}" &
@@ -91,7 +91,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerProductionScript}" ]]; then
-  echo "After container production script: ${afterContainerProductionScript}"
+  echo "After system container production script: ${afterContainerProductionScript}"
   if [[ -n "${afterContainerProductionParameters}" ]]; then
     "${afterContainerProductionScript}" \
       --systemName "${systemName}" \

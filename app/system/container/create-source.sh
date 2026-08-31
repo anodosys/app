@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerCreateSourceScript}" ]]; then
-  echo "Before container create source script: ${beforeContainerCreateSourceScript}"
+  echo "Before system container create source script: ${beforeContainerCreateSourceScript}"
   if [[ -n "${beforeContainerCreateSourceParameters}" ]]; then
     "${beforeContainerCreateSourceScript}" \
       --systemName "${systemName}" \
@@ -42,7 +42,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         createScript="${PWD}/${serverName}/container/create-source.sh"
         if [[ -f "${createScript}" ]]; then
-          echo "[${serverName}] Creating container of server: ${serverName} with custom script: ${createScript}"
+          echo "[${serverName}] Creating system container of server: ${serverName} with custom script: ${createScript}"
           "${createScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/create-source.sh" -s "${serverName}" &
@@ -81,7 +81,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerCreateSourceScript}" ]]; then
-  echo "After container create source script: ${afterContainerCreateSourceScript}"
+  echo "After system container create source script: ${afterContainerCreateSourceScript}"
   if [[ -n "${afterContainerCreateSourceParameters}" ]]; then
     "${afterContainerCreateSourceScript}" \
       --systemName "${systemName}" \

@@ -35,7 +35,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerCommencementScript}" ]]; then
-  echo "Before container commencement script: ${beforeContainerCommencementScript}"
+  echo "Before system container commencement script: ${beforeContainerCommencementScript}"
   if [[ -n "${beforeContainerCommencementParameters}" ]]; then
     "${beforeContainerCommencementScript}" \
       --systemName "${systemName}" \
@@ -60,7 +60,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         commencementScript="${PWD}/${serverName}/container/commencement.sh"
         if [[ -f "${commencementScript}" ]]; then
-          echo "[${serverName}] Commencement container of server: ${serverName} with custom script: ${commencementScript}"
+          echo "[${serverName}] Commencement system container of server: ${serverName} with custom script: ${commencementScript}"
           "${commencementScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/commencement.sh" -s "${serverName}" &
@@ -99,7 +99,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerCommencementScript}" ]]; then
-  echo "After container commencement script: ${afterContainerCommencementScript}"
+  echo "After system container commencement script: ${afterContainerCommencementScript}"
   if [[ -n "${afterContainerCommencementParameters}" ]]; then
     "${afterContainerCommencementScript}" \
       --systemName "${systemName}" \

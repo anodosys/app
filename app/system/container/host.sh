@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerHostScript}" ]]; then
-  echo "Before container host script: ${beforeContainerHostScript}"
+  echo "Before system container host script: ${beforeContainerHostScript}"
   if [[ -n "${beforeContainerHostParameters}" ]]; then
     "${beforeContainerHostScript}" \
       --systemName "${systemName}" \
@@ -42,7 +42,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/foundation.sh" -s "${serverName}" -p "${processedServerNames}") == 1 ]]; then
         hostScript="${PWD}/${serverName}/container/host.sh"
         if [[ -f "${hostScript}" ]]; then
-          echo "[${serverName}] Hosting container of server: ${serverName} with custom script: ${hostScript}"
+          echo "[${serverName}] Hosting system container of server: ${serverName} with custom script: ${hostScript}"
           "${hostScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/host.sh" -s "${serverName}" &
@@ -81,7 +81,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerHostScript}" ]]; then
-  echo "After container host script: ${afterContainerHostScript}"
+  echo "After system container host script: ${afterContainerHostScript}"
   if [[ -n "${afterContainerHostParameters}" ]]; then
     "${afterContainerHostScript}" \
       --systemName "${systemName}" \

@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerExistsScript}" ]]; then
-  echo "Before container exists script: ${beforeContainerExistsScript}"
+  echo "Before system container exists script: ${beforeContainerExistsScript}"
   if [[ -n "${beforeContainerExistsParameters}" ]]; then
     "${beforeContainerExistsScript}" \
       --systemName "${systemName}" \
@@ -51,7 +51,7 @@ for serverName in "${!processIds[@]}"; do
 done
 
 if [[ -n "${afterContainerExistsScript}" ]]; then
-  echo "After container exists script: ${afterContainerExistsScript}"
+  echo "After system container exists script: ${afterContainerExistsScript}"
   if [[ -n "${afterContainerExistsParameters}" ]]; then
     "${afterContainerExistsScript}" \
       --systemName "${systemName}" \

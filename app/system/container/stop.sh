@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerStopScript}" ]]; then
-  echo "Before container stop script: ${beforeContainerStopScript}"
+  echo "Before system container stop script: ${beforeContainerStopScript}"
   if [[ -n "${beforeContainerStopParameters}" ]]; then
     "${beforeContainerStopScript}" \
       --systemName "${systemName}" \
@@ -70,7 +70,7 @@ while : ; do
       if [[ -n "${server}" ]] && [[ "${server}" == "${serverName}" ]] || [[ $("${currentPath}/../../server/container/independent.sh" -s "${serverName}" -p "${supportsServerNames}" -r "${runningServerNames}") == 1 ]]; then
         stopScript="${PWD}/${serverName}/container/stop.sh"
         if [[ -f "${stopScript}" ]]; then
-          echo "[${serverName}] Stopping container of server: ${serverName} with custom script: ${stopScript}"
+          echo "[${serverName}] Stopping system container of server: ${serverName} with custom script: ${stopScript}"
           "${stopScript}" -s "${serverName}" &
         else
           "${currentPath}/../../server/container/stop.sh" -s "${serverName}" &
@@ -109,7 +109,7 @@ while : ; do
 done
 
 if [[ -n "${afterContainerStopScript}" ]]; then
-  echo "After container stop script: ${afterContainerStopScript}"
+  echo "After system container stop script: ${afterContainerStopScript}"
   if [[ -n "${afterContainerStopParameters}" ]]; then
     "${afterContainerStopScript}" \
       --systemName "${systemName}" \

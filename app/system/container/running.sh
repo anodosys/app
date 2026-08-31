@@ -15,7 +15,7 @@ if [[ -z "${serverNames}" ]]; then
 fi
 
 if [[ -n "${beforeContainerRunningScript}" ]]; then
-  echo "Before container running script: ${beforeContainerRunningScript}"
+  echo "Before system container running script: ${beforeContainerRunningScript}"
   if [[ -n "${beforeContainerRunningParameters}" ]]; then
     "${beforeContainerRunningScript}" \
       --systemName "${systemName}" \
@@ -50,7 +50,7 @@ for serverName in "${!processIds[@]}"; do
 done
 
 if [[ -n "${afterContainerRunningScript}" ]]; then
-  echo "After container running script: ${afterContainerRunningScript}"
+  echo "After system container running script: ${afterContainerRunningScript}"
   if [[ -n "${afterContainerRunningParameters}" ]]; then
     "${afterContainerRunningScript}" \
       --systemName "${systemName}" \

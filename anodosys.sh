@@ -185,6 +185,16 @@ Example: ads build
 EOF
 }
 
+if [[ $(which jcp | wc -l) == 0 ]]; then
+  >&2 echo "Please install required package: jcp"
+  exit 1
+fi
+
+if [[ $(which j2v | wc -l) == 0 ]]; then
+  >&2 echo "Please install required package: j2v"
+  exit 1
+fi
+
 if [[ $(which jq | wc -l) == 0 ]]; then
   >&2 echo "Please install required package: jq"
   exit 1
