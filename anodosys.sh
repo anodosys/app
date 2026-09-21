@@ -256,10 +256,14 @@ if [[ -n "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ -f "${anodosysUserPa
 fi
 
 if [[ -z "${fileName}" ]]; then
-  if [[ ! -f anodosys.json ]] && { test -f anodosys/anodosys.json; test -f anodosys/ads.json; }; then
+  if [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]] && { test -f anodosys/anodosys.json; test -f anodosys/ads.json; }; then
     cd anodosys
-  elif [[ ! -f anodosys.json ]] && { test -f ads/anodosys.json; test -f ads/ads.json; }; then
+  elif [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]] && { test -f ads/anodosys.json; test -f ads/ads.json; }; then
     cd ads
+  elif [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]] && { test -f ../anodosys.json; test -f ../ads.json; }; then
+    cd ..
+  elif [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]] && { test -f ../ads/anodosys.json; test -f ../ads/ads.json; }; then
+    cd ../ads
   fi
 
   systemPath="${PWD}"
