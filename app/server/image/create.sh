@@ -48,7 +48,9 @@ setServerConfiguration "${systemName}" "${serverName}"
 
 if [[ -n "${beforeImageCreateScript}" ]]; then
   echo "Before image create script: ${beforeImageCreateScript}"
-  "${beforeImageCreateScript}"
+  "${beforeImageCreateScript}" \
+    --systemName "${systemName}" \
+    --serverName "${serverName}"
 fi
 
 if [[ -z "${buildImageName}" ]] && [[ -z "${buildImageTag}" ]]; then
@@ -82,5 +84,7 @@ imageCreate "${imageName,,}" "${imageTag,,}" "${containerName}" "${buildImageEnt
 
 if [[ -n "${afterImageCreateScript}" ]]; then
   echo "After image create script: ${afterImageCreateScript}"
-  "${afterImageCreateScript}"
+  "${afterImageCreateScript}" \
+    --systemName "${systemName}" \
+    --serverName "${serverName}"
 fi

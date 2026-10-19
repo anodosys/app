@@ -8,12 +8,18 @@ containerCopy()
   local remoteUserName="${4}"
   local remoteGroupName="${5}"
   local remoteAccessRights="${6}"
+  local remoteParentPath
 
   if [[ -z "${remotePath}" ]]; then
     remotePath=$(basename "${localPath}")
   fi
 
   if [[ $(containerRunning "${containerName}") == 1 ]]; then
+    remoteParentPath=$(dirname "${remotePath}")
+    if [[ -n "${remoteParentPath}" ]] && [[ "${remoteParentPath}" != "." ]]; then
+      echo "Ensuring path: ${remoteParentPath} in container: ${containerName}"
+      containerCommand "${containerName}" "mkdir -p ${remoteParentPath}"
+    fi
     echo "Copying from: ${localPath} to container: ${containerName} at: ${remotePath}"
     docker cp "${localPath}" "${containerName}:${remotePath}"
 

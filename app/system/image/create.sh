@@ -12,7 +12,8 @@ echo "- Image create -" | sed $'s,.*,\e[1;37m&\e[m,'
 
 if [[ -n "${beforeImageCreateScript}" ]]; then
   echo "Before image create script: ${beforeImageCreateScript}"
-  "${beforeImageCreateScript}"
+  "${beforeImageCreateScript}" \
+    --systemName "${systemName}"
 fi
 
 if [[ -z "${serverNames}" ]]; then
@@ -46,5 +47,6 @@ done
 
 if [[ -n "${afterImageCreateScript}" ]]; then
   echo "After image create script: ${afterImageCreateScript}"
-  "${afterImageCreateScript}"
+  "${afterImageCreateScript}" \
+    --systemName "${systemName}"
 fi

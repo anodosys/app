@@ -51,6 +51,9 @@ logName "${systemName}" "${serverName}"
 
 setServerConfiguration "${systemName}" "${serverName}"
 
+if [[ -z "${useNamedVolumes}" ]]; then
+  useNamedVolumes="false"
+fi
 containerName="${systemName}_${serverName}"
 
 if [[ -n "${beforeContainerTeardownScript}" ]]; then
@@ -70,6 +73,7 @@ if [[ -n "${beforeContainerTeardownScript}" ]]; then
 fi
 
 if [[ -n "${beforeContainerTeardownDockerScript}" ]]; then
+  containerStart "${containerName}" "${useNamedVolumes}"
   containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
 
   echo "Before container teardown docker script: ${beforeContainerTeardownDockerScript}"
@@ -127,6 +131,7 @@ if [[ -n "${containerTeardownScript}" ]]; then
 fi
 
 if [[ -n "${containerTeardownDockerScript}" ]]; then
+  containerStart "${containerName}" "${useNamedVolumes}"
   containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
 
   echo "Container teardown docker script: ${containerTeardownDockerScript}"
@@ -188,6 +193,7 @@ if [[ -n "${afterContainerTeardownScript}" ]]; then
 fi
 
 if [[ -n "${afterContainerTeardownDockerScript}" ]]; then
+  containerStart "${containerName}" "${useNamedVolumes}"
   containerCopy "${containerName}" "${anodosysAppPath}/prepare-parameters.sh"
 
   echo "After container teardown docker script: ${afterContainerTeardownDockerScript}"
