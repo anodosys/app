@@ -46,7 +46,8 @@ if [[ -n "${anodosysPath}" ]]; then
   mkdir -p "${anodosysUserHostPath}"
   export anodosysUserHostPath
 
-  anodosysUserActionPath="${anodosysPath}/action"
+  anodosysUserActionPath="${anodosysUserPath}/action"
+  mkdir -p "${anodosysUserActionPath}"
   anodosysUserActionSystemPath="${anodosysUserActionPath}/system"
   export anodosysUserActionSystemPath
   anodosysUserActionServerPath="${anodosysUserActionPath}/server"
