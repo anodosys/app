@@ -17,7 +17,8 @@ typeset -fx prepareValue
 
 finish()
 {
-  local lastExitCode
+  # must be captured first, any later command overwrites it
+  local lastExitCode=$?
   local processId
   local sessionId
   local subProcessIds
@@ -26,7 +27,6 @@ finish()
   local runningProcessId
 
   if [[ "${action}" != "" ]] && [[ "${action}" != "steps" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "extension" ]]; then
-    lastExitCode=$?
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
     sessionId=$(prepareValue "${sessionId}")
@@ -43,7 +43,7 @@ finish()
       sleep 0.5
       for runningProcessId in "${!runningProcessIds[@]}"; do
         if [[ $(ps -p "${runningProcessId}" | wc -l) -eq 1 ]]; then
-          unset runningProcessIds["${runningProcessId}"]
+          unset 'runningProcessIds[${runningProcessId}]'
         fi
       done
     done
@@ -80,6 +80,9 @@ EOF
 cat >&2 << EOF
 
   list                          List all known systems
+  extension                     Add, update, reset or remove extensions
+  update                        Update Anodosys to the latest or a given release (--applicationVersion)
+  version                       Show the installed version
 
   construct                     Create or update system components
   reset                         Remove all generated data of the system
@@ -218,6 +221,28 @@ fi
 anodosysPath=$(cd -P "$(dirname "${scriptName}")" && pwd)
 export anodosysPath
 
+# extensions are managed independently of any system configuration
+if [[ "${1}" == "extension" ]]; then
+  shift
+  exec "${anodosysPath}/extension.sh" "$@"
+fi
+
+if [[ "${1}" == "update" ]]; then
+  shift
+  exec "${anodosysPath}/update.sh" "$@"
+fi
+
+if [[ "${1}" == "version" ]]; then
+  if [[ -L "$(dirname "${anodosysPath}")/current" ]]; then
+    basename "${anodosysPath}"
+  elif [[ -d "${anodosysPath}/.git" ]]; then
+    git -C "${anodosysPath}" describe --tags --always --dirty
+  else
+    echo "unknown"
+  fi
+  exit 0
+fi
+
 anodosysAppPath="${anodosysPath}/app"
 export anodosysAppPath
 
@@ -233,12 +258,24 @@ anodosysUserActionServerPath=
 source "${anodosysAppPath}/path.sh"
 source "${anodosysAppPath}/log.sh"
 
+# listing systems does not depend on any system configuration
+if [[ "${1}" == "list" ]]; then
+  source "${anodosysActionSystemPath}/list.sh"
+  exit 0
+fi
+
 fileName=
 force=0
-local=0
+localImages=0
+declare -A prepareParameters=()
 source "${anodosysAppPath}/prepare-parameters.sh"
+# the --local flag is stored as localImages to avoid a variable named like the builtin
+if test "${prepareParameters["local"]+isset}"; then
+  localImages="${prepareParameters["local"]}"
+  unset local
+fi
 export force
-export local
+export localImages
 export env
 
 source "${anodosysAppPath}/lib.sh"

@@ -10,6 +10,10 @@ anodosysPath=$(cd -P "$( dirname "${scriptName}" )" && pwd)
 anodosysHostPath="${anodosysPath}/host"
 
 anodosysExtensionPath="${anodosysPath}/extension"
+# installed releases share their extensions so they survive updates
+if [[ -L "$(dirname "${anodosysPath}")/current" ]]; then
+  anodosysExtensionPath="$(dirname "${anodosysPath}")/extension"
+fi
 
 currentUser=$(whoami)
 currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)

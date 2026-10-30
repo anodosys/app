@@ -124,7 +124,7 @@ if [[ "${alreadyInstalled}" == 0 ]]; then
   fi
 
   if [[ "${distribution}" == "Ubuntu" ]]; then
-    requiredPackages=( git head moreutils sed wget unzip )
+    requiredPackages=( curl git head jq moreutils sed wget unzip )
   else
     >&2 echo "Unsupported OS: ${distribution}"
     exit 1
@@ -243,8 +243,10 @@ if [[ "${alreadyInstalled}" == 0 ]]; then
   fi
 fi
 
+previousReleasePath=
 if [[ -L "${currentReleasePath}" ]]; then
-  if ! [[ $(readlink -f "${currentReleasePath}") == "${releasePath}" ]]; then
+  previousReleasePath=$(readlink -f "${currentReleasePath}")
+  if ! [[ "${previousReleasePath}" == "${releasePath}" ]]; then
     echo "Unlinking currently installed release"
     rm "${currentReleasePath}"
   fi
@@ -288,8 +290,29 @@ fi
 anodosysConfigurationPath="${currentReleasePath}/configuration"
 mkdir -p "${anodosysConfigurationPath}"
 
-anodosysExtensionPath="${currentReleasePath}/extension"
+anodosysExtensionPath="${anodosysPath}/extension"
 mkdir -p "${anodosysExtensionPath}"
+
+# move extensions of the previous release, which stored them inside the release directory
+for releaseExtensionPath in "${previousReleasePath}"/extension/*/; do
+  if [[ -n "${previousReleasePath}" ]] && [[ -d "${releaseExtensionPath}" ]]; then
+    releaseExtensionName=$(basename "${releaseExtensionPath}")
+    if [[ ! -d "${anodosysExtensionPath}/${releaseExtensionName}" ]]; then
+      echo "Moving extension: ${releaseExtensionName} to: ${anodosysExtensionPath}/${releaseExtensionName}"
+      cp -a "${releaseExtensionPath}" "${anodosysExtensionPath}/${releaseExtensionName}"
+    fi
+  fi
+done
+
+# keep the current and the previous release only
+for installedReleasePath in "${anodosysPath}"/*/; do
+  installedReleasePath="${installedReleasePath%/}"
+  installedReleaseVersion=$(basename "${installedReleasePath}")
+  if [[ "${installedReleaseVersion}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] && [[ "${installedReleasePath}" != "${releasePath}" ]] && [[ "${installedReleasePath}" != "${previousReleasePath}" ]]; then
+    echo "Removing old release: ${installedReleaseVersion}"
+    rm -rf "${installedReleasePath}"
+  fi
+done
 
 anodosysHostPath="${currentReleasePath}/host"
 mkdir -p "${anodosysHostPath}"

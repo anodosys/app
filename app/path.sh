@@ -17,6 +17,10 @@ if [[ -n "${anodosysPath}" ]]; then
   export anodosysActionServerPath
 
   anodosysExtensionPath="${anodosysPath}/extension"
+  # installed releases share their extensions so they survive updates
+  if [[ -L "$(dirname "${anodosysPath}")/current" ]]; then
+    anodosysExtensionPath="$(dirname "${anodosysPath}")/extension"
+  fi
   export anodosysExtensionPath
 
   currentUser=$(whoami)
