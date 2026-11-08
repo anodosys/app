@@ -1,3 +1,17 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="logo/anodosys-logo-dark.svg">
+    <img src="logo/anodosys-logo.svg" alt="Anodosys" width="473">
+  </picture>
+</p>
+
+<p align="center">Step pipelines across Docker containers.</p>
+
+Anodosys builds and runs systems of several Docker containers that are described in one `ads.json`. Its actions are
+pipelines of steps that move between the containers in a fixed order, for example installing something in the first
+container, then in the second one and afterwards again in the first one. Servers run in waves: as soon as the servers
+they depend on are done, they run in parallel.
+
 # Installation
 
 ```

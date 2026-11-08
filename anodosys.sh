@@ -84,6 +84,9 @@ usage()
 {
   local extensionName="${1}"
 
+  if [[ -t 2 ]] && [[ -z "${anodosysBannerShown}" ]]; then
+    source "${anodosysPath}/banner.sh" >&2
+  fi
   cat >&2 << EOF
 
 usage: ads <ACTION>
@@ -397,6 +400,12 @@ fi
 export systemName
 
 if [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "log" ]]; then
+  # Show the logo once per top-level run in a terminal, before the output is passed to the log file, and not for ads
+  # calls made by scripts
+  if [[ -t 1 ]] && [[ -z "${anodosysBannerShown}" ]]; then
+    source "${anodosysPath}/banner.sh"
+    export anodosysBannerShown=1
+  fi
   logStart "${systemName}" "${anodosysCommandLine}"
   logName "${systemName}"
 fi
