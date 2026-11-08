@@ -24,7 +24,7 @@ if [[ -n "${anodosysPath}" ]]; then
   export anodosysExtensionPath
 
   currentUser=$(whoami)
-  currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
+  currentUserHome=$(getent passwd "${currentUser}" | cut -d: -f6)
 
   # ANODOSYS_USER_PATH replaces ~/.anodosys, for example to run the smoke tests isolated from the real user setup
   anodosysUserPath="${ANODOSYS_USER_PATH:-${currentUserHome}/.anodosys}"

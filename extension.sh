@@ -62,7 +62,7 @@ if [[ -L "$(dirname "${anodosysPath}")/current" ]]; then
 fi
 
 currentUser=$(whoami)
-currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
+currentUserHome=$(getent passwd "${currentUser}" | cut -d: -f6)
 
 anodosysUserPath="${currentUserHome}/.anodosys"
 mkdir -p "${anodosysUserPath}"
@@ -197,7 +197,7 @@ if [[ "${type}" != "git" ]]; then
 fi
 
 if [[ "${type}" == "git" ]]; then
-  if [[ $(which git | wc -l) == 0 ]]; then
+  if ! command -v git >/dev/null 2>&1; then
     >&2 echo "Please install required package: git"
     exit 1
   fi

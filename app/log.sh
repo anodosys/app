@@ -8,6 +8,7 @@ logFileCaptured="${logFileCaptured:-}"
 # a log file larger than this (in bytes) is rotated when the next run of the system starts
 logMaxSize=10485760
 
+
 logName()
 {
   if [[ $(hash ts >/dev/null 2>&1 && echo "yes" || echo "no") == "yes" ]]; then
@@ -64,6 +65,25 @@ typeset -fx logDisable
 logEnable()
 {
   local writeLogFile=0
+  local esc=$'\e'
+  local cr=$'\r'
+  local bel=$'\a'
+  local logFileFilter
+
+  # sed script that turns terminal output into plain log file lines:
+  # 1. remove color codes
+  # 2. remove trailing carriage returns (output of docker exec -t ends with \r\n)
+  # 3. collapse progress output to its last state: keep the [system] [server] prefix and the text after the last
+  #    carriage return, cursor to line start (ESC[G, ESC[1G) or clear line (ESC[2K)
+  # 4. remove all other control sequences (cursor movement, ESC[K, cursor visibility, ...)
+  # 5. remove window title sequences (ESC]...BEL)
+  # 6. remove remaining carriage returns
+  logFileFilter="s/${esc}\[[0-9;]*m//g"
+  logFileFilter+=";s/${cr}+\$//"
+  logFileFilter+=";s/^((\[[^]]*\] )*).*(${cr}|${esc}\[[01]?G|${esc}\[2K)/\1/"
+  logFileFilter+=";s/${esc}\[[0-9;?]*[A-Za-z]//g"
+  logFileFilter+=";s/${esc}\][^${bel}]*${bel}//g"
+  logFileFilter+=";s/${cr}//g"
 
   if [[ -n "${logFile}" ]]; then
     if sh -c ": >/dev/tty" >/dev/null 2>/dev/null; then
@@ -79,9 +99,9 @@ logEnable()
   fi
 
   if [[ "${writeLogFile}" == 1 ]]; then
-    # the terminal gets colored output, the log file the same lines without color codes
-    exec > >(ts "${logPrefix}" | tee >(sed -u $'s,\e\\[[0-9;]*m,,g' >> "${logFile}") | sed $'s,.*,\e[0;37m&\e[m,')
-    exec 2> >(ts "${logPrefix}" | tee >(sed -u $'s,\e\\[[0-9;]*m,,g' >> "${logFile}") | sed $'s,.*,\e[1;31m&\e[m,' >&2)
+    # the terminal gets colored output, the log file the same lines without control codes
+    exec > >(ts "${logPrefix}" | tee >(sed -E -u "${logFileFilter}" >> "${logFile}") | sed $'s,.*,\e[0;37m&\e[m,')
+    exec 2> >(ts "${logPrefix}" | tee >(sed -E -u "${logFileFilter}" >> "${logFile}") | sed $'s,.*,\e[1;31m&\e[m,' >&2)
   else
     exec > >(ts "${logPrefix}" | sed $'s,.*,\e[0;37m&\e[m,')
     exec 2> >(ts "${logPrefix}" | sed $'s,.*,\e[1;31m&\e[m,' >&2)

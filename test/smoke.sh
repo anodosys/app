@@ -234,7 +234,8 @@ if ! docker image inspect "${imageName}:${imageTag}" >/dev/null 2>&1; then
   docker pull -q "${imageName}:${imageTag}" >/dev/null
 fi
 
-# each container writes the time of its installation, so that the order of the dependency waves can be checked
+# each container writes the time of its installation, so that the order of the dependency waves can be checked, and
+# prints a progress line like Composer, which the log file has to reduce to its last state
 cat > "${projectPath}/ads.json" << EOF
 {
   "global": {
@@ -250,7 +251,7 @@ cat > "${projectPath}/ads.json" << EOF
     "imageName": "${imageName}",
     "imageTag": "${imageTag}",
     "buildImageTag": "smoke",
-    "containerInstall": "date +%s%N > /tmp/installed"
+    "containerInstall": "date +%s%N > /tmp/installed; printf 'progress 1/2\\\\033[1G\\\\033[2Kprogress 2/2\\\\n'"
   },
   "db": {
     "buildImageName": "${system}/db"
@@ -375,10 +376,15 @@ if [[ $(grep -c "^===== .* | anodosys.sh rise | ${projectPath} =====$" "${logFil
 else
   fail "log file has no header for the rise run"
 fi
-if grep -q $'\e' "${logFilePath}" 2>/dev/null; then
-  fail "log file contains color codes"
+if grep -q $'[\e\r]' "${logFilePath}" 2>/dev/null; then
+  fail "log file contains control codes"
 else
-  pass "log file contains no color codes"
+  pass "log file contains no control codes"
+fi
+if grep -q "\] progress 2/2$" "${logFilePath}" 2>/dev/null && ! grep -q "\] progress 1/2" "${logFilePath}" 2>/dev/null; then
+  pass "progress output is reduced to its last state"
+else
+  fail "progress output is not reduced to its last state: $(grep "progress" "${logFilePath}" 2>/dev/null | head -n 2 | cat -v)"
 fi
 assertOutputContains "[${system}] [app]"
 finishTest

@@ -61,18 +61,34 @@ for unparsedParametersKey in "${!unparsedParameters[@]}"; do
   prepareParametersList+=( "${unparsedParametersValue}" )
 done
 
-distribution=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
-distributionVersion=$(awk -F= '/^VERSION_ID/{print $2}' /etc/os-release | tr -d '"')
+# shellcheck disable=SC1091
+distribution=$(. /etc/os-release && echo "${NAME}")
+# shellcheck disable=SC1091
+read -r -a distributionIds <<< "$(. /etc/os-release && echo "${ID} ${ID_LIKE}")"
 
-if [[ "${distribution}" == "Ubuntu" ]]; then
-  basePath="/usr/local"
-  binPath="${basePath}/bin"
-  libPath="${basePath}/lib"
-  anodosysPath="${libPath}/anodosys"
-else
-  >&2 echo "Unsupported OS: ${distribution}"
+# Ubuntu and Debian (and their derivatives) use apt, Fedora uses dnf
+packageManager=
+for distributionId in "${distributionIds[@]}"; do
+  case "${distributionId}" in
+    ubuntu|debian) packageManager="apt"; break;;
+    fedora) packageManager="dnf"; break;;
+  esac
+done
+
+if [[ -z "${packageManager}" ]]; then
+  >&2 echo "Unsupported OS: ${distribution}, supported are Ubuntu, Debian and Fedora"
   exit 1
 fi
+
+if [[ $(id -u) != 0 ]]; then
+  >&2 echo "Installing requires root privileges, please run it with sudo"
+  exit 1
+fi
+
+basePath="/usr/local"
+binPath="${basePath}/bin"
+libPath="${basePath}/lib"
+anodosysPath="${libPath}/anodosys"
 
 mkdir -p "${binPath}"
 mkdir -p "${libPath}"
@@ -92,55 +108,59 @@ if [[ -n "${applicationVersion}" ]]; then
 fi
 
 if [[ "${alreadyInstalled}" == 0 ]]; then
-  echo "Preparing distribution detection"
+  # required command and the package that contains it
+  declare -A requiredCommands
+  if [[ "${packageManager}" == "apt" ]]; then
+    requiredCommands=( [curl]=curl [git]=git [jq]=jq [ts]=moreutils [sed]=sed [wget]=wget [unzip]=unzip [ps]=procps
+      [find]=findutils [getent]=libc-bin [rsync]=rsync [awk]=gawk )
+  else
+    requiredCommands=( [curl]=curl [git]=git [jq]=jq [ts]=moreutils [sed]=sed [wget]=wget [unzip]=unzip [ps]=procps-ng
+      [find]=findutils [getent]=glibc-common [rsync]=rsync [awk]=gawk )
+  fi
 
-  if ! [[ -x "$(command -v lsb_release)" ]]; then
-    echo "Installing lsb_release"
-    if [[ "${distribution}" == "Ubuntu" ]]; then
-      if [[ $(printf '%s\n' "18.04" "${distributionVersion}" | sort -C -V && echo "yes" || echo "no") == "yes" ]]; then
-        apt-get update --allow-releaseinfo-change
-      else
-        apt-get update
-      fi
-      DEBIAN_FRONTEND="noninteractive" apt-get install -y apt-utils
-      DEBIAN_FRONTEND="noninteractive" apt-get install -y lsb-release
+  requiredPackages=( )
+  for requiredCommand in "${!requiredCommands[@]}"; do
+    if command -v "${requiredCommand}" >/dev/null 2>&1; then
+      echo "${requiredCommand} already installed"
     else
-      >&2 echo "Unsupported OS: ${distribution}"
+      requiredPackages+=( "${requiredCommands[${requiredCommand}]}" )
+    fi
+  done
+
+  if [[ "${#requiredPackages[@]}" -gt 0 ]]; then
+    readarray -t requiredPackages < <(printf '%s\n' "${requiredPackages[@]}" | sort -u)
+    echo "Installing packages: ${requiredPackages[*]}"
+    if [[ "${packageManager}" == "apt" ]]; then
+      apt-get update --allow-releaseinfo-change || apt-get update
+      DEBIAN_FRONTEND="noninteractive" apt-get install -y "${requiredPackages[@]}" 2>&1
+    else
+      dnf install -y "${requiredPackages[@]}" 2>&1
+    fi
+  fi
+
+  # jcp and j2v are self-contained binaries, so the same files work on every distribution
+  case "$(uname -m)" in
+    x86_64|amd64) toolPlatform="linux-x64";;
+    aarch64|arm64) toolPlatform="linux-arm";;
+    *) toolPlatform=;;
+  esac
+
+  for tool in jcp j2v; do
+    if command -v "${tool}" >/dev/null 2>&1; then
+      echo "${tool} already installed"
+    elif [[ -z "${toolPlatform}" ]]; then
+      >&2 echo "No ${tool} binary available for architecture: $(uname -m)"
       exit 1
-    fi
-  fi
-
-  echo "Finished preparing distribution detection"
-
-  if [[ "${distribution}" == "Ubuntu" ]]; then
-    if [[ $(printf '%s\n' "18.04" "${distributionVersion}" | sort -C -V && echo "yes" || echo "no") == "yes" ]]; then
-      apt-get update --allow-releaseinfo-change
     else
-      apt-get update
-    fi
-  else
-    >&2 echo "Unsupported OS: ${distribution}"
-    exit 1
-  fi
-
-  if [[ "${distribution}" == "Ubuntu" ]]; then
-    requiredPackages=( curl git head jq moreutils sed wget unzip )
-  else
-    >&2 echo "Unsupported OS: ${distribution}"
-    exit 1
-  fi
-
-  for requiredPackage in "${requiredPackages[@]}"; do
-    if ! [[ -x "$(command -v "${requiredPackage}")" ]]; then
-      echo "Installing package: ${requiredPackage}"
-      if [[ "${distribution}" == "Ubuntu" ]]; then
-        DEBIAN_FRONTEND="noninteractive" apt-get install -y "${requiredPackage}" 2>&1
-      else
-        >&2 echo "Unsupported OS: ${distribution}"
+      toolUrl="https://raw.githubusercontent.com/fewe-dev/${tool}/refs/heads/master/build/linux/${toolPlatform}"
+      echo "Installing ${tool} from url: ${toolUrl}"
+      if ! wget -q -O "${binPath}/${tool}.download" "${toolUrl}"; then
+        rm -f "${binPath}/${tool}.download"
+        >&2 echo "Could not download ${tool} from url: ${toolUrl}"
         exit 1
       fi
-    else
-      echo "${requiredPackage} already installed."
+      chmod 0755 "${binPath}/${tool}.download"
+      mv "${binPath}/${tool}.download" "${binPath}/${tool}"
     fi
   done
 
@@ -150,28 +170,33 @@ if [[ "${alreadyInstalled}" == 0 ]]; then
     gitReleaseUrl="https://api.github.com/repos/anodosys/app/releases/latest"
   fi
 
+  # the release data is only accepted when it names a version, GitHub answers with an error page when it is unavailable
+  determineReleaseData()
+  {
+    releaseData=$(curl -s "${gitReleaseUrl}" 2>/dev/null | cat)
+    releaseVersion=$(echo "${releaseData}" | jq -r '.tag_name // empty' 2>/dev/null || true)
+    [[ "${releaseVersion}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+  }
+
   echo "Determining release data"
-  releaseData=$(curl -s "${gitReleaseUrl}" 2>/dev/null | cat)
-  if [[ -z "${releaseData}" ]]; then
+  if ! determineReleaseData; then
     counter=0
-    until [[ "${counter}" -gt 20 ]]; do
-      ((counter++))
+    until [[ "${counter}" -ge 20 ]]; do
+      counter=$((counter+1))
       >&2 echo "Could not determine release data. Waiting three seconds to avoid too many requests timeout."
       sleep 3
       echo "Determining release data (retry #${counter})"
-      releaseData=$(curl -s "${gitReleaseUrl}" 2>/dev/null | cat)
-      if [[ -n "${releaseData}" ]]; then
-        break;
+      if determineReleaseData; then
+        break
       fi
     done
   fi
 
-  if [[ -z "${releaseData}" ]]; then
-    >&2 echo "Could not determine release data."
+  if [[ ! "${releaseVersion}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    >&2 echo "Could not determine release data from url: ${gitReleaseUrl}"
     exit 1
   fi
 
-  releaseVersion=$(echo "${releaseData}" | jq -r '.tag_name')
   echo "Release version: ${releaseVersion}"
 
   if [[ ! -d "${anodosysPath}" ]]; then
@@ -198,8 +223,8 @@ if [[ "${alreadyInstalled}" == 0 ]]; then
     if [[ ! -f "${releaseZipPath}" ]]; then
       if [[ "${result}" =~ "ERROR 429" ]]; then
         counter=0
-        until [[ "${counter}" -gt 20 ]]; do
-          ((counter++))
+        until [[ "${counter}" -ge 20 ]]; do
+          counter=$((counter+1))
           echo "Could not download release archive. Waiting three seconds to avoid too many requests timeout"
           sleep 3
           echo "Downloading release archive from url: ${releaseZipUrl} (retry #${counter})"

@@ -1,8 +1,12 @@
 # Installation
 
 ```
-wget --no-cache -q -O - https://raw.githubusercontent.com/anodosys/app/master/setup.sh | bash
+curl -fsSL https://raw.githubusercontent.com/anodosys/app/master/setup.sh | sudo bash
 ```
+
+Supported are Ubuntu, Debian and Fedora (and distributions based on them). The setup installs the required packages
+with `apt` or `dnf`, and `jcp` and `j2v` from their GitHub repositories if they are missing. Docker has to be installed
+separately.
 
 # Update
 
@@ -24,7 +28,8 @@ Every run of a system action (for example `ads rise` or `ads start`) is appended
 ```
 
 Each run starts with a line containing the time, the command and the directory. The lines are the same as in the
-terminal, with a timestamp and the `[system] [server]` prefix, but without colors. When a log file is larger than
+terminal, with the `[system] [server]` prefix, but without colors and other terminal control codes. Progress bars
+(for example from Composer) are reduced to their last state. When a log file is larger than
 10 MB, it is renamed to `<systemName>.log.1` at the start of the next run, replacing an older one.
 
 ```

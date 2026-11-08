@@ -14,7 +14,7 @@ systemStart()
   fi
 
   echo "Updating system status with name: ${systemName} to: started"
-  (cd "${anodosysUserPath}"; jq -j ". += {\"${systemName}\":true}" status.json | ex -sc 'wq!status.json' /dev/stdin)
+  (cd "${anodosysUserPath}"; jq ". += {\"${systemName}\":true}" status.json > status.json.tmp && mv status.json.tmp status.json)
 }
 
 # shellcheck disable=SC2034

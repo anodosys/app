@@ -12,7 +12,7 @@ if [[ "${sourced}" == 1 ]]; then
 
   if [[ -n "${systemName}" ]]; then
     currentUser=$(whoami)
-    currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
+    currentUserHome=$(getent passwd "${currentUser}" | cut -d: -f6)
 
     anodosysUserPath="${currentUserHome}/.anodosys"
     mkdir -p "${anodosysUserPath}"

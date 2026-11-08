@@ -204,22 +204,22 @@ Example: ads build
 EOF
 }
 
-if [[ $(which jcp | wc -l) == 0 ]]; then
+if ! command -v jcp >/dev/null 2>&1; then
   >&2 echo "Please install required package: jcp"
   exit 1
 fi
 
-if [[ $(which j2v | wc -l) == 0 ]]; then
+if ! command -v j2v >/dev/null 2>&1; then
   >&2 echo "Please install required package: j2v"
   exit 1
 fi
 
-if [[ $(which jq | wc -l) == 0 ]]; then
+if ! command -v jq >/dev/null 2>&1; then
   >&2 echo "Please install required package: jq"
   exit 1
 fi
 
-if [[ $(which ts | wc -l) == 0 ]]; then
+if ! command -v ts >/dev/null 2>&1; then
   >&2 echo "Please install required package: moreutils"
   exit 1
 fi

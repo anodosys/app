@@ -3,13 +3,15 @@
 containerHostNameRemove()
 {
   local containerName="${1}"
-  local lineNumber
+  local hosts
 
-  if [[ -f /etc/hosts ]]; then
+  if [[ -f /etc/hosts ]] && [[ -w /etc/hosts ]]; then
     if [[ $(grep -E "\s+${containerName}\s*$" /etc/hosts | wc -l) -gt 0 ]]; then
-      lineNumber=$(grep -En "\s+${containerName}\s*$" /etc/hosts | awk -F: '{print $1}')
       echo "Removing host entry: ${containerName}"
-      sed -i "${lineNumber}d" /etc/hosts
+      # the content is written back instead of replacing the file (sed -i), which fails when /etc/hosts is a mount point,
+      # for example inside a container
+      hosts=$(grep -Ev "\s+${containerName}\s*$" /etc/hosts || true)
+      printf '%s\n' "${hosts}" > /etc/hosts
     fi
   fi
 }
