@@ -26,7 +26,8 @@ if [[ -n "${anodosysPath}" ]]; then
   currentUser=$(whoami)
   currentUserHome=$(awk -F: -v u="${currentUser}" '$1==u{print $6}' /etc/passwd)
 
-  anodosysUserPath="${currentUserHome}/.anodosys"
+  # ANODOSYS_USER_PATH replaces ~/.anodosys, for example to run the smoke tests isolated from the real user setup
+  anodosysUserPath="${ANODOSYS_USER_PATH:-${currentUserHome}/.anodosys}"
   mkdir -p "${anodosysUserPath}"
   export anodosysUserPath
 
