@@ -64,6 +64,12 @@ containerStart()
         >&2 echo "${result}"
         exit 1
       fi
+      # containerBootstrapCommand (server config) runs with sh before the first command that needs bash, e.g. to
+      # install bash in an image without it: "command -v bash >/dev/null || apk add --no-interactive bash shadow"
+      if [[ -n "${containerBootstrapCommand}" ]] && [[ "${containerBootstrapCommand}" != "-" ]]; then
+        echo "Running bootstrap command in container: ${containerName}"
+        docker exec "${containerName}" sh -c "${containerBootstrapCommand}"
+      fi
       containerVolumePrepare "${containerName}" "${useNamedVolumes}"
       containerHostNameAdd "${containerName}"
       if [[ "${containerStartedCommand}" != "false" ]]; then

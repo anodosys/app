@@ -19,7 +19,12 @@ imagePull()
         echo "${password}" | docker login -u="${userName}" --password-stdin
       fi
     fi
-    docker pull "${imageName,,}:${imageTag,,}"
+    # containerPlatform (server config, e.g. linux/arm64) pulls an image for another architecture, run with QEMU
+    if [[ -n "${containerPlatform}" ]] && [[ "${containerPlatform}" != "-" ]]; then
+      docker pull --platform "${containerPlatform}" "${imageName,,}:${imageTag,,}"
+    else
+      docker pull "${imageName,,}:${imageTag,,}"
+    fi
     logEnable
   else
     echo "No need to pull image: ${imageName,,}:${imageTag,,}"
