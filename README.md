@@ -103,6 +103,26 @@ ads connect <container>                 # run in the system directory
 ads connect <container> --disconnect
 ```
 
+# Data that outlives its container
+
+Everything a container writes stays in the container: removing it (`remove`, `purge`, `erase`) or creating it again
+loses that data. A path whose data has to stay, for example the files of a database, is kept in a data volume:
+
+```json
+"database": {
+  "containerDataVolumes": ["data:/var/lib/mysql"]
+}
+```
+
+Every entry `name:/path/in/container` becomes the named Docker volume `<system>_<server>_<name>`. When it is created,
+Docker fills it with what the image has at that path, so a database that was initialized in the image starts with its
+initial files. `remove`, `purge` and `erase` keep data volumes, and a container created again mounts the same volume
+with the data. `ads volumes` lists them; they are only deleted by hand with `docker volume rm <name>`. Images built
+with `image` do not contain the data of a data volume.
+
+A container that already exists does not get a data volume afterwards: back up its data, create it again and restore
+the data into the volume.
+
 # Extensions
 
 Extensions add actions, constructs, library functions, host tools and configuration to Anodosys. They are managed with `ads extension` (or the equivalent `ads-ext`):

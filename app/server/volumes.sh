@@ -87,3 +87,27 @@ for containerVolume in "${containerVolumes[@]}"; do
   printf '%-4s' "${mode}"
   echo ""
 done
+
+if [[ -z "${containerDataVolumes}" ]]; then
+  containerDataVolumes=()
+fi
+
+# data volumes are listed with their Docker volume name instead of a local path, and as kept (k) by remove and purge
+for containerDataVolume in "${containerDataVolumes[@]}"; do
+  IFS=: read -r dataVolumeName dataVolumeTargetPath <<< "${containerDataVolume}"
+
+  printf '%-10s' "${serverName}"
+  echo -n " | "
+
+  printf '%-90s' "volume $(dataVolumeName "${systemName}_${serverName}" "${dataVolumeName}")"
+  echo -n " | "
+
+  printf '%-50s' "${dataVolumeTargetPath}"
+  echo -n " | "
+
+  printf '%-15s' "-"
+  echo -n " | "
+
+  printf '%-4s' "k"
+  echo ""
+done

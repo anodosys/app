@@ -63,6 +63,8 @@ userPath="${testPath}/user"
 projectPath="${testPath}/project"
 constructPath="${testPath}/construct"
 outputFile="${testPath}/output.txt"
+# db keeps /etc/skel (files from the image) in a data volume
+dataVolume="${system}_db_data"
 
 # two more systems run at the same time behind an own proxy on free high ports, so that a running proxy on 80 and 443
 # is not touched; both request the same host port to check the port registry
@@ -104,6 +106,7 @@ cleanup()
   fi
   docker network rm "${system}" >/dev/null 2>&1
   docker rmi -f "${system}/db:smoke" "${system}/app:smoke" >/dev/null 2>&1
+  docker volume rm -f "${dataVolume}" >/dev/null 2>&1
   for project in "${systemA}" "${systemB}" "${system}l" "${proxySystem}" "${toolContainer}"; do
     containerIds=$(docker ps -a -q --filter "label=com.docker.compose.project=${project}")
     if [[ -n "${containerIds}" ]]; then
@@ -256,6 +259,25 @@ assertImageMissing()
   fi
 }
 
+# the data volume of db outlives its container; the marker written into it after rise has to stay in it
+assertDataVolume()
+{
+  local expectMarker="${1}"
+
+  if [[ $(docker volume inspect --format '{{ index .Labels "anodosys.data" }}' "${dataVolume}" 2>/dev/null) == "true" ]]; then
+    pass "data volume ${dataVolume} exists"
+  else
+    fail "data volume ${dataVolume} does not exist"
+  fi
+  if [[ "${expectMarker}" == 1 ]]; then
+    if [[ $(docker run --rm -v "${dataVolume}:/data" "${imageName}:${imageTag}" cat /data/marker 2>/dev/null) == "kept" ]]; then
+      pass "data volume ${dataVolume} kept its content"
+    else
+      fail "data volume ${dataVolume} lost its content"
+    fi
+  fi
+}
+
 assertNetwork()
 {
   local expected="${1}"
@@ -296,7 +318,10 @@ cat > "${projectPath}/ads.json" << EOF
     "containerInstall": "date +%s%N > /tmp/installed; printf 'progress 1/2\\\\033[1G\\\\033[2Kprogress 2/2\\\\n'"
   },
   "db": {
-    "buildImageName": "${system}/db"
+    "buildImageName": "${system}/db",
+    "containerDataVolumes": [
+      "data:/etc/skel"
+    ]
   },
   "app": {
     "buildImageName": "${system}/app",
@@ -370,6 +395,19 @@ if [[ $(jq -r --arg system "${system}" '.[$system] // empty' "${userPath}/system
 else
   fail "system not registered in systems.json"
 fi
+if docker exec "${system}_db" test -f /etc/skel/.bashrc 2>/dev/null; then
+  pass "data volume was filled with the files of the image"
+else
+  fail "data volume was not filled with the files of the image"
+fi
+docker exec "${system}_db" sh -c 'echo kept > /etc/skel/marker'
+assertDataVolume 1
+finishTest
+
+startTest "volumes"
+runAds "${projectPath}" volumes
+assertExitCode 0
+assertOutputContains "volume ${dataVolume}"
 finishTest
 
 startTest "status"
@@ -453,6 +491,7 @@ assertExitCode 0
 assertContainerMissing db
 assertContainerMissing app
 assertNetwork 0
+assertDataVolume 1
 finishTest
 
 startTest "purge without containers"
@@ -470,6 +509,11 @@ assertExitCode 0
 assertContainerState db running
 assertContainerState app running
 assertContainerImage app "${system}/app:smoke"
+if [[ $(docker exec "${system}_db" cat /etc/skel/marker 2>/dev/null) == "kept" ]]; then
+  pass "the new db container uses the kept data volume"
+else
+  fail "the new db container does not use the kept data volume"
+fi
 finishTest
 
 startTest "erase"
@@ -479,6 +523,7 @@ assertContainerMissing db
 assertContainerMissing app
 assertImageMissing "${system}/db:smoke"
 assertImageMissing "${system}/app:smoke"
+assertDataVolume 1
 finishTest
 
 fi

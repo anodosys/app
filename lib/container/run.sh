@@ -72,6 +72,8 @@ containerRun()
         else
           command+=" --volume=${sourcePath}:${targetPath}"
         fi
+      elif [[ "${parameter:0:11}" == "dataVolume:" ]]; then
+        dataVolumeMount command "${containerName}" "${systemName}" "${serverName}" "${parameter:11}"
       elif [[ "${parameter:0:12}" == "environment:" ]]; then
         command+=" --env ${parameter:12}"
       elif [[ "${parameter:0:5}" == "size:" ]]; then

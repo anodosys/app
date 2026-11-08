@@ -37,7 +37,11 @@ containerRemove()
     if [[ "${useNamedVolumes}" == "true" ]]; then
       for volumeName in "${volumeNames[@]}"; do
         volumeName=$(trim "${volumeName}")
-        volumeRemove "${volumeName}"
+        if [[ $(dataVolumeIs "${volumeName}") == 1 ]]; then
+          echo "Keeping data volume: ${volumeName}"
+        else
+          volumeRemove "${volumeName}"
+        fi
       done
     fi
 

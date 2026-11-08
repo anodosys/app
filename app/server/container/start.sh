@@ -175,6 +175,14 @@ for containerVolume in "${containerVolumes[@]}"; do
   optionalParameters+=( "volume:${containerVolume}" )
 done
 
+if [[ -z "${containerDataVolumes}" ]]; then
+  containerDataVolumes=()
+fi
+
+for containerDataVolume in "${containerDataVolumes[@]}"; do
+  optionalParameters+=( "dataVolume:${containerDataVolume}" )
+done
+
 if [[ -z "${containerVariables}" ]]; then
   containerVariables=()
 fi

@@ -187,6 +187,14 @@ for containerVolume in "${containerVolumes[@]}"; do
   optionalParameters+=( "volume:${containerVolume}" )
 done
 
+if [[ -z "${containerDataVolumes}" ]]; then
+  containerDataVolumes=()
+fi
+
+for containerDataVolume in "${containerDataVolumes[@]}"; do
+  optionalParameters+=( "dataVolume:${containerDataVolume}" )
+done
+
 rm -rf "${anodosysUserVarEnvPath:?}/${containerName}"
 touch "${anodosysUserVarEnvPath}/${containerName}"
 optionalParameters+=( "volume:${anodosysUserVarPath}/env/${containerName}:/usr/local/etc/.anodosys:root" )
