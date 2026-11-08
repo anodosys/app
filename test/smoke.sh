@@ -104,7 +104,7 @@ cleanup()
   fi
   docker network rm "${system}" >/dev/null 2>&1
   docker rmi -f "${system}/db:smoke" "${system}/app:smoke" >/dev/null 2>&1
-  for project in "${systemA}" "${systemB}" "${proxySystem}" "${toolContainer}"; do
+  for project in "${systemA}" "${systemB}" "${system}l" "${proxySystem}" "${toolContainer}"; do
     containerIds=$(docker ps -a -q --filter "label=com.docker.compose.project=${project}")
     if [[ -n "${containerIds}" ]]; then
       # shellcheck disable=SC2086
@@ -585,6 +585,31 @@ assertHostPort()
 
 writeWebSystem "${systemA}" "${testPath}/proxy-a"
 writeWebSystem "${systemB}" "${testPath}/proxy-b"
+
+# a container created before its server used the proxy publishes the web port itself and has to keep working that way
+systemLegacy="${system}l"
+writeWebSystem "${systemLegacy}" "${testPath}/proxy-legacy"
+jq --arg port "${proxyHttpPort}" '.web.containerPortsFixed = "true" | .web.containerPorts = ["\($port):80"]' \
+  "${testPath}/proxy-legacy/ads.json" > "${testPath}/proxy-legacy/ads.json.tmp"
+mv "${testPath}/proxy-legacy/ads.json.tmp" "${testPath}/proxy-legacy/ads.json"
+
+startTest "proxy: container that publishes the proxy ports itself"
+runAds "${testPath}/proxy-legacy" rise
+assertExitCode 0
+assertOutputContains "publishes the ports of the proxy itself"
+if [[ $(docker inspect --format '{{.State.Status}}' "${systemLegacy}_web" 2>/dev/null) == "running" ]]; then
+  pass "${systemLegacy}_web is running with its own ports"
+else
+  fail "${systemLegacy}_web is not running"
+fi
+if docker inspect "${proxySystem}_proxy" >/dev/null 2>&1 || [[ -f "${userPath}/var/proxy/${proxySystem}/routes/${systemLegacy}_web.yml" ]]; then
+  fail "proxy or route was created for a container that publishes the proxy ports"
+else
+  pass "no proxy and no route for a container that publishes the proxy ports"
+fi
+runAds "${testPath}/proxy-legacy" purge
+assertExitCode 0
+finishTest
 
 startTest "proxy: first system"
 runAds "${testPath}/proxy-a" rise

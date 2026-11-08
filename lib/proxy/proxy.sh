@@ -187,6 +187,13 @@ proxyServerPrepare()
   httpPort="${proxyHttpPort-80}"
   httpsPort="${proxyHttpsPort-}"
 
+  # a container created before its server used the proxy may still publish the ports of the proxy itself, it keeps
+  # working that way until it is created again, because starting the proxy would take its ports
+  if containerPortHostList "${containerName}" | grep -qxE "${ANODOSYS_PROXY_HTTP_PORT:-80}|${ANODOSYS_PROXY_HTTPS_PORT:-443}"; then
+    echo "Container: ${containerName} publishes the ports of the proxy itself, create it again to use the proxy" | sed $'s,.*,\e[0;33m&\e[m,'
+    return 0
+  fi
+
   proxyEnsure
   proxyConnect "${containerName}"
   proxyRoutesWrite "${systemName}" "${serverName}" "${containerName}" "${httpPort}" "${httpsPort}" "${proxyHosts[@]}"
