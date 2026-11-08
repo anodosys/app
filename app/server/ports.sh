@@ -55,6 +55,10 @@ for containerPort in "${containerPorts[@]}"; do
   readarray -d : -t containerPortParts < <(printf '%s' "${containerPort}")
   hostPort="${containerPortParts[0]}"
   containerPort="${containerPortParts[1]}"
+  # the port registry may have assigned another host port than the configured one
+  if [[ "${containerPortsFixed}" != "true" ]] && [[ -n "$(portRegistryLookup "${systemName}" "${serverName}" "${containerPort}")" ]]; then
+    hostPort=$(portRegistryLookup "${systemName}" "${serverName}" "${containerPort}")
+  fi
 
   printf '%-14s' "${hostPort}"
   echo -n " | "

@@ -13,21 +13,28 @@ usage()
 {
 cat >&2 << EOF
 
-usage: ${scriptName} [--keep]
+usage: ${scriptName} [--keep] [--cosyses <path>] [--proxy-only]
 
 Runs the smoke tests for the main actions against Docker.
 
 OPTIONS:
-  --keep  Do not remove the temporary directory (configuration, logs and command output) at the end
+  --keep            Do not remove the temporary directory (configuration, logs and command output) at the end
+  --cosyses <path>  Use this Cosyses checkout in the proxy container instead of the released Cosyses, to test with
+                    routines that are not released yet (for example a new Traefik version)
+  --proxy-only      Run only the tests of the proxy, the port registry and connect
 EOF
 }
 
 keep=0
+cosysesPath=
+proxyOnly=0
 
 while [[ "$#" -gt 0 ]]; do
   case "${1}" in
     -h|--help|-\?) usage; exit 0;;
     --keep) keep=1;;
+    --cosyses) cosysesPath="${2}"; shift;;
+    --proxy-only) proxyOnly=1;;
     *) >&2 echo "Unknown option: ${1}"; usage; exit 1;;
   esac
   shift
@@ -56,12 +63,32 @@ userPath="${testPath}/user"
 projectPath="${testPath}/project"
 constructPath="${testPath}/construct"
 outputFile="${testPath}/output.txt"
+
+# two more systems run at the same time behind an own proxy on free high ports, so that a running proxy on 80 and 443
+# is not touched; both request the same host port to check the port registry
+systemA="${system}a"
+systemB="${system}b"
+proxySystem="${system}proxy"
+toolContainer="${system}tool"
+proxyHttpPort=$((40000 + $$ % 10000))
+proxyHttpsPort=$((50000 + $$ % 10000))
+requestedPort=$((20000 + $$ % 10000))
+proxyEnv=
+proxyCosysesPath=
+if [[ -n "${cosysesPath}" ]]; then
+  # a copy, so that the volume handling cannot change the checkout
+  mkdir -p "${testPath}/cosyses"
+  tar -C "${cosysesPath}" --exclude=.git -cf - . | tar -C "${testPath}/cosyses" -xf -
+  proxyEnv="NO_COSYSES_UPDATE=1"
+  proxyCosysesPath="${testPath}/cosyses"
+fi
 mkdir -p "${projectPath}" "${constructPath}"
 
 passed=0
 failed=0
 failedTests=()
 currentTest=
+currentTestFailed=0
 lastExitCode=0
 
 cleanup()
@@ -77,6 +104,14 @@ cleanup()
   fi
   docker network rm "${system}" >/dev/null 2>&1
   docker rmi -f "${system}/db:smoke" "${system}/app:smoke" >/dev/null 2>&1
+  for project in "${systemA}" "${systemB}" "${proxySystem}" "${toolContainer}"; do
+    containerIds=$(docker ps -a -q --filter "label=com.docker.compose.project=${project}")
+    if [[ -n "${containerIds}" ]]; then
+      # shellcheck disable=SC2086
+      docker rm -f ${containerIds} >/dev/null
+    fi
+    docker network rm "${project}" >/dev/null 2>&1
+  done
   if [[ "${keep}" == 1 ]]; then
     echo "Kept test files in: ${testPath}"
   else
@@ -101,7 +136,12 @@ runAds()
       PATH="${PATH}" \
       LANG="${LANG:-C.UTF-8}" \
       ANODOSYS_USER_PATH="${userPath}" \
-      setsid -w timeout 600 "${ads}" "$@" </dev/null 2>&1 | sed $'s,\e\\[[0-9;]*m,,g' > "${outputFile}"
+      ANODOSYS_PROXY_SYSTEM="${proxySystem}" \
+      ANODOSYS_PROXY_HTTP_PORT="${proxyHttpPort}" \
+      ANODOSYS_PROXY_HTTPS_PORT="${proxyHttpsPort}" \
+      ANODOSYS_PROXY_ENV="${proxyEnv}" \
+      ANODOSYS_PROXY_COSYSES_PATH="${proxyCosysesPath}" \
+      setsid -w timeout 900 "${ads}" "$@" </dev/null 2>&1 | sed $'s,\e\\[[0-9;]*m,,g' > "${outputFile}"
     exit "${PIPESTATUS[0]}"
   )
   lastExitCode=$?
@@ -110,6 +150,7 @@ runAds()
 startTest()
 {
   currentTest="${1}"
+  currentTestFailed=0
   echo ""
   echo "- ${currentTest} -" | sed $'s,.*,\e[1;37m&\e[m,'
 }
@@ -126,11 +167,12 @@ fail()
     tail -n 20 "${outputFile}" | sed 's,^,    | ,'
   fi
   failedTests+=( "${currentTest}: ${1}" )
+  currentTestFailed=1
 }
 
 finishTest()
 {
-  if [[ "${#failedTests[@]}" -gt 0 ]] && [[ "${failedTests[-1]%%:*}" == "${currentTest}" ]]; then
+  if [[ "${currentTestFailed}" == 1 ]]; then
     failed=$((failed+1))
   else
     passed=$((passed+1))
@@ -266,6 +308,8 @@ cat > "${projectPath}/ads.json" << EOF
 EOF
 
 echo "Running smoke tests with system: ${system} in: ${testPath}" | sed $'s,.*,\e[1;37m&\e[m,'
+
+if [[ "${proxyOnly}" == 0 ]]; then
 
 startTest "construct"
 echo "{}" > "${constructPath}/ads.json"
@@ -435,6 +479,200 @@ assertContainerMissing db
 assertContainerMissing app
 assertImageMissing "${system}/db:smoke"
 assertImageMissing "${system}/app:smoke"
+finishTest
+
+fi
+
+# --- proxy and port registry ---
+
+# a web server with HTTP on port 80 and HTTPS with an own certificate on port 443, reached only through the proxy; like
+# real systems it is a cosyses/ubuntu container whose entrypoint runs the start scripts, so the servers run after every
+# container start (and after the first restart following rise, because they are installed into the running container)
+cat > "${testPath}/web.sh" << 'WEB'
+#!/bin/bash -e
+case "${1}" in
+  install)
+    apt-get update -qq
+    DEBIAN_FRONTEND=noninteractive apt-get install -y -qq busybox openssl >/dev/null
+    mkdir -p /srv
+    echo "${2}" > /srv/index.html
+    openssl req -x509 -newkey rsa:2048 -nodes -keyout /srv/key.pem -out /srv/cert.pem -days 1 -subj "/CN=${2}.smoke.test" 2>/dev/null
+    printf '#!/bin/bash\nbash /usr/local/bin/web.sh start\n' > /usr/local/lib/start/50-web.sh
+    chmod +x /usr/local/lib/start/50-web.sh
+    ;;
+  start)
+    busybox httpd -p 80 -h /srv
+    nohup openssl s_server -quiet -www -accept 443 -cert /srv/cert.pem -key /srv/key.pem >/dev/null 2>&1 &
+    ;;
+esac
+WEB
+
+writeWebSystem()
+{
+  local name="${1}"
+  local path="${2}"
+
+  mkdir -p "${path}"
+  jq -n --arg name "${name}" --arg port "${requestedPort}" --arg script "${testPath}/web.sh" '{
+    global: {systemName: $name},
+    system: {serverNames: ["web"]},
+    web: {
+      imageName: "cosyses/ubuntu",
+      imageTag: "24.04",
+      containerPorts: ["\($port):7000"],
+      proxyHosts: ["\($name).smoke.test"],
+      proxyHttpPort: "80",
+      proxyHttpsPort: "443",
+      skipPortsAvailable: "true",
+      containerStartedCommand: "/usr/local/bin/started.sh",
+      containerVolumes: ["\($script):/usr/local/bin/web.sh"],
+      containerInstall: "bash /usr/local/bin/web.sh install \($name)"
+    }
+  }' > "${path}/ads.json"
+}
+
+proxyGet()
+{
+  curl -s -m 5 -H "Host: ${1}.smoke.test" "http://127.0.0.1:${proxyHttpPort}/"
+}
+
+# the subject of the certificate that the proxy passes through for a host name, waits until the server answers
+proxyCertificate()
+{
+  local subject=
+  local counter=0
+
+  while [[ -z "${subject}" ]] && [[ "${counter}" -lt 20 ]]; do
+    subject=$(echo | timeout 5 openssl s_client -connect "127.0.0.1:${proxyHttpsPort}" -servername "${1}.smoke.test" 2>/dev/null \
+      | openssl x509 -noout -subject 2>/dev/null)
+    if [[ -z "${subject}" ]]; then
+      sleep 1
+    fi
+    counter=$((counter + 1))
+  done
+  echo "${subject}"
+}
+
+assertProxyServes()
+{
+  local name="${1}"
+
+  if [[ $(proxyGet "${name}") == "${name}" ]]; then
+    pass "proxy serves http for ${name}.smoke.test"
+  else
+    fail "proxy does not serve http for ${name}.smoke.test: $(proxyGet "${name}")"
+  fi
+  if [[ $(proxyCertificate "${name}") == *"CN = ${name}.smoke.test"* ]]; then
+    pass "proxy passes https through to the certificate of ${name}.smoke.test"
+  else
+    fail "proxy does not pass https through for ${name}.smoke.test: $(proxyCertificate "${name}")"
+  fi
+}
+
+assertHostPort()
+{
+  local name="${1}"
+  local expected="${2}"
+  local hostPort
+
+  hostPort=$(docker inspect --format '{{ (index (index .HostConfig.PortBindings "7000/tcp") 0).HostPort }}' "${name}_web" 2>/dev/null)
+  if [[ "${hostPort}" == "${expected}" ]]; then
+    pass "${name}_web publishes container port 7000 on host port ${expected}"
+  else
+    fail "${name}_web publishes container port 7000 on host port ${hostPort:-none}, expected ${expected}"
+  fi
+}
+
+writeWebSystem "${systemA}" "${testPath}/proxy-a"
+writeWebSystem "${systemB}" "${testPath}/proxy-b"
+
+startTest "proxy: first system"
+runAds "${testPath}/proxy-a" rise
+assertExitCode 0
+runAds "${testPath}/proxy-a" restart
+assertExitCode 0
+if [[ $(docker inspect --format '{{.State.Status}}' "${proxySystem}_proxy" 2>/dev/null) == "running" ]]; then
+  pass "proxy ${proxySystem}_proxy was started by the first system"
+else
+  fail "proxy ${proxySystem}_proxy is not running"
+fi
+assertProxyServes "${systemA}"
+assertHostPort "${systemA}" "${requestedPort}"
+finishTest
+
+startTest "proxy: second system on the same ports"
+runAds "${testPath}/proxy-b" rise
+assertExitCode 0
+runAds "${testPath}/proxy-b" restart
+assertExitCode 0
+assertProxyServes "${systemB}"
+assertProxyServes "${systemA}"
+assertHostPort "${systemB}" "$((requestedPort + 1))"
+runAds "${testPath}/proxy-b" ports
+assertOutputContains "$((requestedPort + 1))"
+finishTest
+
+startTest "proxy: status and hosts"
+runAds "${testPath}" proxy status
+assertExitCode 0
+assertOutputContains "${systemA}.smoke.test"
+assertOutputContains "${systemB}.smoke.test"
+runAds "${testPath}" proxy hosts
+assertOutputContains "127.0.0.1 ${systemA}.smoke.test"
+finishTest
+
+startTest "connect"
+docker run -d --name "${toolContainer}" --label "com.docker.compose.project=${toolContainer}" busybox:1.36 sleep 600 >/dev/null 2>&1 \
+  || docker run -d --name "${toolContainer}" --label "com.docker.compose.project=${toolContainer}" ubuntu:24.04 sleep 600 >/dev/null
+runAds "${testPath}/proxy-a" connect "${toolContainer}"
+assertExitCode 0
+if [[ $(docker exec "${toolContainer}" wget -qO- http://web/ 2>/dev/null) == "${systemA}" ]]; then
+  pass "tool container reaches the server by its name"
+else
+  fail "tool container does not reach http://web/ of ${systemA}"
+fi
+runAds "${testPath}/proxy-a" connect "${toolContainer}" --disconnect
+assertExitCode 0
+finishTest
+
+startTest "proxy: restart"
+runAds "${testPath}/proxy-b" restart
+assertExitCode 0
+assertProxyServes "${systemB}"
+finishTest
+
+startTest "proxy: removed system"
+runAds "${testPath}/proxy-a" purge
+assertExitCode 0
+if [[ ! -f "${userPath}/var/proxy/${proxySystem}/routes/${systemA}_web.yml" ]] && [[ $(curl -s -o /dev/null -w "%{http_code}" -m 5 -H "Host: ${systemA}.smoke.test" "http://127.0.0.1:${proxyHttpPort}/") == "404" ]]; then
+  pass "route of ${systemA} was removed"
+else
+  fail "route of ${systemA} still exists"
+fi
+assertProxyServes "${systemB}"
+finishTest
+
+startTest "port registry keeps ports"
+runAds "${testPath}/proxy-b" purge
+assertExitCode 0
+runAds "${testPath}/proxy-b" rise
+assertExitCode 0
+runAds "${testPath}/proxy-b" restart
+assertExitCode 0
+# the requested port is free again, but the system keeps the port it was assigned
+assertHostPort "${systemB}" "$((requestedPort + 1))"
+assertProxyServes "${systemB}"
+runAds "${testPath}/proxy-b" purge
+finishTest
+
+startTest "proxy: remove"
+runAds "${testPath}" proxy remove
+assertExitCode 0
+if docker inspect "${proxySystem}_proxy" >/dev/null 2>&1; then
+  fail "proxy container still exists"
+else
+  pass "proxy container was removed"
+fi
 finishTest
 
 echo ""

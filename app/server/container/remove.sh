@@ -120,6 +120,7 @@ if [[ -z "${useNamedVolumes}" ]]; then
 fi
 
 containerRemove "${containerName}" "${useNamedVolumes}"
+proxyRoutesRemove "${systemName}" "${serverName}"
 
 if [[ -z "${containerVolumes}" ]]; then
   containerVolumes=()

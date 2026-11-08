@@ -163,6 +163,11 @@ if [[ -z "${containerPorts}" ]]; then
 fi
 
 for containerPort in "${containerPorts[@]}"; do
+  # host ports come from the port registry, so that systems running at the same time do not collide, unless the server
+  # needs exactly the configured ones
+  if [[ "${containerPortsFixed}" != "true" ]]; then
+    containerPort=$(portRegistryResolve "${systemName}" "${serverName}" "${containerPort}")
+  fi
   optionalParameters+=( "port:${containerPort}" )
 done
 
@@ -199,6 +204,8 @@ if [[ -n "${containerSize}" ]]; then
 fi
 
 containerCreate "${imageName,,}:${imageTag,,}" "${containerName}" "${systemName}" "${serverName}" "${useNamedVolumes}" "${optionalParameters[@]}"
+
+proxyServerPrepare "${systemName}" "${serverName}" "${containerName}"
 
 if [[ -n "${afterContainerCreateSourceScript}" ]]; then
   echo "After container create source script: ${afterContainerCreateSourceScript}"

@@ -151,6 +151,11 @@ if [[ -z "${containerPorts}" ]]; then
 fi
 
 for containerPort in "${containerPorts[@]}"; do
+  # host ports come from the port registry, so that systems running at the same time do not collide, unless the server
+  # needs exactly the configured ones
+  if [[ "${containerPortsFixed}" != "true" ]]; then
+    containerPort=$(portRegistryResolve "${systemName}" "${serverName}" "${containerPort}")
+  fi
   optionalParameters+=( "port:${containerPort}" )
 done
 
@@ -228,6 +233,8 @@ if [[ -n "${env}" ]]; then
     echo "${nextEnv}" >> "${anodosysUserVarEnvPath}/${containerName}"
   done
 fi
+
+proxyServerPrepare "${systemName}" "${serverName}" "${containerName}"
 
 containerStart \
   "${containerName}" \

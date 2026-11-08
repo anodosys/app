@@ -6,7 +6,11 @@ containerHostNameAdd()
   local ipAddress
   local hosts
 
-  ipAddress=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" | jq -r '.Networks[].IPAddress')
+  # a container can be in several networks (for example the one of the proxy), the address in the network of its system
+  # is used, otherwise the first one
+  # shellcheck disable=SC2154
+  ipAddress=$(docker inspect -f "{{ json .NetworkSettings }}" "${containerName}" \
+    | jq -r --arg network "${systemName}" '.Networks[$network].IPAddress // ([.Networks[].IPAddress] | first) // empty')
   if [[ -f /etc/hosts ]]; then
     if [[ -w /etc/hosts ]]; then
       if [[ $(grep -E "\s+${containerName}\s*$" /etc/hosts | wc -l) -eq 0 ]]; then

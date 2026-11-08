@@ -28,7 +28,7 @@ finish()
   local ancestorProcessIds
   local ancestorProcessId
 
-  if [[ "${action}" != "" ]] && [[ "${action}" != "steps" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "extension" ]] && [[ "${action}" != "log" ]]; then
+  if [[ "${action}" != "" ]] && [[ "${action}" != "steps" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "extension" ]] && [[ "${action}" != "log" ]] && [[ "${action}" != "proxy" ]] && [[ "${action}" != "connect" ]]; then
     processId=$$
     sessionId=$(ps -o sid= -p ${processId})
     sessionId=$(prepareValue "${sessionId}")
@@ -142,6 +142,8 @@ cat >&2 << EOF
   paths                         Show the details of all paths
   ports                         Show the details of all ports
   log                           Show the log of the system (--lines <number>, --follow)
+  proxy                         Manage the proxy for the host names of all systems (start, stop, restart, status, remove, hosts)
+  connect                       Connect a container to the network of the system (<container> [--disconnect])
 
   bash                          Open a bash shell in a container
   cmd                           Execute a command in a container
@@ -306,6 +308,13 @@ export env
 
 source "${anodosysAppPath}/lib.sh"
 
+# the proxy serves all systems, so it does not depend on any system configuration
+if [[ "${1}" == "proxy" ]]; then
+  trap - EXIT
+  source "${anodosysActionSystemPath}/proxy.sh"
+  exit 0
+fi
+
 if [[ -n "${server}" ]]; then
   export server
 fi
@@ -408,7 +417,7 @@ if [[ -z "${systemName}" ]]; then
 fi
 export systemName
 
-if [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "log" ]]; then
+if [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "log" ]] && [[ "${action}" != "connect" ]]; then
   # Show the logo once per top-level run in a terminal, before the output is passed to the log file, and not for ads
   # calls made by scripts
   if [[ -t 1 ]] && [[ -z "${anodosysBannerShown}" ]]; then

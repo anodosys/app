@@ -56,6 +56,53 @@ ads log <systemName>    # show the log of a registered system from any directory
 Actions that only show information (`config`, `status`, `log`, ...) or open a shell (`bash`, `cmd`, ...) are not
 logged.
 
+# Running several systems at the same time
+
+## Host names instead of ports 80 and 443
+
+A server that declares host names is reached through a shared proxy instead of publishing ports 80 and 443 itself:
+
+```json
+"webserver": {
+  "proxyHosts": ["{appHostName}"],
+  "proxyHttpPort": "80",
+  "proxyHttpsPort": "443"
+}
+```
+
+The proxy (`anodosys_proxy`, Traefik installed with `cosyses Traefik 3.7`) owns the host ports 80 and 443 and routes by
+host name. HTTP goes to `proxyHttpPort` of the container (default 80, empty for none). HTTPS is passed through
+unchanged to `proxyHttpsPort` (default none) and routed by the server name of the TLS connection, so the containers keep
+their own certificates. The proxy is created with the first system that uses `proxyHosts`, and every container with
+host names joins its network. Web tools work the same way, for example `"proxyHosts": ["mail.{appHostName}"]` with
+`"proxyHttpPort": "1080"`.
+
+```
+ads proxy status    # show the proxy and the host names of all systems
+ads proxy hosts     # print the host names that are missing in /etc/hosts (and the Windows hosts file in WSL)
+ads proxy start     # also: stop, restart, remove
+```
+
+The host names have to point to `127.0.0.1` in the hosts file of the machine that runs the browser.
+
+## Fixed host ports for everything else
+
+Ports that cannot be routed by name, such as MySQL or Redis, are still published with `containerPorts`, but the host
+port is a request: the first system that requests a host port keeps it, and a later system that requests the same port
+gets the next free one. Every assignment is stored in `~/.anodosys/var/ports.json` and kept, also when containers are
+removed and created again, so tools configured for a port keep working. `ads ports` shows the assigned ports. A server
+with `"containerPortsFixed": "true"` always publishes the configured ports.
+
+## Tools in containers
+
+A container that is not part of a system, for example a database tool, can join the network of a system and reach its
+servers by name and container port (for example `database:3306`), without any host port:
+
+```
+ads connect <container>                 # run in the system directory
+ads connect <container> --disconnect
+```
+
 # Extensions
 
 Extensions add actions, constructs, library functions, host tools and configuration to Anodosys. They are managed with `ads extension` (or the equivalent `ads-ext`):

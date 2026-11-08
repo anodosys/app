@@ -112,10 +112,10 @@ if [[ "${alreadyInstalled}" == 0 ]]; then
   declare -A requiredCommands
   if [[ "${packageManager}" == "apt" ]]; then
     requiredCommands=( [curl]=curl [git]=git [jq]=jq [ts]=moreutils [sed]=sed [wget]=wget [unzip]=unzip [ps]=procps
-      [find]=findutils [getent]=libc-bin [rsync]=rsync [awk]=gawk )
+      [find]=findutils [getent]=libc-bin [rsync]=rsync [awk]=gawk [flock]=util-linux )
   else
     requiredCommands=( [curl]=curl [git]=git [jq]=jq [ts]=moreutils [sed]=sed [wget]=wget [unzip]=unzip [ps]=procps-ng
-      [find]=findutils [getent]=glibc-common [rsync]=rsync [awk]=gawk )
+      [find]=findutils [getent]=glibc-common [rsync]=rsync [awk]=gawk [flock]=util-linux-core )
   fi
 
   requiredPackages=( )
