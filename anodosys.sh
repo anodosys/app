@@ -80,13 +80,20 @@ scriptName="${0##*/}"
 # the original command line, written into the log file of the system
 anodosysCommandLine="${scriptName} $*"
 
+# shows the logo on stderr above usage and error messages, when it goes to a terminal and was not shown yet
+showBanner()
+{
+  if [[ -t 2 ]] && [[ -z "${anodosysBannerShown}" ]]; then
+    source "${anodosysPath}/banner.sh" >&2
+    anodosysBannerShown=1
+  fi
+}
+
 usage()
 {
   local extensionName="${1}"
 
-  if [[ -t 2 ]] && [[ -z "${anodosysBannerShown}" ]]; then
-    source "${anodosysPath}/banner.sh" >&2
-  fi
+  showBanner
   cat >&2 << EOF
 
 usage: ads <ACTION>
@@ -326,6 +333,7 @@ if [[ -z "${fileName}" ]]; then
   export systemPath
 
   if [[ ! -f anodosys.json ]] && [[ ! -f ads.json ]]; then
+    showBanner
     >&2 echo "Could not find anodosys.json or ads.json in directory: ${PWD}"
     exit 1
   fi
@@ -343,6 +351,7 @@ fi
 systemActionPath="${systemPath}/action"
 
 if [[ ! -f "${fileName}" ]]; then
+  showBanner
   >&2 echo "Could not find configuration at: ${fileName}"
   exit 1
 fi
