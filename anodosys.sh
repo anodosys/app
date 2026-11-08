@@ -25,6 +25,8 @@ finish()
   local subProcessId
   local runningProcessIds
   local runningProcessId
+  local ancestorProcessIds
+  local ancestorProcessId
 
   if [[ "${action}" != "" ]] && [[ "${action}" != "steps" ]] && [[ "${action}" != "construct" ]] && [[ "${action}" != "list" ]] && [[ "${action}" != "bash" ]] && [[ "${action}" != "cmd" ]] && [[ "${action}" != "cmdi" ]] && [[ "${action}" != "cmdiq" ]] && [[ "${action}" != "cmdq" ]] && [[ "${action}" != "config" ]] && [[ "${action}" != "copy" ]] && [[ "${action}" != "exec" ]] && [[ "${action}" != "names" ]] && [[ "${action}" != "ports" ]] && [[ "${action}" != "reset" ]] && [[ "${action}" != "status" ]] && [[ "${action}" != "step" ]] && [[ "${action}" != "volumes" ]] && [[ "${action}" != "extension" ]]; then
     processId=$$
@@ -35,9 +37,20 @@ finish()
     else
       subProcessIds=()
     fi
+    # never wait for this process or its ancestors (for example a wrapper shell whose command line contains ".sh"),
+    # they cannot finish before this process does
+    declare -A ancestorProcessIds
+    ancestorProcessId="${processId}"
+    while [[ -n "${ancestorProcessId}" ]] && [[ "${ancestorProcessId}" -gt 0 ]]; do
+      ancestorProcessIds["${ancestorProcessId}"]=1
+      ancestorProcessId=$(ps -o ppid= -p "${ancestorProcessId}" 2>/dev/null || true)
+      ancestorProcessId=$(prepareValue "${ancestorProcessId}")
+    done
     declare -A runningProcessIds
     for subProcessId in "${subProcessIds[@]}"; do
-      runningProcessIds["${subProcessId}"]=0
+      if [[ -z "${ancestorProcessIds[${subProcessId}]+x}" ]]; then
+        runningProcessIds["${subProcessId}"]=0
+      fi
     done
     while [[ "${#runningProcessIds[@]}" -gt 0 ]]; do
       sleep 0.5
