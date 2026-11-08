@@ -73,6 +73,10 @@ if [[ -n "${anodosysPath}" ]]; then
   mkdir -p "${anodosysUserVarEnvPath}"
   export anodosysUserVarEnvPath
 
+  anodosysUserVarLogPath="${anodosysUserVarPath}/log"
+  mkdir -p "${anodosysUserVarLogPath}"
+  export anodosysUserVarLogPath
+
   if [[ -d "${anodosysExtensionPath}" ]]; then
     anodosysExtensions=( $(find "${anodosysExtensionPath}" -mindepth 1 -maxdepth 1 -xtype d -printf "%f\n") )
   else

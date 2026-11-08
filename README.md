@@ -15,6 +15,28 @@ ads version                                     # show the installed version
 
 Releases are installed in `/usr/local/lib/anodosys/<version>`, and `current` links to the active one. An update keeps the active and the previous release and removes older ones.
 
+# Logs
+
+Every run of a system action (for example `ads rise` or `ads start`) is appended to a log file per system:
+
+```
+~/.anodosys/var/log/<systemName>.log
+```
+
+Each run starts with a line containing the time, the command and the directory. The lines are the same as in the
+terminal, with a timestamp and the `[system] [server]` prefix, but without colors. When a log file is larger than
+10 MB, it is renamed to `<systemName>.log.1` at the start of the next run, replacing an older one.
+
+```
+ads log                 # show the last 100 lines of the log of the system in the current directory
+ads log --lines 500     # show the last 500 lines
+ads log --follow        # keep showing new lines while a run is in progress
+ads log <systemName>    # show the log of a registered system from any directory
+```
+
+Actions that only show information (`config`, `status`, `log`, ...) or open a shell (`bash`, `cmd`, ...) are not
+logged.
+
 # Extensions
 
 Extensions add actions, constructs, library functions, host tools and configuration to Anodosys. They are managed with `ads extension` (or the equivalent `ads-ext`):
