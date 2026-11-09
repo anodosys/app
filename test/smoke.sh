@@ -1,7 +1,8 @@
 #!/bin/bash
 
 # Smoke tests for the main actions. They build a small system with two Ubuntu containers (db and app, where app depends
-# on db), run it through its lifecycle with the anodosys.sh of this checkout and remove everything afterwards.
+# on db), run it through its lifecycle with the anodosys.sh of this checkout and remove everything afterwards. A second
+# system of plain Alpine images checks the bootstrap command and, when Docker can emulate arm64, the container platform.
 #
 # The tests use their own user path (ANODOSYS_USER_PATH) in a temporary directory, so ~/.anodosys with its extensions,
 # systems.json and logs is not touched. They need Docker and create containers, a network and images named after a
@@ -66,6 +67,12 @@ outputFile="${testPath}/output.txt"
 # db keeps /etc/skel (files from the image) in a data volume
 dataVolume="${system}_db_data"
 
+# a system of plain Alpine images (without bash), one of them for arm64 when Docker can emulate it
+otherSystem="${system}x"
+otherPath="${testPath}/other"
+otherImageName="alpine"
+otherImageTag="3.24"
+
 # two more systems run at the same time behind an own proxy on free high ports, so that a running proxy on 80 and 443
 # is not touched; both request the same host port to check the port registry
 systemA="${system}a"
@@ -107,7 +114,7 @@ cleanup()
   docker network rm "${system}" >/dev/null 2>&1
   docker rmi -f "${system}/db:smoke" "${system}/app:smoke" >/dev/null 2>&1
   docker volume rm -f "${dataVolume}" >/dev/null 2>&1
-  for project in "${systemA}" "${systemB}" "${system}l" "${proxySystem}" "${toolContainer}"; do
+  for project in "${systemA}" "${systemB}" "${system}l" "${otherSystem}" "${proxySystem}" "${toolContainer}"; do
     containerIds=$(docker ps -a -q --filter "label=com.docker.compose.project=${project}")
     if [[ -n "${containerIds}" ]]; then
       # shellcheck disable=SC2086
@@ -298,6 +305,27 @@ if ! docker image inspect "${imageName}:${imageTag}" >/dev/null 2>&1; then
   docker pull -q "${imageName}:${imageTag}" >/dev/null
 fi
 
+# hook scripts of app: one on the host, two in the container (one as root, one as another user); each writes the
+# parameters it received through prepare-parameters.sh
+hookPath="${testPath}/hook"
+mkdir -p "${hookPath}"
+cat > "${hookPath}/host.sh" << EOF
+#!/bin/bash -e
+source "${appPath}/app/prepare-parameters.sh"
+echo "\${containerName} \${marker}" > "${hookPath}/host.txt"
+EOF
+cat > "${hookPath}/before.sh" << 'EOF'
+#!/bin/bash -e
+source /prepare-parameters.sh
+echo "${serverName} ${marker} ${mode} $(id -un)" > /tmp/hook-before
+EOF
+cat > "${hookPath}/after.sh" << 'EOF'
+#!/bin/bash -e
+source /prepare-parameters.sh
+echo "${serverName} $(id -un)" > /tmp/hook-after
+EOF
+chmod +x "${hookPath}/host.sh" "${hookPath}/before.sh" "${hookPath}/after.sh"
+
 # each container writes the time of its installation, so that the order of the dependency waves can be checked, and
 # prints a progress line like Composer, which the log file has to reduce to its last state
 cat > "${projectPath}/ads.json" << EOF
@@ -327,7 +355,18 @@ cat > "${projectPath}/ads.json" << EOF
     "buildImageName": "${system}/app",
     "depends": [
       "db"
-    ]
+    ],
+    "beforeContainerInstallScript": "${hookPath}/host.sh",
+    "beforeContainerInstallParameters": [
+      "--marker host"
+    ],
+    "beforeContainerInstallDockerScript": "${hookPath}/before.sh",
+    "beforeContainerInstallDockerParameters": [
+      "--marker docker",
+      "-mode single"
+    ],
+    "afterContainerInstallDockerScript": "${hookPath}/after.sh",
+    "afterContainerInstallDockerUser": "nobody"
   }
 }
 EOF
@@ -402,6 +441,31 @@ else
 fi
 docker exec "${system}_db" sh -c 'echo kept > /etc/skel/marker'
 assertDataVolume 1
+finishTest
+
+startTest "install hooks"
+if [[ $(cat "${hookPath}/host.txt" 2>/dev/null) == "${system}_app host" ]]; then
+  pass "host script got container name and parameters"
+else
+  fail "host script output: $(cat "${hookPath}/host.txt" 2>/dev/null || echo none)"
+fi
+hookOutput=$(docker exec "${system}_app" cat /tmp/hook-before 2>/dev/null)
+if [[ "${hookOutput}" == "app docker single root" ]]; then
+  pass "docker script got server name and parameters"
+else
+  fail "docker script output: ${hookOutput:-none}"
+fi
+hookOutput=$(docker exec "${system}_app" cat /tmp/hook-after 2>/dev/null)
+if [[ "${hookOutput}" == "app nobody" ]]; then
+  pass "docker script ran as docker user"
+else
+  fail "docker script with user output: ${hookOutput:-none}"
+fi
+if docker exec "${system}_db" test -e /tmp/hook-before 2>/dev/null; then
+  fail "hook of app ran in db"
+else
+  pass "hook of app did not run in db"
+fi
 finishTest
 
 startTest "volumes"
@@ -524,6 +588,85 @@ assertContainerMissing app
 assertImageMissing "${system}/db:smoke"
 assertImageMissing "${system}/app:smoke"
 assertDataVolume 1
+finishTest
+
+# --- images without bash and other architectures ---
+
+startTest "other images: rise"
+otherServers='"alpine"'
+if docker run --rm --platform linux/arm64 "arm64v8/${otherImageName}:${otherImageTag}" true >/dev/null 2>&1; then
+  otherServers+=', "arm"'
+else
+  echo "  skipped arm64: no emulation for linux/arm64 available"
+fi
+mkdir -p "${otherPath}"
+cat > "${otherPath}/ads.json" << EOF
+{
+  "global": {
+    "systemName": "${otherSystem}"
+  },
+  "system": {
+    "serverNames": [ ${otherServers} ]
+  },
+  "any": {
+    "imageTag": "${otherImageTag}",
+    "containerBootstrapCommand": "command -v bash >/dev/null || apk add --no-interactive bash shadow",
+    "containerInstall": "uname -m > /tmp/installed"
+  },
+  "alpine": {
+    "imageName": "${otherImageName}"
+  },
+  "arm": {
+    "imageName": "arm64v8/${otherImageName}",
+    "containerPlatform": "linux/arm64"
+  }
+}
+EOF
+runAds "${otherPath}" rise
+assertExitCode 0
+for otherServer in alpine arm; do
+  if [[ "${otherServer}" == "arm" ]] && [[ "${otherServers}" != *arm* ]]; then
+    continue
+  fi
+  otherContainer="${otherSystem}_${otherServer}"
+  if [[ $(docker inspect --format '{{.State.Status}}' "${otherContainer}" 2>/dev/null) == "running" ]]; then
+    pass "container ${otherContainer} is running"
+  else
+    fail "container ${otherContainer} is not running"
+  fi
+  if docker exec "${otherContainer}" sh -c 'command -v bash' >/dev/null 2>&1; then
+    pass "bootstrap command installed bash in ${otherContainer}"
+  else
+    fail "bash is missing in ${otherContainer}"
+  fi
+  expectedArchitecture=$([[ "${otherServer}" == "arm" ]] && echo "aarch64" || docker run --rm "${otherImageName}:${otherImageTag}" uname -m)
+  installedArchitecture=$(docker exec "${otherContainer}" cat /tmp/installed 2>/dev/null)
+  if [[ "${installedArchitecture}" == "${expectedArchitecture}" ]]; then
+    pass "container ${otherContainer} was installed on ${expectedArchitecture}"
+  else
+    fail "container ${otherContainer} was installed on ${installedArchitecture:-nothing}, expected ${expectedArchitecture}"
+  fi
+done
+finishTest
+
+startTest "other images: restart"
+runAds "${otherPath}" restart
+assertExitCode 0
+if [[ $(docker inspect --format '{{.State.Status}}' "${otherSystem}_alpine" 2>/dev/null) == "running" ]]; then
+  pass "container ${otherSystem}_alpine is running"
+else
+  fail "container ${otherSystem}_alpine is not running"
+fi
+finishTest
+
+startTest "other images: purge"
+runAds "${otherPath}" purge
+assertExitCode 0
+if docker ps -a -q --filter "label=com.docker.compose.project=${otherSystem}" | grep -q .; then
+  fail "containers of ${otherSystem} still exist"
+else
+  pass "containers of ${otherSystem} were removed"
+fi
 finishTest
 
 fi
