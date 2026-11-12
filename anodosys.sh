@@ -72,6 +72,10 @@ finish()
       sleep 1
     fi
   fi
+
+  if [[ $(type -t logClose) == "function" ]]; then
+    logClose
+  fi
 }
 
 trap finish EXIT

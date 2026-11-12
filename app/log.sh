@@ -2,6 +2,8 @@
 
 logPrefix=
 logFile=
+# process ids of the log pipelines of this process, waited for by logClose
+logProcessIds=()
 # set to the log file once a pipeline without terminal writes it, so that child processes do not write it again
 logFileCaptured="${logFileCaptured:-}"
 
@@ -101,12 +103,37 @@ logEnable()
   if [[ "${writeLogFile}" == 1 ]]; then
     # the terminal gets colored output, the log file the same lines without control codes
     exec > >(ts "${logPrefix}" | tee >(sed -E -u "${logFileFilter}" >> "${logFile}") | sed $'s,.*,\e[0;37m&\e[m,')
+    logProcessIds+=("$!")
     exec 2> >(ts "${logPrefix}" | tee >(sed -E -u "${logFileFilter}" >> "${logFile}") | sed $'s,.*,\e[1;31m&\e[m,' >&2)
+    logProcessIds+=("$!")
   else
     exec > >(ts "${logPrefix}" | sed $'s,.*,\e[0;37m&\e[m,')
+    logProcessIds+=("$!")
     exec 2> >(ts "${logPrefix}" | sed $'s,.*,\e[1;31m&\e[m,' >&2)
+    logProcessIds+=("$!")
   fi
 }
 
 # shellcheck disable=SC2034
 typeset -fx logEnable
+
+# Closes the output of this process and waits until the log pipelines have written everything, so that no output
+# appears after the prompt of the calling shell. Bash does not wait for process substitutions on its own. Waits at
+# most five seconds, in case a background process still holds the pipeline open.
+logClose()
+{
+  local processId
+  local attempt
+
+  exec >&- 2>&-
+  for processId in "${logProcessIds[@]}"; do
+    for (( attempt = 0; attempt < 100; attempt++ )); do
+      kill -0 "${processId}" 2>/dev/null || break
+      sleep 0.05
+    done
+  done
+  logProcessIds=()
+}
+
+# shellcheck disable=SC2034
+typeset -fx logClose
