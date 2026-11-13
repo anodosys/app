@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Anodosys systems</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Crect width='120' height='120' rx='27' fill='%2315212C'/%3E%3Cg transform='translate(16 16) scale(.7333)'%3E%3Crect x='14' y='76' width='60' height='20' rx='6' fill='%23F2F5F7'/%3E%3Crect x='30' y='50' width='60' height='20' rx='6' fill='%23F2F5F7'/%3E%3Crect x='46' y='24' width='60' height='20' rx='6' fill='%230E8C7E'/%3E%3C/g%3E%3C/svg%3E">
+<!--
+  Status page of the Anodosys proxy. Everything is read live in the browser:
+  /docker/containers  the container list of Docker (read-only, through the Nginx of the status container)
+  /systems.json       the registered systems with their configuration files
+  /api/...            the routers of Traefik
+  A container belongs to a system by its label anodosys.system, older containers by com.docker.compose.project when
+  that is a registered system and com.docker.compose.version is missing (the same rule as ads list).
+-->
+<style>
+:root {
+  --bg: #F2F5F7;
+  --surface: #FFFFFF;
+  --surface-2: #E8EDF1;
+  --text: #15212C;
+  --muted: #5B6B78;
+  --border: #D5DDE3;
+  --accent: #0E8C7E;
+  --accent-soft: #D7EFEC;
+  --mark: #15212C;
+  --ok: #0E8C7E;
+  --partial: #B7791F;
+  --partial-soft: #FBEFD9;
+  --stopped: #7A8794;
+  --error: #C2412D;
+  --error-soft: #FBE3DF;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0E161D;
+    --surface: #15212C;
+    --surface-2: #1C2B38;
+    --text: #E6ECF0;
+    --muted: #93A3B0;
+    --border: #2A3B49;
+    --accent: #2BB3A3;
+    --accent-soft: #123A37;
+    --mark: #F2F5F7;
+    --ok: #2BB3A3;
+    --partial: #E0A84A;
+    --partial-soft: #3A2E17;
+    --stopped: #6E7E8B;
+    --error: #F07A66;
+    --error-soft: #3D1F1A;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, sans-serif;
+}
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12.5px; }
+
+header {
+  position: sticky; top: 0; z-index: 2;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.bar {
+  max-width: 1180px; margin: 0 auto; padding: 12px 16px;
+  display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+}
+.brand { display: flex; align-items: center; gap: 10px; margin-right: auto; }
+.brand svg { width: 30px; height: 30px; }
+.brand h1 { font-size: 18px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+.brand h1 span { color: var(--accent); }
+.brand small { color: var(--muted); display: block; font-size: 12px; margin-top: -2px; }
+.controls { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 12.5px; flex-wrap: wrap; }
+.controls input[type=search] {
+  font: inherit; color: var(--text); background: var(--bg);
+  border: 1px solid var(--border); border-radius: 6px; padding: 5px 9px; width: 180px;
+}
+.controls label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.button {
+  border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px;
+  color: var(--text); background: var(--surface);
+}
+.button:hover { border-color: var(--accent); text-decoration: none; }
+
+main { max-width: 1180px; margin: 0 auto; padding: 18px 16px 48px; }
+
+.summary { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
+.chip {
+  display: flex; align-items: baseline; gap: 6px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px;
+}
+.chip b { font-size: 18px; font-variant-numeric: tabular-nums; }
+.chip span { color: var(--muted); }
+
+.notice {
+  border-radius: 8px; padding: 10px 12px; margin-bottom: 14px;
+  background: var(--error-soft); color: var(--error); border: 1px solid var(--error);
+}
+
+.system {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+  margin-bottom: 12px; overflow: hidden;
+}
+.system > summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 11px 14px;
+}
+.system > summary::-webkit-details-marker { display: none; }
+.system > summary::before {
+  content: ""; width: 7px; height: 7px; flex: none;
+  border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted);
+  transform: rotate(-45deg); transition: transform .15s; margin-right: 2px;
+}
+.system[open] > summary::before { transform: rotate(45deg); }
+.system h2 { font-size: 15px; font-weight: 600; margin: 0; }
+.path { color: var(--muted); margin-left: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 46ch; }
+
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; background: var(--stopped); }
+.dot.running, .dot.started { background: var(--ok); box-shadow: 0 0 0 3px var(--accent-soft); }
+.dot.partly { background: var(--partial); box-shadow: 0 0 0 3px var(--partial-soft); }
+.dot.problem { background: var(--error); }
+
+.badge {
+  font-size: 11.5px; padding: 1px 8px; border-radius: 999px; white-space: nowrap;
+  background: var(--surface-2); color: var(--muted);
+}
+.badge.started { background: var(--accent-soft); color: var(--accent); }
+.badge.partly { background: var(--partial-soft); color: var(--partial); }
+.badge.warn { background: var(--error-soft); color: var(--error); }
+
+.table-wrap { overflow-x: auto; border-top: 1px solid var(--border); }
+table { width: 100%; min-width: 760px; border-collapse: collapse; table-layout: fixed; }
+th:nth-child(1) { width: 19%; }
+th:nth-child(2) { width: 21%; }
+th:nth-child(3) { width: 26%; }
+th:nth-child(4) { width: 15%; }
+th:nth-child(5) { width: 19%; }
+td { overflow-wrap: anywhere; }
+th, td { text-align: left; padding: 8px 14px; vertical-align: top; border-bottom: 1px solid var(--border); }
+tr:last-child td { border-bottom: none; }
+th { font-size: 11.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; background: var(--surface-2); }
+td.server { white-space: nowrap; font-weight: 600; }
+td.server .dot { display: inline-block; margin-right: 8px; vertical-align: 1px; }
+td .sub { color: var(--muted); font-size: 12px; }
+td ul { list-style: none; margin: 0; padding: 0; }
+td li + li { margin-top: 2px; }
+.empty { color: var(--muted); }
+
+h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 26px 0 8px; }
+.compact { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; }
+.compact div { display: flex; gap: 10px; align-items: center; padding: 8px 14px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.compact div:last-child { border-bottom: none; }
+.compact .path { margin-left: auto; }
+
+footer { color: var(--muted); font-size: 12px; margin-top: 28px; }
+
+@media (max-width: 640px) {
+  .path { margin-left: 0; max-width: 100%; flex-basis: 100%; }
+  .controls input[type=search] { width: 100%; }
+  .controls { width: 100%; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><rect x="14" y="76" width="60" height="20" rx="6" fill="var(--mark)"/><rect x="30" y="50" width="60" height="20" rx="6" fill="var(--mark)"/><rect x="46" y="24" width="60" height="20" rx="6" fill="#0E8C7E"/></svg>
+      <div><h1>Anodo<span>sys</span></h1><small>Systems on this machine</small></div>
+    </div>
+    <div class="controls">
+      <input type="search" id="filter" placeholder="Filter systems" aria-label="Filter systems">
+      <label><input type="checkbox" id="auto" checked> Refresh every 5 s</label>
+      <span id="updated">Loading…</span>
+      <a class="button" href="dashboard/">Traefik dashboard</a>
+    </div>
+  </div>
+</header>
+<main>
+  <div id="notices"></div>
+  <div class="summary" id="summary"></div>
+  <div id="systems"></div>
+  <footer id="footer"></footer>
+</main>
+<script>
+"use strict";
+
+var REFRESH_MS = 5000;
+var openState = {};
+var timer = null;
+var filterText = "";
+var lastState = null;
+
+// creates an element; strings become text nodes, so no value is ever interpreted as HTML
+function h(tag, attributes) {
+  var element = document.createElement(tag);
+  var key;
+  var index;
+  var child;
+  attributes = attributes || {};
+  for (key in attributes) {
+    if (!Object.prototype.hasOwnProperty.call(attributes, key) || attributes[key] === undefined || attributes[key] === null) {
+      continue;
+    }
+    if (key === "class") {
+      element.className = attributes[key];
+    } else if (key === "open") {
+      element.open = !!attributes[key];
+    } else {
+      element.setAttribute(key, attributes[key]);
+    }
+  }
+  for (index = 2; index < arguments.length; index++) {
+    child = arguments[index];
+    if (child === null || child === undefined || child === false) {
+      continue;
+    }
+    if (Array.isArray(child)) {
+      child.forEach(function (item) { if (item) { element.appendChild(typeof item === "string" ? document.createTextNode(item) : item); } });
+    } else {
+      element.appendChild(typeof child === "string" || typeof child === "number" ? document.createTextNode(String(child)) : child);
+    }
+  }
+  return element;
+}
+
+function fetchJson(url) {
+  return fetch(url, { cache: "no-store" }).then(function (response) {
+    if (!response.ok) {
+      throw new Error(url + " answered " + response.status);
+    }
+    return response.json();
+  });
+}
+
+// settles every request, so that one missing source does not hide the others
+function load(url) {
+  return fetchJson(url).then(function (data) { return { data: data }; }, function (error) { return { error: error }; });
+}
+
+// host names of a Traefik rule: Host(`a`) || HostSNI(`b`)
+function ruleHosts(rule) {
+  var hosts = [];
+  var pattern = /Host(?:SNI)?\(`([^`]+)`\)/g;
+  var match;
+  while ((match = pattern.exec(rule || "")) !== null) {
+    if (hosts.indexOf(match[1]) < 0) {
+      hosts.push(match[1]);
+    }
+  }
+  return hosts;
+}
+
+function routeIndex(httpRouters, tcpRouters) {
+  var routes = {};
+  function add(router, protocol) {
+    var name = String(router.name || "").replace(/@.*$/, "");
+    var route = routes[name] || (routes[name] = { hosts: [], http: false, https: false, problems: [] });
+    ruleHosts(router.rule).forEach(function (host) { if (route.hosts.indexOf(host) < 0) { route.hosts.push(host); } });
+    route[protocol] = true;
+    if (router.status && router.status !== "enabled") {
+      route.problems.push(protocol + " router " + router.status);
+    }
+    (router.error || []).forEach(function (message) { route.problems.push(message); });
+  }
+  (httpRouters || []).forEach(function (router) { add(router, "http"); });
+  (tcpRouters || []).forEach(function (router) { add(router, "https"); });
+  return routes;
+}
+
+function hostLink(host, route) {
+  var port = window.location.port && window.location.port !== "80" ? ":" + window.location.port : "";
+  if (route.http) {
+    return h("a", { href: "http://" + host + port + "/", target: "_blank", rel: "noopener" }, host);
+  }
+  return h("span", { class: "mono" }, host);
+}
+
+function ports(container) {
+  var seen = {};
+  // only published ports, every Cosyses image also exposes 22 without publishing it
+  return (container.Ports || []).filter(function (port) {
+    var key = port.PrivatePort + "/" + port.Type + ">" + port.PublicPort;
+    if (!port.PublicPort || seen[key]) {
+      return false;
+    }
+    seen[key] = true;
+    return true;
+  }).sort(function (a, b) { return a.PrivatePort - b.PrivatePort; }).map(function (port) {
+    return port.PublicPort + " → " + port.PrivatePort + (port.Type !== "tcp" ? "/" + port.Type : "");
+  });
+}
+
+function volumes(container) {
+  return (container.Mounts || []).filter(function (mount) { return mount.Type === "volume" && mount.Name; }).map(function (mount) {
+    return mount.Name + " → " + mount.Destination;
+  });
+}
+
+function build(containers, systems, routes) {
+  var result = {};
+  var registered = systems || {};
+  Object.keys(registered).forEach(function (name) {
+    result[name] = { name: name, path: registered[name], registered: true, servers: [] };
+  });
+  (containers || []).forEach(function (container) {
+    var labels = container.Labels || {};
+    var name = labels["anodosys.system"];
+    var project = labels["com.docker.compose.project"];
+    if (!name && project && !labels["com.docker.compose.version"] && Object.prototype.hasOwnProperty.call(registered, project)) {
+      name = project;
+    }
+    if (!name) {
+      return;
+    }
+    var system = result[name] || (result[name] = { name: name, path: null, registered: false, servers: [] });
+    var containerName = String((container.Names || [""])[0]).replace(/^\//, "");
+    var serverName = labels["anodosys.server"] || labels["com.docker.compose.service"] || containerName;
+    system.servers.push({
+      name: serverName,
+      container: containerName,
+      state: container.State,
+      status: container.Status,
+      image: container.Image,
+      ports: ports(container),
+      volumes: volumes(container),
+      route: routes[name + "_" + serverName] || null
+    });
+  });
+  return Object.keys(result).map(function (name) {
+    var system = result[name];
+    var running = system.servers.filter(function (server) { return server.state === "running"; }).length;
+    system.running = running;
+    system.total = system.servers.length;
+    system.group = system.total === 0 ? "none" : running === system.total ? "started" : running === 0 ? "stopped" : "partly";
+    system.servers.sort(function (a, b) { return a.name.localeCompare(b.name); });
+    return system;
+  }).sort(function (a, b) {
+    var order = { started: 0, partly: 1, stopped: 2, none: 3 };
+    return order[a.group] - order[b.group] || a.name.localeCompare(b.name);
+  });
+}
+
+function stateLabel(system) {
+  if (system.group === "started") {
+    return h("span", { class: "badge started" }, "started · " + system.total + (system.total === 1 ? " container" : " containers"));
+  }
+  if (system.group === "partly") {
+    return h("span", { class: "badge partly" }, "partly started · " + system.running + "/" + system.total + " running");
+  }
+  return h("span", { class: "badge" }, "stopped · " + system.total + (system.total === 1 ? " container" : " containers"));
+}
+
+function serverRow(server) {
+  var route = server.route;
+  var routeCell = h("td", null);
+  if (route && route.hosts.length) {
+    routeCell.appendChild(h("ul", null, route.hosts.map(function (host) {
+      return h("li", null, hostLink(host, route), " ", h("span", { class: "sub" }, [route.http ? "http" : null, route.https ? "https" : null].filter(Boolean).join(" + ")));
+    })));
+    route.problems.forEach(function (problem) { routeCell.appendChild(h("div", null, h("span", { class: "badge warn" }, problem))); });
+  } else {
+    routeCell.appendChild(h("span", { class: "empty" }, "–"));
+  }
+  return h("tr", null,
+    h("td", { class: "server" }, h("span", { class: "dot " + (server.state === "running" ? "running" : server.state === "restarting" || server.state === "dead" ? "problem" : "") }), server.name,
+      h("div", { class: "sub mono" }, server.container)),
+    h("td", null, server.status || server.state, h("div", { class: "sub mono" }, server.image)),
+    routeCell,
+    h("td", { class: "mono" }, server.ports.length ? h("ul", null, server.ports.map(function (port) { return h("li", null, port); })) : h("span", { class: "empty" }, "–")),
+    h("td", { class: "mono" }, server.volumes.length ? h("ul", null, server.volumes.map(function (volume) { return h("li", null, volume); })) : h("span", { class: "empty" }, "–"))
+  );
+}
+
+function systemCard(system) {
+  var key = system.name;
+  var open = Object.prototype.hasOwnProperty.call(openState, key) ? openState[key] : system.group !== "stopped";
+  var details = h("details", { class: "system", open: open },
+    h("summary", null,
+      h("span", { class: "dot " + system.group }),
+      h("h2", null, system.name),
+      stateLabel(system),
+      system.registered ? null : h("span", { class: "badge warn" }, "not registered"),
+      system.path ? h("span", { class: "path mono", title: system.path }, system.path) : null
+    ),
+    h("div", { class: "table-wrap" },
+      h("table", null,
+        h("thead", null, h("tr", null, h("th", null, "Server"), h("th", null, "State · image"), h("th", null, "Host names"), h("th", null, "Ports"), h("th", null, "Data volumes"))),
+        h("tbody", null, system.servers.map(serverRow))
+      )
+    )
+  );
+  details.addEventListener("toggle", function () { openState[key] = details.open; });
+  return details;
+}
+
+function render(state) {
+  var systemsElement = document.getElementById("systems");
+  var notices = document.getElementById("notices");
+  var visible = state.systems.filter(function (system) {
+    return !filterText || system.name.toLowerCase().indexOf(filterText) >= 0 || system.servers.some(function (server) {
+      return server.container.toLowerCase().indexOf(filterText) >= 0 || (server.route && server.route.hosts.some(function (host) { return host.toLowerCase().indexOf(filterText) >= 0; }));
+    });
+  });
+  var withContainers = visible.filter(function (system) { return system.group !== "none"; });
+  var notCreated = visible.filter(function (system) { return system.group === "none"; });
+  var counts = { started: 0, partly: 0, stopped: 0, none: 0 };
+  state.systems.forEach(function (system) { counts[system.group]++; });
+
+  notices.replaceChildren.apply(notices, state.errors.map(function (message) { return h("div", { class: "notice" }, message); }));
+
+  var summary = document.getElementById("summary");
+  summary.replaceChildren(
+    h("div", { class: "chip" }, h("b", null, counts.started), h("span", null, "started")),
+    h("div", { class: "chip" }, h("b", null, counts.partly), h("span", null, "partly started")),
+    h("div", { class: "chip" }, h("b", null, counts.stopped), h("span", null, "stopped")),
+    h("div", { class: "chip" }, h("b", null, counts.none), h("span", null, "not created")),
+    h("div", { class: "chip" }, h("b", null, state.routeCount), h("span", null, "proxy routes"))
+  );
+
+  var children = withContainers.map(systemCard);
+  if (notCreated.length) {
+    children.push(h("h3", null, "Not created"));
+    children.push(h("div", { class: "compact" }, notCreated.map(function (system) {
+      return h("div", null, h("span", { class: "dot" }), h("b", null, system.name), system.path ? h("span", { class: "path mono", title: system.path }, system.path) : null);
+    })));
+  }
+  if (!children.length) {
+    children.push(h("p", { class: "empty" }, filterText ? "No system matches the filter." : "No systems known yet."));
+  }
+  systemsElement.replaceChildren.apply(systemsElement, children);
+
+  document.getElementById("footer").replaceChildren(
+    "State read live from Docker. Proxy: Traefik " + (state.version || "?") + ". Systems are registered in ~/.anodosys/systems.json; ",
+    h("code", null, "ads list"), " shows the same in the terminal."
+  );
+  document.getElementById("updated").textContent = "Updated " + new Date().toLocaleTimeString();
+}
+
+function refresh() {
+  return Promise.all([
+    load("docker/containers"),
+    load("systems.json"),
+    load("api/http/routers"),
+    load("api/tcp/routers"),
+    load("api/version")
+  ]).then(function (results) {
+    var errors = [];
+    if (results[0].error) {
+      errors.push("Could not read the containers from Docker: " + results[0].error.message);
+    }
+    if (results[1].error) {
+      errors.push("Could not read the registered systems: " + results[1].error.message);
+    }
+    if (results[2].error || results[3].error) {
+      errors.push("Could not read the routes from Traefik: " + (results[2].error || results[3].error).message);
+    }
+    var routes = routeIndex(results[2].data, results[3].data);
+    var routeCount = Object.keys(routes).length;
+    lastState = {
+      systems: build(results[0].data, results[1].data, routes),
+      routeCount: routeCount,
+      version: results[4].data && results[4].data.Version,
+      errors: errors
+    };
+    render(lastState);
+  });
+}
+
+function schedule() {
+  clearTimeout(timer);
+  if (document.getElementById("auto").checked && !document.hidden) {
+    timer = setTimeout(function () { refresh().then(schedule, schedule); }, REFRESH_MS);
+  }
+}
+
+document.getElementById("filter").addEventListener("input", function (event) {
+  filterText = event.target.value.trim().toLowerCase();
+  if (lastState) {
+    render(lastState);
+  }
+});
+document.getElementById("auto").addEventListener("change", schedule);
+document.addEventListener("visibilitychange", function () {
+  if (!document.hidden) {
+    refresh().then(schedule, schedule);
+  } else {
+    clearTimeout(timer);
+  }
+});
+
+refresh().then(schedule, schedule);
+</script>
+</body>
+</html>

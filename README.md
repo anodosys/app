@@ -94,10 +94,15 @@ ads proxy start     # also: stop, restart, remove
 
 The host names have to point to `127.0.0.1` in the hosts file of the machine that runs the browser.
 
-The Traefik dashboard of the proxy is at http://anodosys.localhost/ and shows every route, its host names and the
-container it leads to. Browsers resolve names below `.localhost` without a hosts entry. A proxy created before the
-dashboard existed gets it with `ads proxy update` (or `ads proxy restart`), which installs Traefik again in the running
-container; containers connected to the proxy stay connected.
+http://anodosys.localhost/ shows all systems of this machine, read live from Docker: started, partly started,
+stopped and not created, with every server's state, image, host names (as links), published ports and data volumes. It
+refreshes every 5 seconds. Browsers resolve names below `.localhost` without a hosts entry. The Traefik dashboard is at
+http://anodosys.localhost/dashboard/ and shows every route with the container it leads to.
+
+The page is served by a second container of the proxy, `anodosys_status` (Nginx). It reads the Docker socket of the host,
+but only through one fixed, read-only request (the list of containers); everything else is refused. A proxy created
+before the page existed gets it with `ads proxy update`, which also installs Traefik again in the running proxy when its
+installation changed; containers connected to the proxy stay connected.
 
 ## Fixed host ports for everything else
 

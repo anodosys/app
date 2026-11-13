@@ -875,50 +875,64 @@ else
 fi
 finishTest
 
-# the dashboard answers with the given path: assertDashboard <path> <expected status code> [<text in the body>]
+# the dashboard host answers with the given path: assertDashboard <path> <expected status code> [<text in the body>]
+# [<method>]
 assertDashboard()
 {
   local path="${1}"
   local expectedCode="${2}"
   local expectedText="${3}"
+  local method="${4:-GET}"
   local body
   local code
 
-  body=$(curl -s -m 5 -w '\n%{http_code}' -H "Host: ${proxySystem}.localhost" "http://127.0.0.1:${proxyHttpPort}${path}")
+  body=$(curl -s -m 5 -X "${method}" -w '\n%{http_code}' -H "Host: ${proxySystem}.localhost" "http://127.0.0.1:${proxyHttpPort}${path}")
   code=$(tail -n 1 <<< "${body}")
   if [[ "${code}" != "${expectedCode}" ]]; then
-    fail "dashboard ${path} answers ${code:-nothing}, expected ${expectedCode}"
+    fail "${method} ${path} answers ${code:-nothing}, expected ${expectedCode}"
   elif [[ -n "${expectedText}" ]] && ! grep -qF -- "${expectedText}" <<< "${body}"; then
-    fail "dashboard ${path} does not contain: ${expectedText}"
+    fail "${method} ${path} does not contain: ${expectedText}"
   else
-    pass "dashboard ${path} answers ${expectedCode}${expectedText:+ with ${expectedText}}"
+    pass "${method} ${path} answers ${expectedCode}${expectedText:+ with ${expectedText}}"
   fi
 }
 
-startTest "proxy: dashboard"
+startTest "proxy: status page and dashboard"
 runAds "${testPath}" proxy status
-assertOutputContains "Dashboard: http://${proxySystem}.localhost:${proxyHttpPort}/"
-assertDashboard "/" 302
+assertOutputContains "Status page: http://${proxySystem}.localhost:${proxyHttpPort}/"
+assertOutputContains "Dashboard: http://${proxySystem}.localhost:${proxyHttpPort}/dashboard/"
+assertDashboard "/" 200 "<title>Anodosys systems</title>"
 assertDashboard "/dashboard/" 200
 assertDashboard "/api/http/routers" 200 "${systemA}_web"
+assertDashboard "/systems.json" 200 "\"${systemA}\""
+assertDashboard "/docker/containers" 200 "\"/${systemA}_web\""
+# the Docker socket is reachable only through the one read-only request
+assertDashboard "/docker/containers" 403 "" POST
+assertDashboard "/docker/containers/${systemA}_web/json" 404
+assertDashboard "/docker/info" 404
+assertDashboard "/nginx.conf" 404
 finishTest
 
 startTest "proxy: update of an older installation"
-# a proxy installed with another command has no or another marker, update installs Traefik again and restarts it
+# a proxy created before the status page existed has no status container and an older installation without marker,
+# update creates the status container, installs Traefik again and restarts it
+docker rm -f "${proxySystem}_status" >/dev/null
 docker exec "${proxySystem}_proxy" rm -f /etc/traefik/anodosys-install
 runAds "${testPath}" proxy update
 assertExitCode 0
-assertOutputContains "Updating proxy: ${proxySystem}_proxy"
+assertOutputContains "Creating status of proxy: ${proxySystem}_status"
+assertOutputContains "Updating proxy of proxy: ${proxySystem}_proxy"
 if [[ $(docker exec "${proxySystem}_proxy" cat /etc/traefik/anodosys-install 2>/dev/null) == *"--dashboard yes" ]]; then
   pass "installation command was written into the proxy"
 else
   fail "installation command missing in the proxy"
 fi
+assertDashboard "/" 200 "<title>Anodosys systems</title>"
 assertDashboard "/dashboard/" 200
 assertProxyServes "${systemA}"
 runAds "${testPath}" proxy update
-if grep -qF "Updating proxy" "${outputFile}"; then
-  fail "an up-to-date proxy was installed again"
+if grep -qF "Updating" "${outputFile}" || grep -qF "Creating" "${outputFile}"; then
+  fail "an up-to-date proxy was changed"
 else
   pass "an up-to-date proxy is left alone"
 fi

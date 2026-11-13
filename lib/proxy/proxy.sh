@@ -160,7 +160,9 @@ proxyDashboardHost()
 # shellcheck disable=SC2034
 typeset -fx proxyDashboardHost
 
-# writes the route of the Traefik dashboard (the API service api@internal), "/" redirects to the dashboard
+# writes the routes of the dashboard host: the status page of Anodosys (container <proxy system>_status, port 8080) at
+# "/", the Traefik dashboard and its API (service api@internal) below /dashboard/ and /api/; the longer rule of the
+# dashboard router wins over the status page
 proxyDashboardWrite()
 {
   local routesPath
@@ -175,20 +177,23 @@ proxyDashboardWrite()
   routesFile="${routesPath}/${routeName}.yml"
 
   {
-    echo "# written by Anodosys for the dashboard of the proxy"
+    echo "# written by Anodosys for the status page and the dashboard of the proxy"
     echo "# hosts: ${hostName}"
     echo "http:"
     echo "  routers:"
     echo "    ${routeName}:"
-    echo "      rule: \"Host(\`${hostName}\`)\""
+    echo "      rule: \"Host(\`${hostName}\`) && (PathPrefix(\`/dashboard\`) || PathPrefix(\`/api\`))\""
     echo "      entryPoints: [web]"
     echo "      service: api@internal"
-    echo "      middlewares: [${routeName}_root]"
-    echo "  middlewares:"
-    echo "    ${routeName}_root:"
-    echo "      redirectRegex:"
-    echo "        regex: \"^(https?://[^/]+)/?\$\""
-    echo "        replacement: \"\${1}/dashboard/\""
+    echo "    $(proxySystemName)_status:"
+    echo "      rule: \"Host(\`${hostName}\`)\""
+    echo "      entryPoints: [web]"
+    echo "      service: $(proxySystemName)_status"
+    echo "  services:"
+    echo "    $(proxySystemName)_status:"
+    echo "      loadBalancer:"
+    echo "        servers:"
+    echo "          - url: \"http://$(proxySystemName)_status:8080\""
   } > "${routesFile}.tmp"
   mv "${routesFile}.tmp" "${routesFile}"
 }
