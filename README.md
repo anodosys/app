@@ -56,6 +56,15 @@ ads log <systemName>    # show the log of a registered system from any directory
 Actions that only show information (`config`, `status`, `log`, ...) or open a shell (`bash`, `cmd`, ...) are not
 logged.
 
+# Listing systems
+
+`ads list` shows every known system as started, partly started (with the number of running containers), stopped or
+not created. The state is read from Docker each time and not stored. Containers belong to a system by the label
+`anodosys.system`. Containers created before that label existed count if their `com.docker.compose.project` label is a
+known system and they have no `com.docker.compose.version` label, so containers of docker compose or ddev never count,
+even with the same project name. Systems become known when they are created and are kept in `~/.anodosys/systems.json`
+with their configuration file, which `--systemName` and `ads-jump` use.
+
 # Running several systems at the same time
 
 ## Host names instead of ports 80 and 443

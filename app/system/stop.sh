@@ -24,7 +24,6 @@ if [[ -n "${beforeStopScript}" ]]; then
 fi
 
 systemAdd "${systemName}" "${configurationFileName}"
-systemStop "${systemName}"
 
 if [[ -n "${afterStopScript}" ]]; then
   echo "After system stop script: ${afterStopScript}"

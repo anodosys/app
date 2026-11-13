@@ -19,13 +19,6 @@ systemRemove()
   else
     echo "No need to remove system with name: ${systemName}"
   fi
-
-  if [[ $(jq -r ". | has(\"${systemName}\")" "${anodosysUserPath}/status.json") == "true" ]]; then
-    echo "Removing system status with name: ${systemName}"
-    (cd "${anodosysUserPath}"; jq "del(.\"${systemName}\")" status.json > status.json.tmp && mv status.json.tmp status.json)
-  else
-    echo "No need to remove system status with name: ${systemName}"
-  fi
 }
 
 # shellcheck disable=SC2034

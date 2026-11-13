@@ -24,7 +24,6 @@ if [[ -n "${beforeAddScript}" ]]; then
 fi
 
 systemAdd "${systemName}" "${configurationFileName}"
-systemStop "${systemName}"
 
 if [[ -n "${afterAddScript}" ]]; then
   echo "After system add script: ${afterAddScript}"

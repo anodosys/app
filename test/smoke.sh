@@ -223,6 +223,24 @@ assertContainerState()
   fi
 }
 
+# the system is listed by ads list in the section with the given title, e.g. "Started" or "Partly started"
+assertListSection()
+{
+  local expected="${1}"
+  local section
+
+  section=$(awk -v name="${system}" '
+    /^$/ { title = ""; next }
+    title == "" { title = $0; next }
+    $1 == name { print title }
+  ' "${outputFile}")
+  if [[ "${section}" == "${expected}" ]]; then
+    pass "ads list shows ${system} as ${expected}"
+  else
+    fail "ads list shows ${system} as ${section:-missing}, expected ${expected}"
+  fi
+}
+
 assertContainerMissing()
 {
   local server="${1}"
@@ -536,9 +554,27 @@ assertOutputContains "[${system}] [app]"
 finishTest
 
 startTest "list"
+if [[ $(docker inspect --format '{{index .Config.Labels "anodosys.system"}}' "${system}_app" 2>/dev/null) == "${system}" ]]; then
+  pass "container has the label anodosys.system"
+else
+  fail "container has no label anodosys.system"
+fi
+# a stopped docker compose container with the same project name must not count for the system
+foreignContainer="${system}_foreign"
+docker create --name "${foreignContainer}" --label "com.docker.compose.project=${system}" \
+  --label "com.docker.compose.version=2.0.0" "${imageName}:${imageTag}" true >/dev/null
 runAds "${projectPath}" list
 assertExitCode 0
-assertOutputContains "${system}"
+assertListSection "Started"
+docker stop "${system}_app" >/dev/null
+runAds "${projectPath}" list
+assertListSection "Partly started"
+assertOutputContains "${system} (1/2 running)"
+docker stop "${system}_db" >/dev/null
+runAds "${projectPath}" list
+assertListSection "Stopped"
+docker rm "${foreignContainer}" >/dev/null
+docker start "${system}_db" "${system}_app" >/dev/null
 finishTest
 
 startTest "image"

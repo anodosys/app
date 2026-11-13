@@ -24,7 +24,6 @@ if [[ -n "${beforeStartScript}" ]]; then
 fi
 
 systemAdd "${systemName}" "${configurationFileName}"
-systemStart "${systemName}"
 
 if [[ -n "${afterStartScript}" ]]; then
   echo "After system start script: ${afterStartScript}"

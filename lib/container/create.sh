@@ -31,7 +31,7 @@ containerCreate()
   local result
 
   if [[ $(containerRunning "${containerName}") == 0 ]] && [[ $(containerExists "${containerName}") == 0 ]]; then
-    command="docker create --tty --label \"com.docker.compose.project=${systemName}\" --label \"com.docker.compose.service=${serverName}\" --network \"${systemName}\""
+    command="docker create --tty --label \"com.docker.compose.project=${systemName}\" --label \"com.docker.compose.service=${serverName}\" --label \"anodosys.system=${systemName}\" --label \"anodosys.server=${serverName}\" --network \"${systemName}\""
     # containerPlatform (server config, e.g. linux/arm64) creates the container for another architecture, run with QEMU
     if [[ -n "${containerPlatform}" ]] && [[ "${containerPlatform}" != "-" ]]; then
       command+=" --platform \"${containerPlatform}\""

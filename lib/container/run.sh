@@ -17,7 +17,7 @@ containerRun()
   local parameters=("$@")
 
   if [[ $(containerRunning "${containerName}") == 0 ]]; then
-    command="docker run -itd --label \"com.docker.compose.project=${systemName}\" --label \"com.docker.compose.service=${serverName}\" --network \"${systemName}\""
+    command="docker run -itd --label \"com.docker.compose.project=${systemName}\" --label \"com.docker.compose.service=${serverName}\" --label \"anodosys.system=${systemName}\" --label \"anodosys.server=${serverName}\" --network \"${systemName}\""
     # containerPlatform (server config, e.g. linux/arm64) runs the container for another architecture with QEMU
     if [[ -n "${containerPlatform}" ]] && [[ "${containerPlatform}" != "-" ]]; then
       command+=" --platform \"${containerPlatform}\""
