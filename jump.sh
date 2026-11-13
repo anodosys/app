@@ -18,9 +18,11 @@ if [[ "${sourced}" == 1 ]]; then
     mkdir -p "${anodosysUserPath}"
 
     if [[ -f "${anodosysUserPath}/systems.json" ]]; then
-      configurationFile=$(jq -r ". | with_entries(select(.key|match(\"${systemName}\")))[]" "${anodosysUserPath}/systems.json")
+      configurationFile=$(jq -r --arg name "${systemName}" '.[$name] // empty' "${anodosysUserPath}/systems.json")
 
-      if [[ -f "${configurationFile}" ]]; then
+      if [[ -z "${configurationFile}" ]]; then
+        >&2 echo "Unknown system: ${systemName}"
+      elif [[ -f "${configurationFile}" ]]; then
         configurationPath=$(dirname "${configurationFile}")
         configurationPathBasename=$(basename "${configurationPath}")
 

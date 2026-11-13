@@ -328,7 +328,7 @@ if [[ -z "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ "${action}" != "bash
 fi
 
 if [[ -n "${systemName}" ]] && [[ -z "${fileName}" ]] && [[ -f "${anodosysUserPath}/systems.json" ]]; then
-  fileName=$(jq -r ". | with_entries(select(.key|match(\"${systemName}\")))[]" "${anodosysUserPath}/systems.json")
+  fileName=$(jq -r --arg name "${systemName}" '.[$name] // empty' "${anodosysUserPath}/systems.json")
 fi
 
 if [[ -z "${fileName}" ]]; then
