@@ -868,6 +868,60 @@ assertOutputContains "${systemA}.smoke.test"
 assertOutputContains "${systemB}.smoke.test"
 runAds "${testPath}" proxy hosts
 assertOutputContains "127.0.0.1 ${systemA}.smoke.test"
+if grep -q "\.localhost" "${outputFile}"; then
+  fail "hosts lists a name below .localhost"
+else
+  pass "hosts leaves out names below .localhost"
+fi
+finishTest
+
+# the dashboard answers with the given path: assertDashboard <path> <expected status code> [<text in the body>]
+assertDashboard()
+{
+  local path="${1}"
+  local expectedCode="${2}"
+  local expectedText="${3}"
+  local body
+  local code
+
+  body=$(curl -s -m 5 -w '\n%{http_code}' -H "Host: ${proxySystem}.localhost" "http://127.0.0.1:${proxyHttpPort}${path}")
+  code=$(tail -n 1 <<< "${body}")
+  if [[ "${code}" != "${expectedCode}" ]]; then
+    fail "dashboard ${path} answers ${code:-nothing}, expected ${expectedCode}"
+  elif [[ -n "${expectedText}" ]] && ! grep -qF -- "${expectedText}" <<< "${body}"; then
+    fail "dashboard ${path} does not contain: ${expectedText}"
+  else
+    pass "dashboard ${path} answers ${expectedCode}${expectedText:+ with ${expectedText}}"
+  fi
+}
+
+startTest "proxy: dashboard"
+runAds "${testPath}" proxy status
+assertOutputContains "Dashboard: http://${proxySystem}.localhost:${proxyHttpPort}/"
+assertDashboard "/" 302
+assertDashboard "/dashboard/" 200
+assertDashboard "/api/http/routers" 200 "${systemA}_web"
+finishTest
+
+startTest "proxy: update of an older installation"
+# a proxy installed with another command has no or another marker, update installs Traefik again and restarts it
+docker exec "${proxySystem}_proxy" rm -f /etc/traefik/anodosys-install
+runAds "${testPath}" proxy update
+assertExitCode 0
+assertOutputContains "Updating proxy: ${proxySystem}_proxy"
+if [[ $(docker exec "${proxySystem}_proxy" cat /etc/traefik/anodosys-install 2>/dev/null) == *"--dashboard yes" ]]; then
+  pass "installation command was written into the proxy"
+else
+  fail "installation command missing in the proxy"
+fi
+assertDashboard "/dashboard/" 200
+assertProxyServes "${systemA}"
+runAds "${testPath}" proxy update
+if grep -qF "Updating proxy" "${outputFile}"; then
+  fail "an up-to-date proxy was installed again"
+else
+  pass "an up-to-date proxy is left alone"
+fi
 finishTest
 
 startTest "connect"

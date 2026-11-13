@@ -146,7 +146,7 @@ cat >&2 << EOF
   paths                         Show the details of all paths
   ports                         Show the details of all ports
   log                           Show the log of the system (--lines <number>, --follow)
-  proxy                         Manage the proxy for the host names of all systems (start, stop, restart, status, remove, hosts)
+  proxy                         Manage the proxy for the host names of all systems (start, stop, restart, update, status, remove, hosts)
   connect                       Connect a container to the network of the system (<container> [--disconnect])
 
   bash                          Open a bash shell in a container

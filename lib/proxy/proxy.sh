@@ -151,6 +151,51 @@ proxyRoutesWrite()
 # shellcheck disable=SC2034
 typeset -fx proxyRoutesWrite
 
+# host name of the Traefik dashboard; browsers resolve every name below .localhost to this machine without a hosts entry
+proxyDashboardHost()
+{
+  echo "$(proxySystemName).localhost"
+}
+
+# shellcheck disable=SC2034
+typeset -fx proxyDashboardHost
+
+# writes the route of the Traefik dashboard (the API service api@internal), "/" redirects to the dashboard
+proxyDashboardWrite()
+{
+  local routesPath
+  local routeName
+  local hostName
+  local routesFile
+
+  routesPath=$(proxyRoutesPath)
+  mkdir -p "${routesPath}"
+  routeName="$(proxySystemName)_dashboard"
+  hostName=$(proxyDashboardHost)
+  routesFile="${routesPath}/${routeName}.yml"
+
+  {
+    echo "# written by Anodosys for the dashboard of the proxy"
+    echo "# hosts: ${hostName}"
+    echo "http:"
+    echo "  routers:"
+    echo "    ${routeName}:"
+    echo "      rule: \"Host(\`${hostName}\`)\""
+    echo "      entryPoints: [web]"
+    echo "      service: api@internal"
+    echo "      middlewares: [${routeName}_root]"
+    echo "  middlewares:"
+    echo "    ${routeName}_root:"
+    echo "      redirectRegex:"
+    echo "        regex: \"^(https?://[^/]+)/?\$\""
+    echo "        replacement: \"\${1}/dashboard/\""
+  } > "${routesFile}.tmp"
+  mv "${routesFile}.tmp" "${routesFile}"
+}
+
+# shellcheck disable=SC2034
+typeset -fx proxyDashboardWrite
+
 proxyRoutesRemove()
 {
   local systemName="${1}"
