@@ -955,6 +955,22 @@ fi
 assertProxyServes "${systemB}"
 finishTest
 
+startTest "output piped into a process named like a script"
+# the finish trap waits for script processes of the session; a pipeline element of the calling shell that waits for the
+# output of ads must not be one of them, the system has no containers any more, so stop fails fast
+startSeconds="${SECONDS}"
+(
+  cd "${testPath}/proxy-a" || exit 1
+  env -i HOME="${HOME}" USER="${USER}" PATH="${PATH}" LANG="${LANG:-C.UTF-8}" ANODOSYS_USER_PATH="${userPath}" \
+    setsid -w timeout 60 bash -c '"$1" stop </dev/null 2>&1 | bash -c "exec -a \"/wrapper.sh 1 2\" cat" >/dev/null' _ "${ads}"
+)
+if [[ $((SECONDS - startSeconds)) -lt 50 ]]; then
+  pass "ads finished after $((SECONDS - startSeconds))s"
+else
+  fail "ads waited for a process of the calling pipeline"
+fi
+finishTest
+
 startTest "port registry keeps ports"
 runAds "${testPath}/proxy-b" purge
 assertExitCode 0

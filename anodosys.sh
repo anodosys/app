@@ -33,7 +33,10 @@ finish()
     sessionId=$(ps -o sid= -p ${processId})
     sessionId=$(prepareValue "${sessionId}")
     if [[ -n "${sessionId}" ]]; then
-      subProcessIds=( $(ps --forest -o pid,cmd -g "${sessionId}" | tail -n +2 | grep -e "[[:space:]]*[0-9]\+[[:space:]][^[:space:]]" | grep -e "\.sh" | awk '{print $1}') )
+      # only processes at the top of the tree (no parent in the session, e.g. orphaned background steps): the pattern is
+      # anchored, otherwise any process whose command line contains a digit, a space and ".sh" would match, for example
+      # a pipeline element of the calling shell that waits for the output of this process
+      subProcessIds=( $(ps --forest -o pid,cmd -g "${sessionId}" | tail -n +2 | grep -e "^[[:space:]]*[0-9]\+[[:space:]][^[:space:]]" | grep -e "\.sh" | awk '{print $1}') )
     else
       subProcessIds=()
     fi
