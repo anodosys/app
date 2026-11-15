@@ -37,10 +37,33 @@ typeset -fx proxyRoutesPath
 # into a parameter of the proxy system
 proxyEnsure()
 {
+  local lockPath
+
   if [[ $(containerRunning "$(proxyContainerName)") == 1 ]]; then
     return 0
   fi
 
+  lockPath="${anodosysUserVarPath}/proxy/$(proxySystemName)"
+  mkdir -p "${lockPath}"
+
+  (
+    # servers are prepared in parallel, so only one of them starts the proxy while the others wait for it
+    flock 9
+
+    if [[ $(containerRunning "$(proxyContainerName)") == 1 ]]; then
+      exit 0
+    fi
+
+    # the nested run does not inherit the lock, a process it leaves running would hold it otherwise
+    proxyStart 9>&-
+  ) 9>"${lockPath}/start.lock"
+}
+
+# shellcheck disable=SC2034
+typeset -fx proxyEnsure
+
+proxyStart()
+{
   echo "Starting proxy: $(proxyContainerName)"
   env -i \
     HOME="${HOME}" \
@@ -64,7 +87,7 @@ proxyEnsure()
 }
 
 # shellcheck disable=SC2034
-typeset -fx proxyEnsure
+typeset -fx proxyStart
 
 # connects a container to the network of the proxy, so that Traefik reaches it by its container name
 proxyConnect()
