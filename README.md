@@ -175,3 +175,23 @@ An extension can contain:
 ```
 
 Each extension directory is passed to `jcp process` as a parameter named after the extension, so the system configuration can use the extension's `configuration/` and `script/` files.
+
+# Credentials
+
+Passwords, tokens and keys are kept outside the repositories in `~/.anodosys/credentials` (created with mode 700). This
+directory is passed to `jcp process` as the parameter `credentials`, so a configuration requires a JSON fragment with
+the secret values from there:
+
+```
+{
+    "require": [
+        "{credentials}/<extension>/<name>.json"
+    ]
+}
+```
+
+The fragment holds the values as normal configuration keys (for example `{"any": {"repositoryPassword": "..."}}`), and
+scripts that run inside a container get them as parameters (`*DockerParameters`). Each repository documents its files
+as templates without values in `credentials/<name>.json.dist`: copy the template to
+`~/.anodosys/credentials/<extension>/<name>.json`, fill in the values and make it readable for the owner only
+(`chmod 600`). A missing file stops the configuration with the path of the file to create.

@@ -39,6 +39,12 @@ if [[ -n "${anodosysPath}" ]]; then
   mkdir -p "${anodosysUserConfigurationPath}"
   export anodosysUserConfigurationPath
 
+  # passwords, tokens and keys are kept outside the repositories, configurations require them as {credentials}/<extension>/<name>.json
+  anodosysUserCredentialsPath="${anodosysUserPath}/credentials"
+  mkdir -p "${anodosysUserCredentialsPath}"
+  chmod 700 "${anodosysUserCredentialsPath}"
+  export anodosysUserCredentialsPath
+
   anodosysUserConstructPath="${anodosysUserPath}/construct"
   mkdir -p "${anodosysUserConstructPath}"
   export anodosysUserConstructPath

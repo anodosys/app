@@ -20,6 +20,11 @@ if [[ -z "${anodosysUserExtensionPath}" ]]; then
   exit 1
 fi
 
+if [[ -z "${anodosysUserCredentialsPath}" ]]; then
+  >&2 echo "No user credentials path specified!"
+  exit 1
+fi
+
 if [[ -z "${fileName}" ]]; then
   >&2 echo "No file name specified!"
   exit 1
@@ -91,6 +96,8 @@ if [[ -n "${anodosysUserExtensions}" ]]; then
   done
 fi
 
+params+=( "--param" "credentials:${anodosysUserCredentialsPath}" )
+
 params+=( "--level" "1:input" )
 params+=( "--level" "2:object:global" )
 params+=( "--level" "3:suffix:/configuration" )
@@ -104,6 +111,12 @@ set -e
 
 if [[ "${lastExitCode}" != 0 ]]; then
   >&2 echo "${configuration}"
+  if [[ "${configuration}" == *"required config file: "*"${anodosysUserCredentialsPath}/"* ]]; then
+    missingCredentialsFile="${configuration#*required config file: *"${anodosysUserCredentialsPath}/"}"
+    missingCredentialsFile="${anodosysUserCredentialsPath}/${missingCredentialsFile%%[[:space:]]*}"
+    >&2 echo "Missing credentials file: ${missingCredentialsFile}"
+    >&2 echo "Create it from the template credentials/*.json.dist of its repository and make it readable for the owner only (chmod 600)."
+  fi
   echo ""
   exit 1
 fi
