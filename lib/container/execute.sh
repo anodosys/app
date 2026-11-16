@@ -13,6 +13,8 @@ containerExecute()
     if [[ $(containerRunning "${containerName}") == 1 ]]; then
       containerCopy "${containerName}" "${localFileName}"
       remoteFileName=$(basename "${localFileName}")
+      # scripts committed without the executable bit (core.fileMode=false) are still executable
+      docker exec --user root "${containerName}" chmod +x "/${remoteFileName}"
       echo "Executing script in container at: /${remoteFileName} ${parameters[*]}"
       docker exec "${containerName}" "/${remoteFileName}" "${parameters[@]}"
     else
@@ -75,6 +77,8 @@ containerExecuteUser()
     if [[ $(containerRunning "${containerName}") == 1 ]]; then
       containerCopy "${containerName}" "${localFileName}"
       remoteFileName=$(basename "${localFileName}")
+      # scripts committed without the executable bit (core.fileMode=false) are still executable
+      docker exec --user root "${containerName}" chmod +x "/${remoteFileName}"
       echo "Executing script in container at: /${remoteFileName} with user: ${userName} ${parameters[*]}"
       docker exec --user "${userName}" "${containerName}" "/${remoteFileName}" "${parameters[@]}"
     else
@@ -103,6 +107,8 @@ containerExecuteQuiet()
     if [[ $(containerRunning "${containerName}") == 1 ]]; then
       containerCopyQuiet "${containerName}" "${localFileName}"
       remoteFileName=$(basename "${localFileName}")
+      # scripts committed without the executable bit (core.fileMode=false) are still executable
+      docker exec --user root "${containerName}" chmod +x "/${remoteFileName}"
       docker exec "${containerName}" "/${remoteFileName}" "${parameters[@]}"
     else
       exit 1
@@ -134,6 +140,8 @@ containerExecuteUserQuiet()
     if [[ $(containerRunning "${containerName}") == 1 ]]; then
       containerCopy "${containerName}" "${localFileName}"
       remoteFileName=$(basename "${localFileName}")
+      # scripts committed without the executable bit (core.fileMode=false) are still executable
+      docker exec --user root "${containerName}" chmod +x "/${remoteFileName}"
       docker exec --user "${userName}" "${containerName}" "/${remoteFileName}" "${parameters[@]}"
     else
       exit 1
