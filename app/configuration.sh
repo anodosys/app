@@ -59,8 +59,13 @@ createServerConfiguration()
     else
       j2v convert --file "${anodosysConfigurationFile}" --key global --key any --key "${serverName}" --output "${configurationHashServerFile}"
     fi
-    cp "${configurationHashServerFile}" "${systemServerFile}"
   fi
+
+  # Always, also when the file of the hash exists: another configuration with the same system name (e.g. the same
+  # build in the directory of another release) may have replaced the file of the system in the meantime; copied and
+  # renamed, so a process that sources the file at the same time never reads it half written
+  cp "${configurationHashServerFile}" "${systemServerFile}.$$"
+  mv -f "${systemServerFile}.$$" "${systemServerFile}"
 }
 
 setServerConfiguration()
