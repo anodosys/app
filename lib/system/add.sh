@@ -9,17 +9,24 @@ systemAdd()
 {
   local systemName="${1}"
   local configurationFile="${2}"
+  local systemsFile="${anodosysUserPath}/systems.json"
 
-  if [[ ! -f "${anodosysUserPath}/systems.json" ]]; then
-    echo "{}" > "${anodosysUserPath}/systems.json"
-  fi
+  (
+    # several systems run at the same time, so the file is locked while it is changed
+    flock 9
 
-  if [[ $(jq -r ". | has(\"${systemName}\")" "${anodosysUserPath}/systems.json") == "false" ]]; then
-    echo "Adding system with name: ${systemName} and configuration file: ${configurationFile}"
-    (cd "${anodosysUserPath}"; jq ". += {\"${systemName}\":\"${configurationFile}\"}" systems.json > systems.json.tmp && mv systems.json.tmp systems.json)
-  else
-    echo "No need to add system with name: ${systemName}"
-  fi
+    if [[ ! -s "${systemsFile}" ]]; then
+      echo "{}" > "${systemsFile}"
+    fi
+
+    if [[ $(jq -r --arg name "${systemName}" 'has($name)' "${systemsFile}") == "false" ]]; then
+      echo "Adding system with name: ${systemName} and configuration file: ${configurationFile}"
+      jq --arg name "${systemName}" --arg file "${configurationFile}" '. + {($name): $file}' "${systemsFile}" > "${systemsFile}.tmp"
+      mv "${systemsFile}.tmp" "${systemsFile}"
+    else
+      echo "No need to add system with name: ${systemName}"
+    fi
+  ) 9>"${systemsFile}.lock"
 }
 
 # shellcheck disable=SC2034

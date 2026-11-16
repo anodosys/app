@@ -1,7 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2016
 
-# Unit tests for code that does not need Docker: the parameter parsing of prepare-parameters.sh and the port registry.
+# Unit tests for code that does not need Docker: the parameter parsing of prepare-parameters.sh, the port registry and the systems file.
 # They run in a few seconds and use a temporary directory as user var path, so ~/.anodosys is not touched.
 
 scriptName="${0##*/}"
@@ -227,6 +227,43 @@ if jq empty "${anodosysUserVarPath}/ports.json" 2>/dev/null; then
 else
   fail "registry is no valid JSON"
 fi
+finishTest
+
+# --- systems file ---
+
+anodosysUserPath="${testPath}/user"
+mkdir -p "${anodosysUserPath}"
+# shellcheck disable=SC1091
+source "${appPath}/lib/system/add.sh"
+# shellcheck disable=SC1091
+source "${appPath}/lib/system/remove.sh"
+
+systemsKeys()
+{
+  jq -r 'keys | join(" ")' "${anodosysUserPath}/systems.json"
+}
+
+startTest "systems file: add and remove"
+systemAdd one /path/one/ads.json > /dev/null
+systemAdd two /path/two/ads.json > /dev/null
+assertEquals "added" "one two" "$(systemsKeys)"
+assertEquals "configuration file" "/path/one/ads.json" "$(jq -r '.one' "${anodosysUserPath}/systems.json")"
+assertEquals "existing system is not added again" "No need to add system with name: one" \
+  "$(systemAdd one /path/other/ads.json)"
+systemRemove one > /dev/null
+assertEquals "removed" "two" "$(systemsKeys)"
+: > "${anodosysUserPath}/systems.json"
+systemAdd three /path/three/ads.json > /dev/null
+assertEquals "empty file is started again" "three" "$(systemsKeys)"
+finishTest
+
+startTest "systems file: parallel changes"
+for index in 1 2 3 4 5 6 7 8; do
+  systemAdd "keep${index}" "/path/keep${index}/ads.json" > /dev/null &
+  systemRemove three > /dev/null &
+done
+wait
+assertEquals "every added system is kept" "keep1 keep2 keep3 keep4 keep5 keep6 keep7 keep8" "$(systemsKeys)"
 finishTest
 
 echo ""
