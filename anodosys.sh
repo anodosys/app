@@ -1,5 +1,16 @@
 #!/bin/bash -e
 
+# marks the processes of this run, the finish trap waits only for scripts that carry it: Claude Code, for example, runs
+# commands through "bash -c source .../snapshot-bash-<id>.sh ...", a top-level process of the session whose command line
+# contains ".sh"; the process starts again with the marker in its environment (same process id), because forked
+# subshells keep the environment the process was started with; every run gets its own, so a nested run does not wait for
+# the scripts of its caller
+if [[ "${anodosysRunId%%.*}" != "$$" ]]; then
+  anodosysRunId="$$.${RANDOM}${RANDOM}"
+  export anodosysRunId
+  exec "${BASH}" -e "$0" "$@"
+fi
+
 prepareValue()
 {
   local text="$*"
@@ -51,7 +62,12 @@ finish()
     done
     declare -A runningProcessIds
     for subProcessId in "${subProcessIds[@]}"; do
-      if [[ -z "${ancestorProcessIds[${subProcessId}]+x}" ]]; then
+      if [[ -n "${ancestorProcessIds[${subProcessId}]+x}" ]]; then
+        continue
+      fi
+      # only scripts of this run, a foreign top-level script of the session (for example the shell of a tool that
+      # started ads) does not finish before this process does
+      if tr '\0' '\n' < "/proc/${subProcessId}/environ" 2>/dev/null | grep -qxF "anodosysRunId=${anodosysRunId}"; then
         runningProcessIds["${subProcessId}"]=0
       fi
     done

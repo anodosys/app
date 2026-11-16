@@ -985,6 +985,22 @@ else
 fi
 finishTest
 
+startTest "foreign script of the same session"
+# a top-level process of the session whose command line contains ".sh" but that does not belong to the run, like the
+# shell through which Claude Code runs commands ("bash -c source .../snapshot-bash-<id>.sh ..."), is not waited for
+startSeconds="${SECONDS}"
+(
+  cd "${testPath}/proxy-a" || exit 1
+  env -i HOME="${HOME}" USER="${USER}" PATH="${PATH}" LANG="${LANG:-C.UTF-8}" ANODOSYS_USER_PATH="${userPath}" \
+    setsid -w timeout 60 bash -c '( exec -a "/shell-snapshots/snapshot-bash-1.sh 1 2" sleep 55 & ); "$1" stop </dev/null >/dev/null 2>&1' _ "${ads}"
+)
+if [[ $((SECONDS - startSeconds)) -lt 50 ]]; then
+  pass "ads finished after $((SECONDS - startSeconds))s"
+else
+  fail "ads waited for a foreign script of the session"
+fi
+finishTest
+
 startTest "port registry keeps ports"
 runAds "${testPath}/proxy-b" purge
 assertExitCode 0
