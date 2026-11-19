@@ -27,6 +27,8 @@ usage: ads extension <ACTION> [ARGUMENTS] [OPTIONS]
 ACTION:
   install <source>[@<constraint>]...  Install extensions and their dependencies, source is a name from a registry,
                                       a git url, a GitHub shorthand owner/repo or a local path
+  install                             Install the extensions the system in this directory requires ("extensions"
+                                      in its ads.json)
   update [<name>...]                  Update all or the given extensions to the newest matching versions
   remove <name>...                    Remove extensions and the dependencies nothing else requires
   list                                List the installed extensions
@@ -39,7 +41,11 @@ ACTION:
 
 OPTIONS:
   --name <name>  Name of an extension installed from a url or path, when its extension.json has no name
+  --file <file>  Configuration of the system, instead of the one found in this directory
   --force        Replace an existing extension or remove an extension that others require
+
+The extensions every registered system requires are kept to its constraints, a system configuration lists them as
+  "extensions": { "laravel": "^1.0", "private": { "version": "^2.0", "source": "git@github.com:company/private.git" } }
 
 CONSTRAINTS:
   ^1.2 (>=1.2.0 <2.0.0), ~1.2 (>=1.2.0 <1.3.0), 1.2.*, >=1.2 <2, 1.2.3, dev (the default branch)
@@ -114,6 +120,7 @@ fail()
 
 force=0
 optionName=
+optionFile=
 positional=()
 while [[ "$#" -gt 0 ]]; do
   case "${1}" in
@@ -121,12 +128,18 @@ while [[ "$#" -gt 0 ]]; do
     --force|-f) force=1;;
     --name) optionName="${2}"; shift;;
     --name=*) optionName="${1#--name=}";;
+    --file) optionFile="${2}"; shift;;
+    --file=*) optionFile="${1#--file=}";;
     -*) >&2 echo "Unknown option: ${1}"; usage; exit 1;;
     *) positional+=( "${1}" );;
   esac
   shift
 done
 set -- "${positional[@]}"
+
+if [[ -n "${optionFile}" ]] && [[ ! -f "${optionFile}" ]]; then
+  fail "Could not find configuration at: ${optionFile}"
+fi
 
 action="${1}"
 if [[ -z "${action}" ]]; then
@@ -164,6 +177,7 @@ declare -A remoteTags=()
 declare -A registryUrl=()
 declare -A registryDescription=()
 declare -A registrySource=()
+projectLines=()
 registriesLoaded=0
 upgradeAll=0
 chosenVersion=
@@ -222,6 +236,77 @@ loadInstalled()
       fi
     done < <(find "${otherBasePath}/extension" -mindepth 1 -maxdepth 1 -xtype d -printf "%f\n" | sort)
   fi
+}
+
+# --- systems ---
+
+# prints the configuration file of the system in this directory (looked up like ads does) or of --file
+projectFile()
+{
+  local directory
+
+  if [[ -n "${optionFile}" ]]; then
+    if [[ ! -f "${optionFile}" ]]; then
+      fail "Could not find configuration at: ${optionFile}"
+    fi
+    realpath "${optionFile}"
+    return 0
+  fi
+
+  for directory in . anodosys ads .. ../ads; do
+    if [[ -f "${directory}/anodosys.json" ]]; then
+      realpath "${directory}/anodosys.json"
+      return 0
+    fi
+    if [[ -f "${directory}/ads.json" ]]; then
+      realpath "${directory}/ads.json"
+      return 0
+    fi
+  done
+}
+
+# loads the extensions that the registered systems and the system in this directory require, as lines of name,
+# constraint, source and system separated by the unit separator
+loadProjects()
+{
+  local systemName
+  local fileName
+  local currentFile
+  local name
+  local constraint
+  local source
+  declare -A seenFiles=()
+
+  currentFile=$(projectFile)
+  if [[ -n "${currentFile}" ]]; then
+    systemName=$(jq -r '.global.systemName // empty' "${currentFile}" 2>/dev/null || true)
+    while IFS="${separator}" read -r name constraint source; do
+      if [[ -n "${name}" ]]; then
+        projectLines+=( "${name}${separator}${constraint}${separator}${source}${separator}${systemName:-${currentFile}}" )
+      fi
+    done < <(extensionProjectRequirements "${currentFile}")
+    seenFiles["${currentFile}"]=1
+  fi
+
+  if [[ ! -s "${anodosysUserPath}/systems.json" ]]; then
+    return 0
+  fi
+
+  while IFS="${separator}" read -r systemName fileName; do
+    if [[ -z "${fileName}" ]] || [[ ! -f "${fileName}" ]]; then
+      continue
+    fi
+    fileName=$(realpath "${fileName}")
+    if [[ -n "${seenFiles[${fileName}]}" ]]; then
+      continue
+    fi
+    seenFiles["${fileName}"]=1
+    while IFS="${separator}" read -r name constraint source; do
+      if [[ -n "${name}" ]]; then
+        projectLines+=( "${name}${separator}${constraint}${separator}${source}${separator}${systemName}" )
+      fi
+    done < <(extensionProjectRequirements "${fileName}")
+  done < <(jq -r --arg separator "${separator}" 'to_entries[] | [.key, .value] | join($separator)' "${anodosysUserPath}/systems.json" 2>/dev/null || true)
 }
 
 # --- sources and registries ---
@@ -504,6 +589,8 @@ collectRequirements()
   local requiredName
   local requiredConstraint
   local source
+  local line
+  local systemLabel
 
   constraints=()
   needed=()
@@ -528,6 +615,15 @@ collectRequirements()
       constraints["${name}"]+="${requestConstraint[${name}]}"$'\t'"requested"$'\n'
     elif [[ -n "${lockConstraint[${name}]}" ]]; then
       constraints["${name}"]+="${lockConstraint[${name}]}"$'\t'"requested"$'\n'
+    fi
+  done
+
+  # the systems keep their extensions to their constraints, without installing them
+  for line in "${projectLines[@]}"; do
+    IFS="${separator}" read -r name requiredConstraint source systemLabel <<< "${line}"
+    constraints["${name}"]+="${requiredConstraint:-*}"$'\t'"system ${systemLabel}"$'\n'
+    if [[ -n "${source}" ]] && [[ -z "${sourceHints[${name}]}" ]]; then
+      sourceHints["${name}"]="${source}"
     fi
   done
 
@@ -946,6 +1042,7 @@ lockChanges()
   flock 9
   loadLock
   loadInstalled
+  loadProjects
 }
 
 # --- actions ---
@@ -958,15 +1055,35 @@ case "${action}" in
       optionName="${1}"
       set -- "${3}"
     fi
-    if [[ "$#" -eq 0 ]]; then
-      >&2 echo "No extension defined!"
-      usage
-      exit 1
-    fi
     if [[ -n "${optionName}" ]] && [[ "$#" -gt 1 ]]; then
       fail "--name can only be used with one extension"
     fi
     lockChanges
+    # without arguments: the extensions of the system in this directory, their constraints come from loadProjects
+    if [[ "$#" -eq 0 ]]; then
+      systemFile=$(projectFile)
+      if [[ -z "${systemFile}" ]]; then
+        >&2 echo "No extension defined and no anodosys.json or ads.json found in: ${PWD}"
+        usage
+        exit 1
+      fi
+      systemRequirements=$(extensionProjectRequirements "${systemFile}")
+      if [[ -z "${systemRequirements}" ]]; then
+        fail "The configuration: ${systemFile} requires no extensions, add them as: \"extensions\": { \"<name>\": \"<constraint>\" }"
+      fi
+      echo "Installing the extensions of: ${systemFile}"
+      while IFS="${separator}" read -r name constraint source; do
+        if [[ -z "${name}" ]]; then
+          continue
+        fi
+        # linked and local extensions are used as they are
+        if [[ -n "${fixedVersion[${name}]+x}" ]] && [[ "${force}" != 1 ]]; then
+          echo "Extension: ${name} is used as it is (${fixedVersion[${name}]}) from: ${fixedPath[${name}]}"
+          continue
+        fi
+        requestExtension "${name}" ""
+      done <<< "${systemRequirements}"
+    fi
     for spec in "$@"; do
       parseSpec "${spec}"
       if [[ "${specSource}" =~ ${namePattern} ]] && [[ -z "${optionName}" ]]; then
@@ -1127,6 +1244,7 @@ case "${action}" in
   outdated)
     loadLock
     loadInstalled
+    loadProjects
     collectRequirements
     printf '%-24s %-10s %-10s %s\n' "NAME" "INSTALLED" "MATCHING" "LATEST"
     for name in $(printf '%s\n' "${!installedVersion[@]}" | sort); do
@@ -1164,6 +1282,29 @@ case "${action}" in
 
   check)
     problems=$(extensionProblems "$(anodosysCurrentVersion "${anodosysPath}")" "${sharedBasePath}" ${otherBasePath:+"${anodosysUserPath}"})
+    # the system in this directory and the registered systems
+    checkBasePaths=( "${basePath}" ${otherBasePath:+"${otherBasePath}"} )
+    declare -A checkedFiles=()
+    systemFile=$(projectFile)
+    if [[ -n "${systemFile}" ]]; then
+      checkedFiles["${systemFile}"]=1
+      systemProblems=$(extensionProjectProblems "${systemFile}" "$(jq -r '.global.systemName // empty' "${systemFile}" 2>/dev/null || true)" "${checkBasePaths[@]}")
+      problems="${problems}${problems:+${systemProblems:+$'\n'}}${systemProblems}"
+    fi
+    if [[ -s "${anodosysUserPath}/systems.json" ]]; then
+      while IFS="${separator}" read -r systemName systemFile; do
+        if [[ -z "${systemFile}" ]] || [[ ! -f "${systemFile}" ]]; then
+          continue
+        fi
+        systemFile=$(realpath "${systemFile}")
+        if [[ -n "${checkedFiles[${systemFile}]}" ]]; then
+          continue
+        fi
+        checkedFiles["${systemFile}"]=1
+        systemProblems=$(extensionProjectProblems "${systemFile}" "${systemName}" "${checkBasePaths[@]}")
+        problems="${problems}${problems:+${systemProblems:+$'\n'}}${systemProblems}"
+      done < <(jq -r --arg separator "${separator}" 'to_entries[] | [.key, .value] | join($separator)' "${anodosysUserPath}/systems.json" 2>/dev/null || true)
+    fi
     if [[ -n "${problems}" ]]; then
       >&2 echo "${problems}"
       exit 1

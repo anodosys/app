@@ -104,3 +104,61 @@ extensionProblems()
 
 # shellcheck disable=SC2034
 typeset -fx extensionProblems
+
+# prints the extensions a system configuration requires, one per line: name, constraint and source separated by the
+# unit separator; "extensions" of the configuration file maps names to a constraint or to { "version", "source" }
+extensionProjectRequirements()
+{
+  local fileName="${1}"
+
+  if [[ ! -f "${fileName}" ]]; then
+    return 0
+  fi
+
+  jq -r '.extensions // {} | to_entries[] | [.key, (if (.value | type) == "object" then (.value.version // "*") else (.value // "*") end), (if (.value | type) == "object" then (.value.source // "") else "" end)] | join("\u001f")' "${fileName}" 2>/dev/null || true
+}
+
+# shellcheck disable=SC2034
+typeset -fx extensionProjectRequirements
+
+# prints one line per extension a system configuration requires that is missing or has an unsuitable version, with the
+# command that solves it: extensionProjectProblems <configuration file> <label> <base path>... (the first base path
+# that has the extension counts)
+extensionProjectProblems()
+{
+  local fileName="${1}"
+  local label="${2}"
+  shift 2
+  local basePaths=( "$@" )
+  local basePath
+  local name
+  local constraint
+  local version
+
+  # the third field, the source, is only used for installing
+  while IFS=$'\x1f' read -r name constraint _; do
+    if [[ -z "${name}" ]]; then
+      continue
+    fi
+    version=
+    for basePath in "${basePaths[@]}"; do
+      version=$(extensionInstalledVersion "${basePath}" "${name}")
+      if [[ -n "${version}" ]]; then
+        break
+      fi
+    done
+    if [[ -z "${version}" ]]; then
+      echo "System: ${label} requires extension: ${name} ${constraint}, which is not installed, run: ads extension install (in: $(dirname "${fileName}"))"
+      continue
+    fi
+    if [[ "${version}" == "linked" ]] || [[ "${version}" == "local" ]] || { [[ "${version}" == "dev" ]] && [[ "${constraint}" != "dev" ]]; }; then
+      continue
+    fi
+    if [[ $(versionSatisfies "${version}" "${constraint}") != 1 ]]; then
+      echo "System: ${label} requires extension: ${name} ${constraint}, installed is: ${version}, run: ads extension update ${name}"
+    fi
+  done < <(extensionProjectRequirements "${fileName}")
+}
+
+# shellcheck disable=SC2034
+typeset -fx extensionProjectProblems

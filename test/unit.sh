@@ -534,6 +534,62 @@ EOF
     fail "unsuitable version not reported: ${output}"
   fi
   finishTest
+
+  # systems that require extensions, with a new user path
+  extensionUserPath="${testPath}/extension-systems"
+  mkdir -p "${extensionUserPath}" "${testPath}/shop/ads" "${testPath}/blog"
+  cat > "${testPath}/shop/ads/ads.json" << EOF
+{
+  "extensions": {
+    "magento": {"version": "^1.0", "source": "${repositoryPath}/magento"},
+    "cosyses": "~1.1"
+  },
+  "global": {"systemName": "shop"}
+}
+EOF
+  echo '{"extensions": {"cosyses": "^1"}, "global": {"systemName": "blog"}}' > "${testPath}/blog/ads.json"
+  echo "{\"blog\": \"${testPath}/blog/ads.json\"}" > "${extensionUserPath}/systems.json"
+
+  startTest "extension manager: extensions of systems"
+  output=$(cd "${testPath}/shop" && extension install)
+  assertEquals "installed what the system requires, in its constraints" \
+    "cosyses=1.1.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  assertEquals "requested by the system" "true" "$(jq -r '.cosyses.explicit' "${extensionUserPath}/extensions.json")"
+  assertEquals "system constraint is not stored as own constraint" "null" "$(jq -r '.cosyses.constraint' "${extensionUserPath}/extensions.json")"
+  output=$(extension install cosyses@^2; echo "exit:$?")
+  assertEquals "registered system keeps its constraint" "exit:1" "${output##*$'\n'}"
+  if [[ "${output}" == *"^1 (system blog)"* ]]; then
+    pass "conflict names the system"
+  else
+    fail "conflict does not name the system: ${output}"
+  fi
+  extension update > /dev/null
+  assertEquals "update stays in the constraints of the registered system" \
+    "cosyses=1.2.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  (cd "${testPath}/shop" && extension update > /dev/null)
+  assertEquals "update in the system directory goes back into its constraint" \
+    "cosyses=1.1.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  finishTest
+
+  startTest "extension manager: check of systems"
+  output=$(extension check; echo "exit:$?")
+  assertEquals "registered system is fine" "exit:0" "${output##*$'\n'}"
+  echo '{"extensions": {"cosyses": "~1.2"}, "global": {"systemName": "newer"}}' > "${testPath}/blog/newer.json"
+  output=$(extension check --file "${testPath}/blog/newer.json"; echo "exit:$?")
+  assertEquals "given system does not match" "exit:1" "${output##*$'\n'}"
+  if [[ "${output}" == *"System: newer requires extension: cosyses ~1.2, installed is: 1.1.0, run: ads extension update cosyses"* ]]; then
+    pass "unsuitable version reported"
+  else
+    fail "unsuitable version not reported: ${output}"
+  fi
+  # shellcheck disable=SC1091
+  source "${appPath}/lib/extension/check.sh"
+  echo '{"extensions": {"wordpress": "^1"}}' > "${testPath}/blog/missing.json"
+  assertEquals "missing extension" \
+    "System: blog requires extension: wordpress ^1, which is not installed, run: ads extension install (in: ${testPath}/blog)" \
+    "$(extensionProjectProblems "${testPath}/blog/missing.json" blog "${extensionUserPath}")"
+  assertEquals "no extensions" "" "$(extensionProjectProblems "${testPath}/shop/ads/missing.json" shop "${extensionUserPath}")"
+  finishTest
 fi
 
 echo ""

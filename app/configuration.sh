@@ -128,6 +128,10 @@ if [[ "${lastExitCode}" != 0 ]]; then
     if [[ -n "${extensionProblemList}" ]]; then
       >&2 echo "${extensionProblemList}"
     fi
+    extensionProblemList=$(extensionProjectProblems "${configurationFileName}" "$(basename "$(dirname "${configurationFileName}")")" "${anodosysUserPath}" "$(dirname "${anodosysExtensionPath}")")
+    if [[ -n "${extensionProblemList}" ]]; then
+      >&2 echo "${extensionProblemList}"
+    fi
   fi
   echo ""
   exit 1
@@ -136,6 +140,22 @@ fi
 configurationHash=$(echo "${configuration}" | md5sum | awk '{print $1}')
 anodosysConfigurationFile="${anodosysUserVarConfigurationPath}/${configurationHash}.json"
 export anodosysConfigurationFile
+
+# the extensions the system requires ("extensions" in its configuration file) are checked when the configuration is new:
+# the paths of the installed extension versions are part of it, so another version always gives another hash, and an
+# unchanged configuration costs nothing; with problems the file is not written, so the next run checks again
+if { [[ ! -f "${anodosysConfigurationFile}" ]] || [[ "${reset}" == 1 ]]; } && [[ $(type -t extensionProjectProblems) == "function" ]]; then
+  extensionProblemList=$(extensionProjectProblems "${configurationFileName}" "$(jq -r '.global.systemName // empty' <<< "${configuration}")" "${anodosysUserPath}" "$(dirname "${anodosysExtensionPath}")")
+  if [[ -n "${extensionProblemList}" ]]; then
+    >&2 echo "${extensionProblemList}"
+    if [[ "${force}" == 1 ]]; then
+      >&2 echo "Continuing because of --force"
+    else
+      >&2 echo "Install the required extensions or continue anyway with: --force"
+      exit 1
+    fi
+  fi
+fi
 
 echo "${configuration}" > "${anodosysConfigurationFile}"
 

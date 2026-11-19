@@ -152,6 +152,7 @@ ads extension install fewedev               # newest version, plus what it requi
 ads extension install fewedev@^1.2          # newest version that matches the constraint
 ads extension install fewe-dev/anodosys     # GitHub shorthand owner/repo (https, then ssh)
 ads extension install <git url>|<path>      # any repository (--name <name> if its extension.json has none)
+ads extension install                       # what the system in this directory requires (see below)
 ads extension update [<name>...]            # newest matching versions of all or the given extensions
 ads extension remove <name>...              # also removes the dependencies nothing else requires
 ads extension list                          # installed extensions with version and source
@@ -194,6 +195,28 @@ the shared ones (`registries.json` of the installation), so a private registry c
 updating picks for every extension the newest version that matches all constraints (the requested one and those of
 every extension requiring it), keeps installed versions that still match, and stops with the conflicting constraints
 when none matches. Extensions that are linked, local or installed for all users are taken as they are.
+
+**Extensions of a system**: a system configuration lists the extensions it needs at its top level, as constraint or,
+for an extension no registry knows, with its source:
+
+```json
+{
+  "require": [ "{{{laravel}}}/laravel/13.5.json" ],
+  "extensions": {
+    "laravel": "^1.0",
+    "company": { "version": "^2.0", "source": "git@github.com:company/anodosys.git" }
+  },
+  "global": { "systemName": "shop" }
+}
+```
+
+`ads extension install` without arguments in the system directory (or with `--file <ads.json>`) installs them. Every
+`install` and `update` keeps the extensions inside the constraints of all registered systems (`~/.anodosys/systems.json`)
+and of the system in the current directory, so an update for one system does not break another, and a conflict names
+the system. Every run checks the system against the installed versions when its configuration changed (another
+extension version always changes it, so an unchanged system costs nothing) and stops with the command that solves a
+problem; `--force` continues anyway. `ads extension check` also checks the registered systems. There is one installed
+version per extension, so systems that need versions no single version satisfies cannot be used on the same machine.
 
 **Layout**: every version is fetched (without `.git`) into `var/extension/<name>/<version>`, and `extension/<name>`
 links to it:
