@@ -266,6 +266,33 @@ wait
 assertEquals "every added system is kept" "keep1 keep2 keep3 keep4 keep5 keep6 keep7 keep8" "$(systemsKeys)"
 finishTest
 
+# --- volume metadata ---
+
+anodosysUserVarVolumePath="${testPath}/volume"
+mkdir -p "${anodosysUserVarVolumePath}"
+# shellcheck disable=SC1091
+source "${appPath}/lib/volume/meta.sh"
+
+startTest "volume metadata: parallel creation of the same container"
+metadataFile=$(volumeMetadataFilePath unit_status /run/docker.sock no)
+volumeMetadataCreate unit_status /run/docker.sock /var/run/docker.sock www-data r 0 root 988 docker 660 false > /dev/null
+invalidReads=0
+for index in 1 2 3 4 5 6 7 8 9 10 11 12; do
+  volumeMetadataCreate unit_status /run/docker.sock /var/run/docker.sock www-data r 0 root 988 docker 660 false > /dev/null &
+done
+for index in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+  if ! jq -e . "${metadataFile}" > /dev/null 2>&1; then
+    invalidReads=$((invalidReads+1))
+  fi
+done
+wait
+assertEquals "every read finds valid JSON" "0" "${invalidReads}"
+assertEquals "file is valid JSON" "www-data r docker 660" \
+  "$(jq -r '[.targetUser, .mode, .group, .rights] | join(" ")' "${metadataFile}")"
+assertEquals "value is read" "/var/run/docker.sock" "$(volumeMetadataGet unit_status /run/docker.sock targetPath)"
+assertEquals "no temporary file is left" "1" "$(find "${anodosysUserVarVolumePath}" -type f | wc -l)"
+finishTest
+
 echo ""
 if [[ "${failed}" == 0 ]]; then
   echo "All ${passed} unit tests passed" | sed $'s,.*,\e[0;32m&\e[m,'

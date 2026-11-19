@@ -42,6 +42,7 @@ volumeMetadataCreate()
   local rights="${10}"
   local empty="${11}"
   local volumeMetadataFilePath
+  local temporaryFilePath
 
   if [[ -z "${userId}" ]] || [[ "${userId}" == "-" ]]; then
     userId=$(stat -c '%u' "${sourcePath}")
@@ -65,17 +66,25 @@ volumeMetadataCreate()
   echo "Creating volume meta data with source path: ${sourcePath}, target path: ${targetPath}, target user: ${targetUser} and mode: ${mode}"
 
   volumeMetadataFilePath=$(volumeMetadataFilePath "${containerName}" "${sourcePath}" "no")
+  # BASHPID is taken here, in a redirection it would be expanded in the forked command
+  temporaryFilePath="${volumeMetadataFilePath}.${BASHPID}.tmp"
 
-  updateJson "${volumeMetadataFilePath}" "sourcePath" "${sourcePath}"
-  updateJson "${volumeMetadataFilePath}" "targetPath" "${targetPath}"
-  updateJson "${volumeMetadataFilePath}" "targetUser" "${targetUser}"
-  updateJson "${volumeMetadataFilePath}" "mode" "${mode}"
-  updateJson "${volumeMetadataFilePath}" "userId" "${userId}"
-  updateJson "${volumeMetadataFilePath}" "user" "${user}"
-  updateJson "${volumeMetadataFilePath}" "groupId" "${groupId}"
-  updateJson "${volumeMetadataFilePath}" "group" "${group}"
-  updateJson "${volumeMetadataFilePath}" "rights" "${rights}"
-  updateJson "${volumeMetadataFilePath}" "empty" "${empty}"
+  # written at once through a file of this process and renamed, so that a reader never sees a partly written file and
+  # two processes creating the same container at the same time cannot mix their contents
+  jq -n \
+    --arg sourcePath "${sourcePath}" \
+    --arg targetPath "${targetPath}" \
+    --arg targetUser "${targetUser}" \
+    --arg mode "${mode}" \
+    --arg userId "${userId}" \
+    --arg user "${user}" \
+    --arg groupId "${groupId}" \
+    --arg group "${group}" \
+    --arg rights "${rights}" \
+    --arg empty "${empty}" \
+    '{sourcePath: $sourcePath, targetPath: $targetPath, targetUser: $targetUser, mode: $mode, userId: $userId, user: $user,
+      groupId: $groupId, group: $group, rights: $rights, empty: $empty}' > "${temporaryFilePath}"
+  mv "${temporaryFilePath}" "${volumeMetadataFilePath}"
 }
 
 # shellcheck disable=SC2034

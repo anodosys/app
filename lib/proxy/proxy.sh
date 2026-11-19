@@ -37,26 +37,13 @@ typeset -fx proxyRoutesPath
 # into a parameter of the proxy system
 proxyEnsure()
 {
-  local lockPath
-
   if [[ $(containerRunning "$(proxyContainerName)") == 1 ]]; then
     return 0
   fi
 
-  lockPath="${anodosysUserVarPath}/proxy/$(proxySystemName)"
-  mkdir -p "${lockPath}"
-
-  (
-    # servers are prepared in parallel, so only one of them starts the proxy while the others wait for it
-    flock 9
-
-    if [[ $(containerRunning "$(proxyContainerName)") == 1 ]]; then
-      exit 0
-    fi
-
-    # the nested run does not inherit the lock, a process it leaves running would hold it otherwise
-    proxyStart 9>&-
-  ) 9>"${lockPath}/start.lock"
+  # servers are prepared in parallel and several systems can start at the same time, ads proxy start locks itself, so
+  # only one of them creates the servers of the proxy while the others wait and find them running
+  proxyStart
 }
 
 # shellcheck disable=SC2034

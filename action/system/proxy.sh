@@ -241,9 +241,36 @@ proxyStopServers()
   done
 }
 
+# runs a function while holding the start lock of the proxy, so that systems starting at the same time (proxyEnsure) and
+# calls of ads proxy never create or install the same server twice at once; the lock is not passed on, a process left
+# running by a nested run would hold it otherwise
+proxyLocked()
+{
+  (
+    flock 9
+    "$@" 9>&-
+  ) 9>"${proxyPath}/start.lock"
+}
+
+proxyUpdateRunning()
+{
+  if [[ $(containerRunning "${proxyContainer}") == 1 ]]; then
+    proxyUpdate
+    echo "Proxy is up to date: ${proxyContainer}"
+  else
+    echo "Proxy is not running: ${proxyContainer}"
+  fi
+}
+
+proxyRestartServers()
+{
+  proxyStopServers
+  proxyStartServers
+}
+
 case "${proxyCommand}" in
   start)
-    proxyStartServers
+    proxyLocked proxyStartServers
     ;;
   stop)
     if [[ $(containerRunning "${proxyContainer}") == 1 ]] || [[ $(containerRunning "${proxyStatusContainer}") == 1 ]]; then
@@ -253,16 +280,10 @@ case "${proxyCommand}" in
     fi
     ;;
   restart)
-    proxyStopServers
-    proxyStartServers
+    proxyLocked proxyRestartServers
     ;;
   update)
-    if [[ $(containerRunning "${proxyContainer}") == 1 ]]; then
-      proxyUpdate
-      echo "Proxy is up to date: ${proxyContainer}"
-    else
-      echo "Proxy is not running: ${proxyContainer}"
-    fi
+    proxyLocked proxyUpdateRunning
     ;;
   remove)
     if [[ $(containerExists "${proxyContainer}") == 1 ]] && [[ $(containerExists "${proxyStatusContainer}") == 1 ]]; then

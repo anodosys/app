@@ -19,11 +19,18 @@ updateJson()
   local key="${2}"
   local value="${3}"
 
-  if [[ ! -f "${filePath}" ]]; then
-    echo "{}" > "${filePath}"
+  local content
+  # BASHPID is taken here, in a redirection it would be expanded in a forked process
+  local temporaryFilePath="${filePath}.${BASHPID}.tmp"
+
+  if [[ -f "${filePath}" ]]; then
+    content=$(jq -j --arg value "${value}" ".${key} = \$value" "${filePath}")
+  else
+    content=$(jq -n -j --arg value "${value}" ".${key} = \$value")
   fi
-  content=$(jq -j ".${key} = \"${value}\"" "${filePath}")
-  echo -E "${content}" > "${filePath}"
+  # renamed into place, so that a reader never sees a partly written file
+  echo -E "${content}" > "${temporaryFilePath}"
+  mv "${temporaryFilePath}" "${filePath}"
 }
 
 # shellcheck disable=SC2034
