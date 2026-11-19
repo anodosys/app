@@ -128,7 +128,7 @@ EOF
 cat >&2 << EOF
 
   list                          List all known systems
-  extension                     Add, update, reset or remove extensions
+  extension                     Install, update, remove, list and search extensions with their dependencies
   update                        Update Anodosys to the latest or a given release (--applicationVersion)
   version                       Show the installed version
 

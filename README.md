@@ -144,26 +144,74 @@ the data into the volume.
 
 # Extensions
 
-Extensions add actions, constructs, library functions, host tools and configuration to Anodosys. They are managed with `ads extension` (or the equivalent `ads-ext`):
+Extensions add actions, constructs, library functions, host tools and configuration to Anodosys. They are installed by
+name with their dependencies, like packages:
 
 ```
-ads extension add    <name> git <url>   # clone and install an extension
-ads extension update <name>             # pull the latest version and re-install it
-ads extension reset  <name>             # re-install from the downloaded copy, discarding local changes
-ads extension remove <name>             # uninstall the extension
+ads extension install fewedev               # newest version, plus what it requires (e.g. cosyses)
+ads extension install fewedev@^1.2          # newest version that matches the constraint
+ads extension install fewe-dev/anodosys     # GitHub shorthand owner/repo (https, then ssh)
+ads extension install <git url>|<path>      # any repository (--name <name> if its extension.json has none)
+ads extension update [<name>...]            # newest matching versions of all or the given extensions
+ads extension remove <name>...              # also removes the dependencies nothing else requires
+ads extension list                          # installed extensions with version and source
+ads extension outdated                      # installed extensions with newer versions
+ads extension search [<text>]               # extensions of all registries
+ads extension link <path> / unlink <name>   # use a local checkout (development)
+ads extension check                         # does every extension have what it requires
+ads extension registry list|add|remove      # registries
 ```
 
-The git clone lives in `~/.anodosys/var/extension/<name>`. Its content (without `.git`) is synced to:
+`ads-ext` is the same command. Constraints: `^1.2` (>=1.2.0 <2.0.0), `~1.2` (>=1.2.0 <1.3.0), `1.2.*`, `>=1.2 <2`,
+`1.2.3`, alternatives with `||`, and `dev` for the default branch.
+
+**Versions** are the semver tags of an extension's repository (`1.2.3`, a `v` prefix is accepted). A repository without
+tags is installed from its default branch as version `dev`, which `ads extension update` fetches again. To release a
+version, tag it: `git tag 1.1.0 && git push origin 1.1.0`.
+
+**extension.json** at the root of the repository names the extension and lists what it requires:
+
+```json
+{
+  "name": "magento",
+  "description": "Magento systems and images",
+  "anodosys": ">=3.7",
+  "requires": { "fewedev": "^1.0", "cosyses": "^1.0" },
+  "sources": { "fewedev": "git@github.com:fewe-dev/anodosys.git" }
+}
+```
+
+The name is the parameter the configuration uses (`{fewedev}`). `sources` tells where to find a required extension
+that no registry knows, for example a private one.
+
+**Registries** map names to repositories. The public registry [anodosys/registry](https://github.com/anodosys/registry)
+is always searched last. Private extensions belong into a registry of your own: a git repository (reached with your git
+login, for example over SSH) or a local directory with a `registry.json`, added once per machine with
+`ads extension registry add <url>`. Registries of the user (`~/.anodosys/registries.json`) are searched first, then
+the shared ones (`registries.json` of the installation), so a private registry can also replace a public extension.
+
+**Resolution**: there is one version per extension name, because the configuration knows it by name. Installing or
+updating picks for every extension the newest version that matches all constraints (the requested one and those of
+every extension requiring it), keeps installed versions that still match, and stops with the conflicting constraints
+when none matches. Extensions that are linked, local or installed for all users are taken as they are.
+
+**Layout**: every version is fetched (without `.git`) into `var/extension/<name>/<version>`, and `extension/<name>`
+links to it:
 
 - `~/.anodosys/extension/<name>` when run as a normal user
 - `/usr/local/lib/anodosys/extension/<name>` when run as root, shared by all installed releases (`extension/<name>` in a local checkout)
 
-Every subdirectory of these two directories is loaded as an extension on each run, so an extension can also be created by hand there. User extensions take precedence over installed ones.
+`extensions.json` next to it records version, url, commit and whether an extension was requested or came as a
+dependency. Every subdirectory of these two `extension` directories is loaded as an extension on each run, so a link to
+a checkout (`ads extension link`) or a directory created by hand works as well; `ads extension list` shows them as
+`linked` or `local`, and `install --force` replaces them. When the configuration cannot be built, Anodosys also prints
+missing or unsuitable extensions.
 
 An extension can contain:
 
 ```
 <name>/
+  extension.json               # name, required Anodosys version and extensions
   action/system/<action>.sh    # system action: ads <action>
   action/server/<action>.sh    # server action: ads <action> or ads <name>:<action>
   action/server/<action>.txt   # optional description shown in the usage output

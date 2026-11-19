@@ -293,6 +293,249 @@ assertEquals "value is read" "/var/run/docker.sock" "$(volumeMetadataGet unit_st
 assertEquals "no temporary file is left" "1" "$(find "${anodosysUserVarVolumePath}" -type f | wc -l)"
 finishTest
 
+# --- extension versions ---
+
+# shellcheck disable=SC1091
+source "${appPath}/lib/extension/version.sh"
+
+satisfies()
+{
+  versionSatisfies "${1}" "${2}" 2>/dev/null
+}
+
+startTest "extension versions: comparison"
+assertEquals "lower" "-1" "$(versionCompare 1.2.3 1.10.0)"
+assertEquals "equal with missing parts" "0" "$(versionCompare 1.2 1.2.0)"
+assertEquals "higher" "1" "$(versionCompare 2.0.0 1.99.99)"
+assertEquals "leading v" "0" "$(versionCompare v1.0.0 1.0.0)"
+finishTest
+
+startTest "extension versions: constraints"
+assertEquals "any" "1" "$(satisfies 3.4.5 "*")"
+assertEquals "exact" "1" "$(satisfies 1.2.3 1.2.3)"
+assertEquals "exact other" "0" "$(satisfies 1.2.4 1.2.3)"
+assertEquals "caret same major" "1" "$(satisfies 1.9.0 ^1.2)"
+assertEquals "caret lower" "0" "$(satisfies 1.1.9 ^1.2)"
+assertEquals "caret next major" "0" "$(satisfies 2.0.0 ^1.2)"
+assertEquals "caret zero major" "0" "$(satisfies 0.3.0 ^0.2.1)"
+assertEquals "caret zero major same minor" "1" "$(satisfies 0.2.5 ^0.2.1)"
+assertEquals "caret zero minor" "0" "$(satisfies 0.0.4 ^0.0.3)"
+assertEquals "tilde minor" "1" "$(satisfies 1.2.9 ~1.2)"
+assertEquals "tilde next minor" "0" "$(satisfies 1.3.0 ~1.2)"
+assertEquals "tilde major only" "1" "$(satisfies 1.9.0 ~1)"
+assertEquals "wildcard" "1" "$(satisfies 1.2.7 1.2.*)"
+assertEquals "wildcard other minor" "0" "$(satisfies 1.3.0 1.2.*)"
+assertEquals "x wildcard" "1" "$(satisfies 1.9.0 1.x)"
+assertEquals "range" "1" "$(satisfies 1.5.0 ">=1.2 <2")"
+assertEquals "range with comma" "0" "$(satisfies 2.0.0 ">=1.2, <2")"
+assertEquals "operator with space" "1" "$(satisfies 1.5.0 ">= 1.2")"
+assertEquals "alternatives" "1" "$(satisfies 3.1.0 "^1 || ^3")"
+assertEquals "alternatives none" "0" "$(satisfies 2.1.0 "^1 || ^3")"
+assertEquals "dev matches dev" "1" "$(satisfies dev dev)"
+assertEquals "dev does not match a version" "0" "$(satisfies dev ^1)"
+assertEquals "invalid constraint" "0" "$(satisfies 1.0.0 "^foo")"
+assertEquals "highest matching" "1.4.0" "$(versionHighest $'^1\n<1.5' 1.0.0 2.0.0 1.4.0 1.10.0)"
+assertEquals "highest of all" "1.10.0" "$(versionHighest "*" 1.0.0 1.4.0 1.10.0)"
+assertEquals "highest of none" "" "$(versionHighest "^3" 1.0.0 2.0.0)"
+finishTest
+
+# --- extension manager ---
+
+if [[ $(id -u) == 0 ]]; then
+  echo ""
+  echo "Skipping the extension manager tests as root, they would install into the checkout"
+else
+  repositoryPath="${testPath}/repositories"
+  extensionUserPath="${testPath}/extension-user"
+  mkdir -p "${repositoryPath}" "${extensionUserPath}" "${testPath}/registry"
+
+  # adds a version (tag) with the given extension.json to a repository: addVersion <repository> <version> <manifest>
+  addVersion()
+  {
+    local repository="${repositoryPath}/${1}"
+
+    if [[ ! -d "${repository}/.git" ]]; then
+      git init --quiet "${repository}"
+    fi
+    echo "${3}" > "${repository}/extension.json"
+    echo "${2}" > "${repository}/VERSION"
+    git -C "${repository}" add -A
+    git -C "${repository}" -c user.name=test -c user.email=test@example.com commit --quiet -m "${2}"
+    if [[ "${2}" != "dev" ]]; then
+      git -C "${repository}" tag "${2}"
+    fi
+  }
+
+  addVersion cosyses 1.0.0 '{"name": "cosyses"}'
+  addVersion cosyses 1.1.0 '{"name": "cosyses"}'
+  addVersion cosyses 2.0.0 '{"name": "cosyses"}'
+  addVersion fewedev 1.0.0 '{"name": "fewedev", "requires": {"cosyses": "^1"}}'
+  addVersion fewedev 1.1.0 '{"name": "fewedev", "requires": {"cosyses": "^1.1"}}'
+  addVersion fewedev 2.0.0 '{"name": "fewedev", "requires": {"cosyses": "^2"}}'
+  # magento is in no registry, its dependency fewedev is found through the registry
+  addVersion magento 1.0.0 '{"name": "magento", "requires": {"fewedev": "^1"}}'
+  # infrangible names where magento is, like a private extension that requires another private one
+  addVersion infrangible 1.0.0 "{\"name\": \"infrangible\", \"requires\": {\"magento\": \"^1\"}, \"sources\": {\"magento\": \"${repositoryPath}/magento\"}}"
+  addVersion notags dev '{"name": "notags"}'
+  addVersion future 1.0.0 '{"name": "future", "anodosys": ">=999"}'
+  mkdir -p "${testPath}/checkout"
+  echo '{"name": "checkout", "requires": {"cosyses": "^1"}}' > "${testPath}/checkout/extension.json"
+
+  cat > "${testPath}/registry/registry.json" << EOF
+{
+  "extensions": {
+    "cosyses": {"url": "${repositoryPath}/cosyses", "description": "Cosyses images"},
+    "fewedev": "${repositoryPath}/fewedev",
+    "future": "${repositoryPath}/future"
+  }
+}
+EOF
+
+  # runs ads extension in a clean environment against the test registry
+  extension()
+  {
+    env -i PATH="${PATH}" HOME="${testPath}" ANODOSYS_USER_PATH="${extensionUserPath}" ANODOSYS_REGISTRY="${testPath}/registry" \
+      bash "${appPath}/extension.sh" "$@" 2>&1
+  }
+
+  installed()
+  {
+    local name
+
+    for name in $(jq -r 'keys[]' "${extensionUserPath}/extensions.json"); do
+      echo -n "${name}=$(jq -r --arg name "${name}" '.[$name].version' "${extensionUserPath}/extensions.json") "
+    done
+  }
+
+  startTest "extension manager: install with dependencies"
+  output=$(extension install "${repositoryPath}/magento")
+  assertEquals "installed with the highest matching versions" "cosyses=1.1.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  assertEquals "requested" "true" "$(jq -r '.magento.explicit' "${extensionUserPath}/extensions.json")"
+  assertEquals "dependency" "false" "$(jq -r '.fewedev.explicit' "${extensionUserPath}/extensions.json")"
+  assertEquals "linked into the extension directory" "1.1.0" "$(cat "${extensionUserPath}/extension/fewedev/VERSION")"
+  assertEquals "commit recorded" "40" "$(jq -r '.cosyses.commit | length' "${extensionUserPath}/extensions.json")"
+  assertEquals "no git data" "no" "$([[ -d "${extensionUserPath}/extension/cosyses/.git" ]] && echo yes || echo no)"
+  assertEquals "check" "0" "$(extension check > /dev/null; echo $?)"
+  finishTest
+
+  startTest "extension manager: conflicts"
+  output=$(extension install fewedev@^2; echo "exit:$?")
+  assertEquals "conflicting constraint fails" "exit:1" "${output##*$'\n'}"
+  if [[ "${output}" == *"^2 (requested)"* ]] && [[ "${output}" == *"^1 (magento 1.0.0)"* ]]; then
+    pass "conflict names the constraints"
+  else
+    fail "conflict does not name the constraints: ${output}"
+  fi
+  assertEquals "nothing changed" "cosyses=1.1.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  output=$(extension remove fewedev; echo "exit:$?")
+  assertEquals "required extension is not removed" "exit:1" "${output##*$'\n'}"
+  assertEquals "still installed" "cosyses=1.1.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  output=$(extension install future; echo "exit:$?")
+  assertEquals "too new for this Anodosys" "exit:1" "${output##*$'\n'}"
+  finishTest
+
+  startTest "extension manager: update"
+  addVersion cosyses 1.2.0 '{"name": "cosyses"}'
+  extension install cosyses@1.1.0 > /dev/null
+  extension update > /dev/null
+  assertEquals "pinned version stays" "cosyses=1.1.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  extension install cosyses@^1 > /dev/null
+  extension update cosyses > /dev/null
+  assertEquals "highest matching, not 2.0.0" "cosyses=1.2.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  assertEquals "older version removed from the store" "1.2.0" \
+    "$(find "${extensionUserPath}/var/extension/cosyses" -mindepth 1 -maxdepth 1 -type d -printf '%f\n')"
+  finishTest
+
+  startTest "extension manager: remove with dependencies"
+  extension remove magento > /dev/null
+  assertEquals "dependencies go, requested cosyses stays" "cosyses=1.2.0 " "$(installed)"
+  assertEquals "link removed" "no" "$([[ -e "${extensionUserPath}/extension/fewedev" ]] && echo yes || echo no)"
+  finishTest
+
+  startTest "extension manager: sources of requiring extensions"
+  extension install "${repositoryPath}/infrangible" > /dev/null
+  assertEquals "magento found through the sources of infrangible" \
+    "cosyses=1.2.0 fewedev=1.1.0 infrangible=1.0.0 magento=1.0.0 " "$(installed)"
+  extension remove infrangible > /dev/null
+  finishTest
+
+  startTest "extension manager: default branch"
+  output=$(extension install "${repositoryPath}/notags")
+  assertEquals "installed as dev" "dev" "$(jq -r '.notags.version' "${extensionUserPath}/extensions.json")"
+  addVersion notags dev '{"name": "notags", "changed": true}'
+  extension update notags > /dev/null
+  assertEquals "update fetches the branch again" "true" "$(jq -r '.changed' "${extensionUserPath}/extension/notags/extension.json")"
+  extension remove notags > /dev/null
+  finishTest
+
+  startTest "extension manager: linked checkout"
+  output=$(extension link "${testPath}/checkout")
+  assertEquals "linked" "${testPath}/checkout" "$(readlink -f "${extensionUserPath}/extension/checkout")"
+  assertEquals "requirement installed" "cosyses=1.2.0 " "$(installed)"
+  output=$(extension remove cosyses; echo "exit:$?")
+  assertEquals "required by the checkout" "exit:1" "${output##*$'\n'}"
+  if [[ "$(extension list)" == *"checkout"*"linked"*"${testPath}/checkout"* ]]; then
+    pass "listed as linked"
+  else
+    fail "not listed as linked: $(extension list)"
+  fi
+  output=$(extension install checkout; echo "exit:$?")
+  assertEquals "linked extension is not replaced without --force" "exit:1" "${output##*$'\n'}"
+  extension unlink checkout > /dev/null
+  assertEquals "unlinked" "no" "$([[ -e "${extensionUserPath}/extension/checkout" ]] && echo yes || echo no)"
+  assertEquals "requested cosyses stays" "cosyses=1.2.0 " "$(installed)"
+  finishTest
+
+  startTest "extension manager: registries"
+  mkdir -p "${testPath}/private"
+  echo "{\"extensions\": {\"magento\": \"${repositoryPath}/magento\", \"cosyses\": \"${repositoryPath}/fewedev\"}}" > "${testPath}/private/registry.json"
+  extension registry add "${testPath}/private" > /dev/null
+  assertEquals "listed before the public one" "${testPath}/private|${testPath}/registry" "$(extension registry list | tr '\n' '|' | sed 's/|$//')"
+  extension install magento > /dev/null
+  assertEquals "installed by name from the private registry" \
+    "cosyses=1.2.0 fewedev=1.1.0 magento=1.0.0 " "$(installed)"
+  if [[ "$(extension search)" == *"Extension: cosyses of registry: ${testPath}/registry is replaced"* ]]; then
+    pass "replaced extension is reported"
+  else
+    fail "replaced extension is not reported: $(extension search)"
+  fi
+  assertEquals "installed url is kept" "${repositoryPath}/cosyses" "$(jq -r '.cosyses.url' "${extensionUserPath}/extensions.json")"
+  extension registry remove "${testPath}/private" > /dev/null
+  assertEquals "removed" "${testPath}/registry" "$(extension registry list)"
+  finishTest
+
+  startTest "extension manager: older installations"
+  extension remove magento cosyses > /dev/null
+  mkdir -p "${extensionUserPath}/extension/cosyses"
+  if [[ "$(extension list)" == *"cosyses"*"local"* ]]; then
+    pass "plain directory is listed as local"
+  else
+    fail "plain directory is not listed as local: $(extension list)"
+  fi
+  output=$(extension install cosyses; echo "exit:$?")
+  assertEquals "not replaced without --force" "exit:1" "${output##*$'\n'}"
+  extension install cosyses --force > /dev/null
+  assertEquals "replaced with --force" "cosyses=2.0.0 " "$(installed)"
+  finishTest
+
+  startTest "extension manager: problems of installed extensions"
+  mkdir -p "${extensionUserPath}/extension/manual"
+  echo '{"name": "manual", "requires": {"cosyses": "^1", "missing": "^1"}}' > "${extensionUserPath}/extension/manual/extension.json"
+  output=$(extension check; echo "exit:$?")
+  assertEquals "check fails" "exit:1" "${output##*$'\n'}"
+  if [[ "${output}" == *"requires extension: missing ^1, which is not installed, run: ads extension install missing"* ]]; then
+    pass "missing extension reported"
+  else
+    fail "missing extension not reported: ${output}"
+  fi
+  if [[ "${output}" == *"requires extension: cosyses ^1, installed is: 2.0.0, run: ads extension update cosyses"* ]]; then
+    pass "unsuitable version reported"
+  else
+    fail "unsuitable version not reported: ${output}"
+  fi
+  finishTest
+fi
+
 echo ""
 if [[ "${failed}" == 0 ]]; then
   echo "All ${passed} unit tests passed" | sed $'s,.*,\e[0;32m&\e[m,'

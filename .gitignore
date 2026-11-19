@@ -1,3 +1,8 @@
 .idea
 /CLAUDE.md
 /extension
+/extensions.json
+/extensions.json.lock
+/registries.json
+/registries.json.lock
+/var

@@ -122,6 +122,13 @@ if [[ "${lastExitCode}" != 0 ]]; then
     >&2 echo "Missing credentials file: ${missingCredentialsFile}"
     >&2 echo "Create it from the template credentials/*.json.dist of its repository and make it readable for the owner only (chmod 600)."
   fi
+  # a missing or unsuitable extension is a common reason, checked only now, so that a working configuration costs nothing
+  if [[ $(type -t extensionProblems) == "function" ]]; then
+    extensionProblemList=$(extensionProblems "$(anodosysCurrentVersion "${anodosysPath}")" "$(dirname "${anodosysExtensionPath}")" "${anodosysUserPath}")
+    if [[ -n "${extensionProblemList}" ]]; then
+      >&2 echo "${extensionProblemList}"
+    fi
+  fi
   echo ""
   exit 1
 fi
