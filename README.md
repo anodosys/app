@@ -175,7 +175,7 @@ version, tag it: `git tag 1.1.0 && git push origin 1.1.0`.
 {
   "name": "magento",
   "description": "Magento systems and images",
-  "anodosys": ">=3.7",
+  "anodosys": ">=4.0",
   "requires": { "fewedev": "^1.0", "cosyses": "^1.0" },
   "sources": { "fewedev": "git@github.com:fewe-dev/anodosys.git" }
 }
