@@ -67,7 +67,8 @@ finish()
       fi
       # only scripts of this run, a foreign top-level script of the session (for example the shell of a tool that
       # started ads) does not finish before this process does
-      if tr '\0' '\n' < "/proc/${subProcessId}/environ" 2>/dev/null | grep -qxF "anodosysRunId=${anodosysRunId}"; then
+      # stderr first: the process may have finished, and a failing < redirect reports on the stderr in effect then
+      if tr '\0' '\n' 2>/dev/null < "/proc/${subProcessId}/environ" | grep -qxF "anodosysRunId=${anodosysRunId}"; then
         runningProcessIds["${subProcessId}"]=0
       fi
     done

@@ -18,6 +18,7 @@ containerStart()
   local dockerNetworkConnectCommand
   local serverNameList
   local linkedContainerName
+  local startedTimeout
 
   if [[ $(containerExists "${containerName}") == 1 ]]; then
     if [[ $(containerRunning "${containerName}") == 0 ]]; then
@@ -73,17 +74,24 @@ containerStart()
       containerVolumePrepare "${containerName}" "${useNamedVolumes}"
       containerHostNameAdd "${containerName}"
       if [[ "${containerStartedCommand}" != "false" ]]; then
-        echo "Using started script for container: ${containerName} at: ${containerStartedCommand}"
+        # the start script of cosyses images runs cosyses update, which takes minutes on a slow connection
+        startedTimeout="${containerStartedTimeout:-900}"
+        if ! [[ "${startedTimeout}" =~ ^[0-9]+$ ]]; then
+          startedTimeout=900
+        fi
+        echo "Using started script for container: ${containerName} at: ${containerStartedCommand} (waiting at most ${startedTimeout} seconds)"
         counter=0
-        while [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerCommandQuiet "${containerName}" "${containerStartedCommand} && echo \"1\" || echo \"0\"") == 0 ]] && [[ "${counter}" -lt 120 ]]; do
-          echo "Waiting for started script for container: ${containerName}" | sed $'s,.*,\e[1;30m&\e[m,'
+        while [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerCommandQuiet "${containerName}" "${containerStartedCommand} && echo \"1\" || echo \"0\"") == 0 ]] && [[ "${counter}" -lt "${startedTimeout}" ]]; do
+          if (( counter % 10 == 0 )); then
+            echo "Waiting for started script for container: ${containerName} (${counter} seconds)" | sed $'s,.*,\e[1;30m&\e[m,'
+          fi
           counter=$(( counter + 1 ))
           sleep 1
         done
         if [[ $(containerRunning "${containerName}") == 1 ]] && [[ $(containerCommandQuiet "${containerName}" "${containerStartedCommand} && echo \"1\" || echo \"0\"") == 1 ]]; then
           echo "Started script has finished for container: ${containerName}" | sed $'s,.*,\e[0;36m&\e[m,'
         elif [[ $(containerRunning "${containerName}") == 1 ]]; then
-          >&2 echo "Started script has not finished for container: ${containerName}"
+          >&2 echo "Started script has not finished for container: ${containerName} within ${startedTimeout} seconds (containerStartedTimeout)"
           exit 1
         fi
       fi

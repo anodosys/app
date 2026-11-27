@@ -118,6 +118,7 @@ fi
 if [[ $(containerExists "${containerName}") == 1 ]]; then
   >&2 echo "Container already exists: ${containerName}"
   if [[ "${force}" == 0 ]]; then
+    >&2 echo "Use ads start (or restart) for existing containers, or ads purge before ads rise"
     exit 1
   fi
 else
