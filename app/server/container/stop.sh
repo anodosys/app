@@ -110,6 +110,10 @@ if [[ -n "${beforeContainerStopDockerScript}" ]]; then
   fi
 fi
 
+# a route to a stopped container answers with an error and keeps the host name from other containers, start writes it
+# again
+proxyRoutesRemove "${systemName}" "${serverName}"
+
 containerStop "${containerName}"
 
 if [[ -n "${afterContainerStopScript}" ]]; then

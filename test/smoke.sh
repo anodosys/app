@@ -958,6 +958,19 @@ assertExitCode 0
 assertProxyServes "${systemB}"
 finishTest
 
+startTest "proxy: stopped system"
+runAds "${testPath}/proxy-b" stop
+assertExitCode 0
+if [[ ! -f "${userPath}/var/proxy/${proxySystem}/routes/${systemB}_web.yml" ]]; then
+  pass "route of ${systemB} was removed by stop"
+else
+  fail "route of ${systemB} still exists after stop"
+fi
+runAds "${testPath}/proxy-b" start
+assertExitCode 0
+assertProxyServes "${systemB}"
+finishTest
+
 startTest "proxy: removed system"
 runAds "${testPath}/proxy-a" purge
 assertExitCode 0

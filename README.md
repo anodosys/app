@@ -86,9 +86,13 @@ their own certificates. The proxy is created with the first system that uses `pr
 host names joins its network. Web tools work the same way, for example `"proxyHosts": ["mail.{appHostName}"]` with
 `"proxyHttpPort": "1080"`.
 
+A container gets its routes when it starts and loses them when it stops. A host name stays with the running container
+that has it: a second system with the same host name starts without that name and prints a warning. To move the name,
+stop the first system and start the second one again.
+
 ```
-ads proxy status    # show the proxy and the host names of all systems
-ads proxy hosts     # print the host names that are missing in /etc/hosts (and the Windows hosts file in WSL)
+ads proxy status    # show the proxy and the host names of all running systems
+ads proxy hosts     # print the host names of running systems that are missing in /etc/hosts (and the Windows hosts file in WSL)
 ads proxy start     # also: stop, restart, remove
 ```
 

@@ -97,6 +97,11 @@ typeset -fx proxyConnect
 
 # writes the Traefik routes of a container: proxyRoutesWrite <system> <server> <container> <http port> <https port>
 # <host name>...; an empty port means that the container is not reached with that protocol
+#
+# a host name that the route of another running container already has stays with that container, Traefik would
+# otherwise pick one of the two routers and the site silently switches to the newer one; routes of containers that are
+# not running are left over (their containers write them again when they start) and are removed. Servers of several
+# systems start at the same time, so the routes are locked while they are checked and written.
 proxyRoutesWrite()
 {
   local systemName="${1}"
@@ -108,8 +113,6 @@ proxyRoutesWrite()
   local hostNames=( "$@" )
   local routesPath
   local routeName
-  local rule
-  local hostName
   local routesFile
 
   routesPath=$(proxyRoutesPath)
@@ -117,15 +120,78 @@ proxyRoutesWrite()
   routeName="${systemName}_${serverName}"
   routesFile="${routesPath}/${routeName}.yml"
 
-  rule=
-  for hostName in "${hostNames[@]}"; do
-    rule+="${rule:+ || }Host(\`${hostName}\`)"
-  done
+  (
+    flock 9
 
-  echo "Writing proxy routes for host names: ${hostNames[*]} to: ${routesFile}"
+    local otherFile
+    local otherContainer
+    local otherHosts
+    local hostName
+    local claimedHosts=()
+    local rule
+
+    for otherFile in "${routesPath}"/*.yml; do
+      if [[ ! -f "${otherFile}" ]] || [[ "${otherFile}" == "${routesFile}" ]]; then
+        continue
+      fi
+      otherContainer=$(sed -n 's/^# written by Anodosys for container: //p' "${otherFile}")
+      # the dashboard route belongs to the proxy itself
+      if [[ -z "${otherContainer}" ]]; then
+        continue
+      fi
+      otherHosts=" $(sed -n 's/^# hosts: //p' "${otherFile}") "
+      for hostName in "${hostNames[@]}"; do
+        if [[ "${otherHosts}" != *" ${hostName} "* ]]; then
+          continue
+        fi
+        if [[ $(containerRunning "${otherContainer}") == 1 ]]; then
+          echo "Host name: ${hostName} is routed to running container: ${otherContainer}, not to: ${containerName}; stop ${otherContainer} and start ${containerName} again to move it" | sed $'s,.*,\e[0;33m&\e[m,'
+          claimedHosts+=( "${hostName}" )
+        else
+          echo "Removing left-over proxy routes of stopped container: ${otherContainer} in: ${otherFile}"
+          rm -f "${otherFile}"
+          break
+        fi
+      done
+    done
+
+    rule=
+    local freeHosts=()
+    for hostName in "${hostNames[@]}"; do
+      if [[ " ${claimedHosts[*]} " != *" ${hostName} "* ]]; then
+        freeHosts+=( "${hostName}" )
+        rule+="${rule:+ || }Host(\`${hostName}\`)"
+      fi
+    done
+
+    if [[ "${#freeHosts[@]}" -eq 0 ]]; then
+      echo "No host name left for container: ${containerName}, it gets no proxy routes" | sed $'s,.*,\e[0;33m&\e[m,'
+      rm -f "${routesFile}"
+      exit 0
+    fi
+
+    echo "Writing proxy routes for host names: ${freeHosts[*]} to: ${routesFile}"
+    proxyRoutesFileWrite "${routesFile}" "${routeName}" "${containerName}" "${httpPort}" "${httpsPort}" "${rule}" "${freeHosts[*]}"
+  ) 9>"${routesPath}.lock"
+}
+
+# shellcheck disable=SC2034
+typeset -fx proxyRoutesWrite
+
+# proxyRoutesFileWrite <file> <route name> <container> <http port> <https port> <rule> <host names>
+proxyRoutesFileWrite()
+{
+  local routesFile="${1}"
+  local routeName="${2}"
+  local containerName="${3}"
+  local httpPort="${4}"
+  local httpsPort="${5}"
+  local rule="${6}"
+  local hostList="${7}"
+
   {
     echo "# written by Anodosys for container: ${containerName}"
-    echo "# hosts: ${hostNames[*]}"
+    echo "# hosts: ${hostList}"
     if [[ -n "${httpPort}" ]]; then
       echo "http:"
       echo "  routers:"
@@ -159,7 +225,7 @@ proxyRoutesWrite()
 }
 
 # shellcheck disable=SC2034
-typeset -fx proxyRoutesWrite
+typeset -fx proxyRoutesFileWrite
 
 # host name of the Traefik dashboard; browsers resolve every name below .localhost to this machine without a hosts entry
 proxyDashboardHost()

@@ -1,7 +1,8 @@
 #!/bin/bash
 # shellcheck disable=SC2016
 
-# Unit tests for code that does not need Docker: the parameter parsing of prepare-parameters.sh, the port registry and the systems file.
+# Unit tests for code that does not need Docker: the parameter parsing of prepare-parameters.sh, the port registry, the
+# systems file, the volume metadata, the proxy route files and the extension manager.
 # They run in a few seconds and use a temporary directory as user var path, so ~/.anodosys is not touched.
 
 scriptName="${0##*/}"
@@ -291,6 +292,68 @@ assertEquals "file is valid JSON" "www-data r docker 660" \
   "$(jq -r '[.targetUser, .mode, .group, .rights] | join(" ")' "${metadataFile}")"
 assertEquals "value is read" "/var/run/docker.sock" "$(volumeMetadataGet unit_status /run/docker.sock targetPath)"
 assertEquals "no temporary file is left" "1" "$(find "${anodosysUserVarVolumePath}" -type f | wc -l)"
+finishTest
+
+# --- proxy routes ---
+
+export ANODOSYS_PROXY_SYSTEM=unitproxy
+# shellcheck disable=SC1091
+source "${appPath}/lib/proxy/proxy.sh"
+routesPath=$(proxyRoutesPath)
+
+# running containers, without asking Docker
+runningContainers=" "
+containerRunning()
+{
+  if [[ "${runningContainers}" == *" ${1} "* ]]; then echo 1; else echo 0; fi
+}
+
+routeHosts()
+{
+  if [[ -f "${routesPath}/${1}.yml" ]]; then
+    sed -n 's/^# hosts: //p' "${routesPath}/${1}.yml"
+  else
+    echo "none"
+  fi
+}
+
+startTest "proxy routes: host names of other containers"
+runningContainers=" a_web "
+proxyRoutesWrite a web a_web 80 443 site.test a.test > /dev/null
+assertEquals "first container gets its host names" "site.test a.test" "$(routeHosts a_web)"
+proxyDashboardWrite
+runningContainers=" a_web b_web "
+proxyRoutesWrite b web b_web 80 "" site.test b.test > "${testPath}/routes.out"
+assertEquals "host name of a running container stays with it" "site.test a.test" "$(routeHosts a_web)"
+assertEquals "second container gets only its free host names" "b.test" "$(routeHosts b_web)"
+if grep -q "Host name: site.test is routed to running container: a_web" "${testPath}/routes.out"; then
+  pass "conflict is reported"
+else
+  fail "conflict is not reported: $(cat "${testPath}/routes.out")"
+fi
+runningContainers=" b_web "
+proxyRoutesWrite c web c_web 80 "" site.test > /dev/null
+assertEquals "route left over by a stopped container is removed" "none" "$(routeHosts a_web)"
+assertEquals "its host name is taken over" "site.test" "$(routeHosts c_web)"
+runningContainers=" b_web c_web "
+proxyRoutesWrite d web d_web 80 "" site.test > /dev/null
+assertEquals "container without free host names gets no route" "none" "$(routeHosts d_web)"
+assertEquals "dashboard route is left alone" "unitproxy.localhost" "$(routeHosts unitproxy_dashboard)"
+proxyRoutesRemove c web > /dev/null
+assertEquals "route is removed" "none" "$(routeHosts c_web)"
+finishTest
+
+startTest "proxy routes: parallel claims of the same host name"
+runningContainers=" "
+for index in 1 2 3 4 5 6; do
+  runningContainers+="p${index}_web "
+done
+for index in 1 2 3 4 5 6; do
+  proxyRoutesWrite "p${index}" web "p${index}_web" 80 "" parallel.test > /dev/null &
+done
+wait
+assertEquals "exactly one route has the host name" "1" \
+  "$(grep -lx "# hosts: parallel.test" "${routesPath}"/p*_web.yml 2>/dev/null | wc -l)"
 finishTest
 
 # --- extension versions ---
